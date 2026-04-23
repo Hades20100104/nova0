@@ -30,14 +30,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Nevira/nova" },
+      { name: "description", content: "Asistente virtual" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Nevira/nova" },
+      { property: "og:description", content: "Asistente virtual" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Nevira/nova" },
+      { name: "twitter:description", content: "Asistente virtual" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8ea53b5b-761e-49cf-8307-ee472d10c2b9/id-preview-3ee84c3b--c6adccff-6ecc-43e5-8d96-e24abc2e8af5.lovable.app-1776966617733.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8ea53b5b-761e-49cf-8307-ee472d10c2b9/id-preview-3ee84c3b--c6adccff-6ecc-43e5-8d96-e24abc2e8af5.lovable.app-1776966617733.png" },
     ],
     links: [
       {
