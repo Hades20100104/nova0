@@ -16,11 +16,13 @@ import { ChatComposer } from "@/components/ChatComposer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { QuickActions } from "@/components/QuickActions";
 import { MenuDrawer } from "@/components/MenuDrawer";
+import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SpotifyPlayer } from "@/components/SpotifyPlayer";
 import { WhatsAppConfirm } from "@/components/WhatsAppConfirm";
 import { ImageMessage } from "@/components/ImageMessage";
 import { Menu, Activity, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -63,19 +65,23 @@ function AssistantApp() {
   const [sending, setSending] = useState(false);
   const [activeMenu, setActiveMenu] = useState("home");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const spotify = useSpotify(!!auth.user);
 
-  // Cargar perfil + memoria
+  // Cargar perfil + memoria + contactos
   useEffect(() => {
     if (!auth.user) return;
     (async () => {
       const p = await fetchProfile(auth.user!.id);
       const n = await fetchNotes(auth.user!.id);
+      const c = await fetchContacts(auth.user!.id);
       setProfile({ assistantName: p?.assistant_name ?? null, theme: (p?.theme as "nevira" | "nova") ?? "nevira" });
       setNotes(n);
+      setContacts(c);
       if (!p?.assistant_name) setShowOnboarding(true);
     })();
   }, [auth.user]);
