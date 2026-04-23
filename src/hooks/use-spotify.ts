@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier } from "@/lib/spotify-storage";
+import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce } from "@/lib/spotify-storage";
 import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -221,7 +221,7 @@ export function useSpotify(enabled: boolean) {
   const api = useCallback(async (path: string, init?: RequestInit) => {
     const token = await getAccessToken();
     if (!token) throw new Error("No hay token de Spotify.");
-    return fetch(`https://api.spotify.com/v1${path}`, {
+    const res = await fetch(`https://api.spotify.com/v1${path}`, {
       ...init,
       headers: {
         ...(init?.headers || {}),
@@ -229,6 +229,19 @@ export function useSpotify(enabled: boolean) {
         "Content-Type": "application/json",
       },
     });
+    if (!res.ok && res.status !== 204) {
+      const raw = await res.text().catch(() => "");
+      let message = `Spotify devolvió ${res.status}.`;
+      try {
+        const parsed = raw ? JSON.parse(raw) : null;
+        message = parsed?.error?.message ?? parsed?.error_description ?? parsed?.error ?? message;
+      } catch {
+        if (raw) message = raw;
+      }
+      if (res.status === 401) clearSpotifyTokens();
+      throw new Error(message);
+    }
+    return res;
   }, [getAccessToken]);
 
   /**
