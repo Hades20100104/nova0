@@ -186,7 +186,7 @@ function AssistantApp() {
   if (!memory) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Orb size={120} active />
+        <Orb size={120} active variant="nova" />
       </div>
     );
   }
@@ -232,7 +232,7 @@ function AssistantApp() {
               {/* Hero con orbe (solo si no hay mensajes) */}
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center gap-6 py-8 text-center">
-                  <Orb size={260} active />
+                  <Orb size={260} active variant={memory.theme} />
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                       Modo <span className="text-gradient">{themeName}</span> activo
