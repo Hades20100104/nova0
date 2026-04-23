@@ -174,7 +174,7 @@ export function useSpotify(enabled: boolean) {
     }
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
-    sessionStorage.setItem("spotify_pkce_verifier", verifier);
+    setSpotifyPkce(verifier, redirectUri);
     // Si estamos dentro del iframe del preview de Lovable, usamos el origin "real"
     // (window.top) para que Spotify pueda redirigir correctamente y no rechazarnos
     // por X-Frame-Options.
@@ -258,7 +258,8 @@ export function useSpotify(enabled: boolean) {
     const lower = query.toLowerCase().trim();
     const isPlaylist = /^(playlist|lista)\s+/.test(lower);
     const isAlbum = /^(album|álbum|disco)\s+/.test(lower);
-    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco)\s+/i, "").trim();
+    const isArtist = /^(artista|artist)\s+/.test(lower);
+    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco|artista|artist)\s+/i, "").trim();
 
     // PLAYLIST
     if (isPlaylist) {
@@ -284,6 +285,24 @@ export function useSpotify(enabled: boolean) {
         body: JSON.stringify({ context_uri: al.uri }),
       });
       return `álbum ${al.name}`;
+    }
+
+    if (isArtist) {
+      const artistRes = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=artist&limit=1`);
+      const artistJson = await artistRes.json();
+      const artist = artistJson.artists?.items?.[0];
+      if (!artist) throw new Error("No encontré ese artista.");
+
+      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
+      const topJson = await topRes.json();
+      const uris: string[] = (topJson.tracks ?? []).map((t: any) => t.uri).filter(Boolean).slice(0, 10);
+      if (uris.length === 0) throw new Error("No encontré canciones reproducibles de ese artista.");
+
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ uris }),
+      });
+      return `artista ${artist.name}`;
     }
 
     // CANCIÓN + cola del artista (para que siga sonando música después)
