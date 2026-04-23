@@ -239,6 +239,8 @@ export function useSpotify(enabled: boolean) {
    */
   const playSearch = useCallback(async (query: string) => {
     if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    // Cualquier reproducción manual cancela la cola personal en curso
+    queueRef.current = null;
 
     const lower = query.toLowerCase().trim();
     const isPlaylist = /^(playlist|lista)\s+/.test(lower);
