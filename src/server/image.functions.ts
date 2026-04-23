@@ -30,7 +30,7 @@ export const generateImage = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-2.5-flash-image",
         messages: [
           {
             role: "user",
@@ -48,12 +48,18 @@ export const generateImage = createServerFn({ method: "POST" })
       return { error: "Sin créditos de IA. Añade fondos en Settings → Workspace → Usage.", dataUrl: null };
     }
     if (!res.ok) {
-      const text = await res.text();
+      const text = await res.text().catch(() => "");
       console.error("Image gen error:", res.status, text);
-      return { error: `No se pudo generar la imagen (${res.status}).`, dataUrl: null };
+      return { error: `No se pudo generar la imagen (${res.status}): ${text.slice(0, 200)}`, dataUrl: null };
     }
 
-    const json = await res.json();
+    const json = await res.json().catch((e) => {
+      console.error("Image gen JSON parse error:", e);
+      return null;
+    });
+    if (!json) {
+      return { error: "Respuesta inválida del servicio de imagen.", dataUrl: null };
+    }
     const dataUrl: string | undefined = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     if (!dataUrl) {
       return { error: "La IA no devolvió ninguna imagen.", dataUrl: null };
