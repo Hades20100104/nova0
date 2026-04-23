@@ -3,6 +3,8 @@
  * derivada del id (lo seteamos cuando hay sesión).
  */
 const KEY = "spotify.tokens.v1";
+const PKCE_VERIFIER_KEY = "spotify.pkce.verifier.v1";
+const PKCE_REDIRECT_KEY = "spotify.pkce.redirect.v1";
 
 export interface SpotifyTokens {
   access_token: string;
@@ -29,6 +31,30 @@ export function getSpotifyTokens(): SpotifyTokens | null {
 export function clearSpotifyTokens() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
+}
+
+export function setSpotifyPkce(verifier: string, redirectUri: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  localStorage.setItem(PKCE_REDIRECT_KEY, redirectUri);
+  sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  sessionStorage.setItem(PKCE_REDIRECT_KEY, redirectUri);
+}
+
+export function getSpotifyPkce(): { verifier: string; redirectUri: string | null } | null {
+  if (typeof window === "undefined") return null;
+  const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY) ?? localStorage.getItem(PKCE_VERIFIER_KEY);
+  if (!verifier) return null;
+  const redirectUri = sessionStorage.getItem(PKCE_REDIRECT_KEY) ?? localStorage.getItem(PKCE_REDIRECT_KEY);
+  return { verifier, redirectUri };
+}
+
+export function clearSpotifyPkce() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PKCE_VERIFIER_KEY);
+  localStorage.removeItem(PKCE_REDIRECT_KEY);
+  sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+  sessionStorage.removeItem(PKCE_REDIRECT_KEY);
 }
 
 /* ===== PKCE helpers ===== */
