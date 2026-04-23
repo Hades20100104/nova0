@@ -45,6 +45,9 @@ export function useSpotify(enabled: boolean) {
   const refreshFn = useServerFn(refreshSpotifyToken);
   const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
   const playerRef = useRef<any>(null);
+  // Cola personal: lista de queries (canción/artista) que se reproducen en orden
+  // y avanzan automáticamente cuando termina cada track.
+  const queueRef = useRef<{ items: string[]; index: number } | null>(null);
   const [state, setState] = useState<SpotifyState>({
     ready: false,
     connected: false,
@@ -107,6 +110,23 @@ export function useSpotify(enabled: boolean) {
       player.addListener("player_state_changed", (st: any) => {
         if (!mounted || !st) return;
         const t = st.track_window?.current_track;
+        // Detectar fin de track para autoplay de cola personal
+        // Spotify SDK marca: paused=true, position=0, y duration > 0 cuando termina la última pista
+        const finished =
+          st.paused === true &&
+          st.position === 0 &&
+          (st.duration ?? 0) > 0 &&
+          (st.track_window?.next_tracks?.length ?? 0) === 0;
+        if (finished && queueRef.current) {
+          const q = queueRef.current;
+          if (q.index + 1 < q.items.length) {
+            q.index += 1;
+            // Disparar siguiente sin bloquear el listener
+            void playNextRef.current?.();
+          } else {
+            queueRef.current = null;
+          }
+        }
         setState((prev) => ({
           ...prev,
           paused: st.paused,
@@ -219,6 +239,8 @@ export function useSpotify(enabled: boolean) {
    */
   const playSearch = useCallback(async (query: string) => {
     if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    // Cualquier reproducción manual cancela la cola personal en curso
+    queueRef.current = null;
 
     const lower = query.toLowerCase().trim();
     const isPlaylist = /^(playlist|lista)\s+/.test(lower);
@@ -280,11 +302,63 @@ export function useSpotify(enabled: boolean) {
     return track.name as string;
   }, [api, state.deviceId]);
 
+  /**
+   * Reproduce la cola personal (queueRef) desde el índice actual.
+   * Cada `query` se busca como track y se reproduce; al terminar, el listener
+   * de `player_state_changed` avanza al siguiente.
+   */
+  const playNextRef = useRef<(() => Promise<void>) | null>(null);
+  const playNextFromQueue = useCallback(async () => {
+    const q = queueRef.current;
+    if (!q || !state.deviceId) return;
+    const query = q.items[q.index];
+    if (!query) return;
+    try {
+      const res = await api(`/search?q=${encodeURIComponent(query)}&type=track&limit=1`);
+      const json = await res.json();
+      const track = json.tracks?.items?.[0];
+      if (!track) return;
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ uris: [track.uri] }),
+      });
+    } catch (e) {
+      console.error("playNextFromQueue", e);
+    }
+  }, [api, state.deviceId]);
+  playNextRef.current = playNextFromQueue;
+
+  /**
+   * Reproduce una playlist personal (lista de queries).
+   * Inicia con el primer item y deja que el autoplay continúe.
+   */
+  const playLocalPlaylist = useCallback(async (queries: string[]) => {
+    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    if (queries.length === 0) throw new Error("Esta playlist está vacía.");
+    queueRef.current = { items: queries, index: 0 };
+    await playNextFromQueue();
+  }, [state.deviceId, playNextFromQueue]);
+
   const togglePlay = useCallback(async () => {
     await playerRef.current?.togglePlay();
   }, []);
-  const next = useCallback(async () => { await playerRef.current?.nextTrack(); }, []);
-  const prev = useCallback(async () => { await playerRef.current?.previousTrack(); }, []);
+  const next = useCallback(async () => {
+    // Si hay cola personal, avanzar dentro de ella
+    if (queueRef.current && queueRef.current.index + 1 < queueRef.current.items.length) {
+      queueRef.current.index += 1;
+      await playNextFromQueue();
+      return;
+    }
+    await playerRef.current?.nextTrack();
+  }, [playNextFromQueue]);
+  const prev = useCallback(async () => {
+    if (queueRef.current && queueRef.current.index > 0) {
+      queueRef.current.index -= 1;
+      await playNextFromQueue();
+      return;
+    }
+    await playerRef.current?.previousTrack();
+  }, [playNextFromQueue]);
   const setVolume = useCallback(async (v: number) => { await playerRef.current?.setVolume(v); }, []);
 
   const isAuthenticated = !!getSpotifyTokens();
@@ -295,6 +369,7 @@ export function useSpotify(enabled: boolean) {
     startLogin,
     logout,
     playSearch,
+    playLocalPlaylist,
     togglePlay,
     next,
     prev,

@@ -16,11 +16,13 @@ import { ChatComposer } from "@/components/ChatComposer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { QuickActions } from "@/components/QuickActions";
 import { MenuDrawer } from "@/components/MenuDrawer";
+import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SpotifyPlayer } from "@/components/SpotifyPlayer";
 import { WhatsAppConfirm } from "@/components/WhatsAppConfirm";
 import { ImageMessage } from "@/components/ImageMessage";
 import { Menu, Activity, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -63,19 +65,23 @@ function AssistantApp() {
   const [sending, setSending] = useState(false);
   const [activeMenu, setActiveMenu] = useState("home");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const spotify = useSpotify(!!auth.user);
 
-  // Cargar perfil + memoria
+  // Cargar perfil + memoria + contactos
   useEffect(() => {
     if (!auth.user) return;
     (async () => {
       const p = await fetchProfile(auth.user!.id);
       const n = await fetchNotes(auth.user!.id);
+      const c = await fetchContacts(auth.user!.id);
       setProfile({ assistantName: p?.assistant_name ?? null, theme: (p?.theme as "nevira" | "nova") ?? "nevira" });
       setNotes(n);
+      setContacts(c);
       if (!p?.assistant_name) setShowOnboarding(true);
     })();
   }, [auth.user]);
@@ -162,12 +168,13 @@ function AssistantApp() {
       }
     }
 
-    // WHATSAPP — tarjeta de confirmación
+    // WHATSAPP — tarjeta de confirmación (acepta número o nombre de contacto)
     if (intent === "whatsapp") {
-      const m = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/);
-      if (m) {
-        const phone = m[1].replace(/[\s-]/g, "");
-        const body = m[2].trim();
+      // Caso 1: número directo
+      const byNumber = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/);
+      if (byNumber) {
+        const phone = byNumber[1].replace(/[\s-]/g, "");
+        const body = byNumber[2].trim();
         setMessages((m2) => [...m2, {
           role: "assistant",
           content: "",
@@ -176,7 +183,29 @@ function AssistantApp() {
         }]);
         return true;
       }
-      setMessages((m2) => [...m2, { role: "assistant", content: "Para enviar un WhatsApp dime: *WhatsApp a +52XXXXXXXXXX diciendo hola*.", time: timeNow() }]);
+      // Caso 2: nombre de contacto guardado
+      const byName = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?([\p{L}\s]{2,40}?)\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/u);
+      if (byName) {
+        const rawName = byName[1].trim();
+        const body = byName[2].trim();
+        const contact = findContactByName(contacts, rawName);
+        if (contact) {
+          setMessages((m2) => [...m2, {
+            role: "assistant",
+            content: "",
+            time: timeNow(),
+            whatsapp: { phone: contact.phone, message: body, sent: false },
+          }]);
+          return true;
+        }
+        setMessages((m2) => [...m2, {
+          role: "assistant",
+          content: `No encontré ningún contacto llamado **${rawName}**. Añádelo en *Menú → Ajustes → Contactos*.`,
+          time: timeNow(),
+        }]);
+        return true;
+      }
+      setMessages((m2) => [...m2, { role: "assistant", content: "Dime: *WhatsApp a +52XXXXXXXXXX diciendo hola* o *WhatsApp a Mamá diciendo hola*.", time: timeNow() }]);
       return true;
     }
 
@@ -319,11 +348,40 @@ function AssistantApp() {
           if (s === "music") setShowPlayer(true);
           if (s === "images") sendMessage("Genera una imagen de ");
           if (s === "whatsapp") sendMessage("WhatsApp a +52 diciendo ");
+          if (s === "settings") setSettingsOpen(true);
         }}
         onClearMemory={handleClearMemory}
         onLogout={handleLogout}
       />
 
+      {auth.user && (
+        <SettingsDrawer
+          open={settingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+            // Recargar contactos al cerrar para reflejar cambios
+            if (!open && auth.user) {
+              fetchContacts(auth.user.id).then(setContacts).catch(() => { /* noop */ });
+            }
+          }}
+          userId={auth.user.id}
+          spotifyConnected={spotify.isAuthenticated && spotify.state.ready}
+          onPlayPlaylist={async (queries, name) => {
+            try {
+              setShowPlayer(true);
+              await spotify.playLocalPlaylist(queries);
+              setMessages((m) => [...m, {
+                role: "assistant",
+                content: `🎵 Reproduciendo tu playlist **${name}** (${queries.length} canciones).`,
+                time: timeNow(),
+              }]);
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : "No pude reproducir la playlist.";
+              toast.error(msg);
+            }
+          }}
+        />
+      )}
       <div className="flex min-h-screen w-full">
         <AppSidebar
           themeName={themeName}
