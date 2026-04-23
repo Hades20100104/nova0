@@ -348,11 +348,40 @@ function AssistantApp() {
           if (s === "music") setShowPlayer(true);
           if (s === "images") sendMessage("Genera una imagen de ");
           if (s === "whatsapp") sendMessage("WhatsApp a +52 diciendo ");
+          if (s === "settings") setSettingsOpen(true);
         }}
         onClearMemory={handleClearMemory}
         onLogout={handleLogout}
       />
 
+      {auth.user && (
+        <SettingsDrawer
+          open={settingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+            // Recargar contactos al cerrar para reflejar cambios
+            if (!open && auth.user) {
+              fetchContacts(auth.user.id).then(setContacts).catch(() => { /* noop */ });
+            }
+          }}
+          userId={auth.user.id}
+          spotifyConnected={spotify.isAuthenticated && spotify.state.ready}
+          onPlayPlaylist={async (queries, name) => {
+            try {
+              setShowPlayer(true);
+              await spotify.playLocalPlaylist(queries);
+              setMessages((m) => [...m, {
+                role: "assistant",
+                content: `🎵 Reproduciendo tu playlist **${name}** (${queries.length} canciones).`,
+                time: timeNow(),
+              }]);
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : "No pude reproducir la playlist.";
+              toast.error(msg);
+            }
+          }}
+        />
+      )}
       <div className="flex min-h-screen w-full">
         <AppSidebar
           themeName={themeName}
