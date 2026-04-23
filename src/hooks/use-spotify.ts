@@ -187,6 +187,7 @@ export function useSpotify(enabled: boolean) {
       // Cross-origin iframe (publicado dentro de otro sitio): mantenemos origin propio.
     }
     const redirectUri = `${origin}/spotify/callback`;
+    setSpotifyPkce(verifier, redirectUri);
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: "code",
@@ -371,6 +372,34 @@ export function useSpotify(enabled: boolean) {
     await playNextFromQueue();
   }, [state.deviceId, playNextFromQueue]);
 
+  const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
+    const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
+    if (cleanArtists.length === 0) return [] as string[];
+
+    const out: string[] = [];
+    for (const artistName of cleanArtists) {
+      const artistRes = await api(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`);
+      const artistJson = await artistRes.json();
+      const artist = artistJson.artists?.items?.[0];
+      if (!artist?.id) continue;
+
+      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
+      const topJson = await topRes.json();
+      const tracks: string[] = (topJson.tracks ?? [])
+        .map((track: any) => {
+          const title = track?.name;
+          const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+          return title ? `${primaryArtist} - ${title}` : null;
+        })
+        .filter(Boolean)
+        .slice(0, 4);
+
+      out.push(...tracks);
+    }
+
+    return Array.from(new Set(out));
+  }, [api]);
+
   const togglePlay = useCallback(async () => {
     await playerRef.current?.togglePlay();
   }, []);
@@ -402,6 +431,7 @@ export function useSpotify(enabled: boolean) {
     logout,
     playSearch,
     playLocalPlaylist,
+    generateArtistPlaylistQueries,
     togglePlay,
     next,
     prev,
