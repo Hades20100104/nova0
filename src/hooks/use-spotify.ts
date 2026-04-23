@@ -45,6 +45,9 @@ export function useSpotify(enabled: boolean) {
   const refreshFn = useServerFn(refreshSpotifyToken);
   const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
   const playerRef = useRef<any>(null);
+  // Cola personal: lista de queries (canción/artista) que se reproducen en orden
+  // y avanzan automáticamente cuando termina cada track.
+  const queueRef = useRef<{ items: string[]; index: number } | null>(null);
   const [state, setState] = useState<SpotifyState>({
     ready: false,
     connected: false,
