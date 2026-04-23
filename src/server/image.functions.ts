@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { withSupabaseAuth } from "@/integrations/supabase/auth-client-middleware";
 
 interface GenerateImageInput {
   prompt: string;
@@ -8,8 +9,11 @@ interface GenerateImageInput {
  * Genera una imagen usando Lovable AI Gateway (Nano Banana / Gemini image).
  * Devuelve la imagen como dataURL (base64). El cliente la sube al bucket
  * privado y registra la URL en la tabla `generated_images`.
+ *
+ * Requiere usuario autenticado (evita drenaje de créditos por endpoints abiertos).
  */
 export const generateImage = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
   .inputValidator((input: GenerateImageInput) => {
     if (!input?.prompt || input.prompt.trim().length < 3) {
       throw new Error("Prompt demasiado corto");
@@ -50,7 +54,7 @@ export const generateImage = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error("Image gen error:", res.status, text);
-      return { error: `No se pudo generar la imagen (${res.status}): ${text.slice(0, 200)}`, dataUrl: null };
+      return { error: "No se pudo generar la imagen. Intenta de nuevo.", dataUrl: null };
     }
 
     const json = await res.json().catch((e) => {
