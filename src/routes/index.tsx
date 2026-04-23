@@ -20,7 +20,7 @@ import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SpotifyPlayer } from "@/components/SpotifyPlayer";
 import { WhatsAppConfirm } from "@/components/WhatsAppConfirm";
 import { ImageMessage } from "@/components/ImageMessage";
-import { Menu, Activity, Lock } from "lucide-react";
+import { Menu, Activity, Lock, LayoutPanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
 
@@ -157,13 +157,9 @@ function AssistantApp() {
 
     // RENAME
     if (intent === "rename") {
-      const m = t.match(/(?:llamame|dime|cambia mi nombre a|mi nombre es)\s+([\p{L}\s]{2,30})/u);
-      if (m && auth.user) {
-        const newName = m[1].trim().split(" ")[0];
-        const cap = newName.charAt(0).toUpperCase() + newName.slice(1);
-        await updateProfile(auth.user.id, { assistant_name: cap });
-        setProfile((p) => p ? { ...p, assistantName: cap } : p);
-        setMessages((m2) => [...m2, { role: "assistant", content: `Perfecto, ahora te llamaré **${cap}**.`, time: timeNow() }]);
+      const m = t.match(/(?:llamame|cambia mi nombre a|mi nombre es)\s+([\p{L}\s]{2,30})/u);
+      if (m) {
+        setMessages((m2) => [...m2, { role: "assistant", content: "Puedes cambiar tu nombre solo desde **Ajustes** para evitar cambios accidentales.", time: timeNow() }]);
         return true;
       }
     }
@@ -211,7 +207,7 @@ function AssistantApp() {
 
     // IMAGEN
     if (intent === "image") {
-      const prompt = text.replace(/.*(?:genera imagen( de)?|crea imagen( de)?|dibuja|imagina)\s*/i, "").trim() || text;
+      const prompt = text.replace(/.*(?:genera imagen( de)?|crea imagen( de)?|dibuja|imagina|busca imagen( de)?|imagen de)\s*/i, "").trim() || text;
       const placeholderIdx = messages.length + 1; // +1 por el user msg
       setMessages((m2) => [...m2, { role: "assistant", content: "", time: timeNow(), image: { prompt, url: null } }]);
       try {
@@ -366,6 +362,7 @@ function AssistantApp() {
           }}
           userId={auth.user.id}
           spotifyConnected={spotify.isAuthenticated && spotify.state.ready}
+          onGeneratePlaylistFromArtists={spotify.generateArtistPlaylistQueries}
           onPlayPlaylist={async (queries, name) => {
             try {
               setShowPlayer(true);
@@ -382,7 +379,7 @@ function AssistantApp() {
           }}
         />
       )}
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-gradient-bg">
         <AppSidebar
           themeName={themeName}
           userName={profile.assistantName}
@@ -390,8 +387,8 @@ function AssistantApp() {
           onSelect={setActiveMenu}
         />
 
-        <main className="flex flex-1 flex-col">
-          <header className="flex items-center justify-between gap-3 border-b border-border bg-background/40 px-4 py-3 backdrop-blur lg:px-8">
+        <main className="flex min-h-screen flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur lg:px-8">
             <div className="min-w-0">
               <h1 className="truncate text-lg font-semibold sm:text-xl">
                 {greeting}, <span className="text-gradient">{profile.assistantName ?? "tú"}</span>
@@ -414,9 +411,10 @@ function AssistantApp() {
           </header>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
-            <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-6 lg:py-10">
+            <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4 sm:py-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6 lg:px-8 lg:py-8">
+              <section className="min-w-0">
               {showPlayer && (
-                <div className="mb-4 w-full">
+                <div className="mb-4 w-full lg:hidden">
                   <SpotifyPlayer
                     state={spotify.state}
                     isAuthenticated={spotify.isAuthenticated}
@@ -431,8 +429,8 @@ function AssistantApp() {
               )}
 
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center gap-6 py-8 text-center">
-                  <Orb size={260} active variant={profile.theme} />
+                <div className="flex min-h-[56svh] flex-col items-center justify-center gap-6 py-8 text-center lg:min-h-[70svh]">
+                  <Orb size={220} active variant={profile.theme} className="sm:[transform:scale(1.05)]" />
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                       Modo <span className="text-gradient">{themeName}</span> activo
@@ -489,6 +487,33 @@ function AssistantApp() {
                   )}
                 </div>
               )}
+              </section>
+
+              <aside className="hidden lg:sticky lg:top-24 lg:block">
+                <div className="space-y-4">
+                  <SpotifyPlayer
+                    state={spotify.state}
+                    isAuthenticated={spotify.isAuthenticated}
+                    onLogin={() => spotify.startLogin().catch((e) => toast.error(e.message))}
+                    onLogout={spotify.logout}
+                    onToggle={spotify.togglePlay}
+                    onNext={spotify.next}
+                    onPrev={spotify.prev}
+                    onVolume={spotify.setVolume}
+                  />
+                  <div className="glass rounded-2xl p-4">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <LayoutPanelLeft className="h-4 w-4 text-primary" />
+                      {themeName} activo
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {themeName === "NOVA"
+                        ? "Interfaz concentrada para música, imágenes y acciones rápidas sin dejar espacios vacíos."
+                        : "Vista más compacta y útil para conversar, crear imágenes y controlar Spotify."}
+                    </p>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier } from "@/lib/spotify-storage";
+import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce } from "@/lib/spotify-storage";
 import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -174,7 +174,6 @@ export function useSpotify(enabled: boolean) {
     }
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
-    sessionStorage.setItem("spotify_pkce_verifier", verifier);
     // Si estamos dentro del iframe del preview de Lovable, usamos el origin "real"
     // (window.top) para que Spotify pueda redirigir correctamente y no rechazarnos
     // por X-Frame-Options.
@@ -187,6 +186,7 @@ export function useSpotify(enabled: boolean) {
       // Cross-origin iframe (publicado dentro de otro sitio): mantenemos origin propio.
     }
     const redirectUri = `${origin}/spotify/callback`;
+    setSpotifyPkce(verifier, redirectUri);
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: "code",
@@ -221,7 +221,7 @@ export function useSpotify(enabled: boolean) {
   const api = useCallback(async (path: string, init?: RequestInit) => {
     const token = await getAccessToken();
     if (!token) throw new Error("No hay token de Spotify.");
-    return fetch(`https://api.spotify.com/v1${path}`, {
+    const res = await fetch(`https://api.spotify.com/v1${path}`, {
       ...init,
       headers: {
         ...(init?.headers || {}),
@@ -229,6 +229,19 @@ export function useSpotify(enabled: boolean) {
         "Content-Type": "application/json",
       },
     });
+    if (!res.ok && res.status !== 204) {
+      const raw = await res.text().catch(() => "");
+      let message = `Spotify devolvió ${res.status}.`;
+      try {
+        const parsed = raw ? JSON.parse(raw) : null;
+        message = parsed?.error?.message ?? parsed?.error_description ?? parsed?.error ?? message;
+      } catch {
+        if (raw) message = raw;
+      }
+      if (res.status === 401) clearSpotifyTokens();
+      throw new Error(message);
+    }
+    return res;
   }, [getAccessToken]);
 
   /**
@@ -245,7 +258,8 @@ export function useSpotify(enabled: boolean) {
     const lower = query.toLowerCase().trim();
     const isPlaylist = /^(playlist|lista)\s+/.test(lower);
     const isAlbum = /^(album|álbum|disco)\s+/.test(lower);
-    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco)\s+/i, "").trim();
+    const isArtist = /^(artista|artist)\s+/.test(lower);
+    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco|artista|artist)\s+/i, "").trim();
 
     // PLAYLIST
     if (isPlaylist) {
@@ -271,6 +285,24 @@ export function useSpotify(enabled: boolean) {
         body: JSON.stringify({ context_uri: al.uri }),
       });
       return `álbum ${al.name}`;
+    }
+
+    if (isArtist) {
+      const artistRes = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=artist&limit=1`);
+      const artistJson = await artistRes.json();
+      const artist = artistJson.artists?.items?.[0];
+      if (!artist) throw new Error("No encontré ese artista.");
+
+      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
+      const topJson = await topRes.json();
+      const uris: string[] = (topJson.tracks ?? []).map((t: any) => t.uri).filter(Boolean).slice(0, 10);
+      if (uris.length === 0) throw new Error("No encontré canciones reproducibles de ese artista.");
+
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ uris }),
+      });
+      return `artista ${artist.name}`;
     }
 
     // CANCIÓN + cola del artista (para que siga sonando música después)
@@ -339,6 +371,34 @@ export function useSpotify(enabled: boolean) {
     await playNextFromQueue();
   }, [state.deviceId, playNextFromQueue]);
 
+  const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
+    const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
+    if (cleanArtists.length === 0) return [] as string[];
+
+    const out: string[] = [];
+    for (const artistName of cleanArtists) {
+      const artistRes = await api(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`);
+      const artistJson = await artistRes.json();
+      const artist = artistJson.artists?.items?.[0];
+      if (!artist?.id) continue;
+
+      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
+      const topJson = await topRes.json();
+      const tracks: string[] = (topJson.tracks ?? [])
+        .map((track: any) => {
+          const title = track?.name;
+          const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+          return title ? `${primaryArtist} - ${title}` : null;
+        })
+        .filter(Boolean)
+        .slice(0, 4);
+
+      out.push(...tracks);
+    }
+
+    return Array.from(new Set(out));
+  }, [api]);
+
   const togglePlay = useCallback(async () => {
     await playerRef.current?.togglePlay();
   }, []);
@@ -370,6 +430,7 @@ export function useSpotify(enabled: boolean) {
     logout,
     playSearch,
     playLocalPlaylist,
+    generateArtistPlaylistQueries,
     togglePlay,
     next,
     prev,

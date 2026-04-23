@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { exchangeSpotifyCode } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { setSpotifyTokens } from "@/lib/spotify-storage";
+import { clearSpotifyPkce, getSpotifyPkce, setSpotifyTokens } from "@/lib/spotify-storage";
 import { Orb } from "@/components/Orb";
 
 export const Route = createFileRoute("/spotify/callback")({
@@ -22,7 +22,8 @@ function SpotifyCallbackPage() {
     const url = new URL(window.location.href);
     const code = url.searchParams.get("code");
     const errorParam = url.searchParams.get("error");
-    const verifier = sessionStorage.getItem("spotify_pkce_verifier");
+    const pkce = getSpotifyPkce();
+    const verifier = pkce?.verifier ?? null;
 
     if (errorParam) {
       setStatus("error");
@@ -35,7 +36,7 @@ function SpotifyCallbackPage() {
       return;
     }
 
-    const redirectUri = `${window.location.origin}/spotify/callback`;
+    const redirectUri = pkce?.redirectUri ?? `${window.location.origin}/spotify/callback`;
     exchangeFn({ data: { code, codeVerifier: verifier, redirectUri } })
       .then((res) => {
         if (res.error || !res.access_token) {
@@ -48,7 +49,7 @@ function SpotifyCallbackPage() {
           refresh_token: res.refresh_token ?? null,
           expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
         });
-        sessionStorage.removeItem("spotify_pkce_verifier");
+        clearSpotifyPkce();
         setStatus("ok");
         setMessage("¡Spotify conectado! Volviendo al asistente…");
         setTimeout(() => navigate({ to: "/" }), 800);
