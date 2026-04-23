@@ -168,12 +168,13 @@ function AssistantApp() {
       }
     }
 
-    // WHATSAPP — tarjeta de confirmación
+    // WHATSAPP — tarjeta de confirmación (acepta número o nombre de contacto)
     if (intent === "whatsapp") {
-      const m = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/);
-      if (m) {
-        const phone = m[1].replace(/[\s-]/g, "");
-        const body = m[2].trim();
+      // Caso 1: número directo
+      const byNumber = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/);
+      if (byNumber) {
+        const phone = byNumber[1].replace(/[\s-]/g, "");
+        const body = byNumber[2].trim();
         setMessages((m2) => [...m2, {
           role: "assistant",
           content: "",
@@ -182,7 +183,29 @@ function AssistantApp() {
         }]);
         return true;
       }
-      setMessages((m2) => [...m2, { role: "assistant", content: "Para enviar un WhatsApp dime: *WhatsApp a +52XXXXXXXXXX diciendo hola*.", time: timeNow() }]);
+      // Caso 2: nombre de contacto guardado
+      const byName = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?([\p{L}\s]{2,40}?)\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/u);
+      if (byName) {
+        const rawName = byName[1].trim();
+        const body = byName[2].trim();
+        const contact = findContactByName(contacts, rawName);
+        if (contact) {
+          setMessages((m2) => [...m2, {
+            role: "assistant",
+            content: "",
+            time: timeNow(),
+            whatsapp: { phone: contact.phone, message: body, sent: false },
+          }]);
+          return true;
+        }
+        setMessages((m2) => [...m2, {
+          role: "assistant",
+          content: `No encontré ningún contacto llamado **${rawName}**. Añádelo en *Menú → Ajustes → Contactos*.`,
+          time: timeNow(),
+        }]);
+        return true;
+      }
+      setMessages((m2) => [...m2, { role: "assistant", content: "Dime: *WhatsApp a +52XXXXXXXXXX diciendo hola* o *WhatsApp a Mamá diciendo hola*.", time: timeNow() }]);
       return true;
     }
 
