@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus } from "lucide-react";
+import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchContacts, addContact, deleteContact, normalizePhone, type WhatsAppContact,
@@ -19,11 +19,12 @@ interface SettingsDrawerProps {
   userId: string;
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
+  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]>;
 }
 
 type View = "menu" | "playlists" | "playlist-detail" | "contacts";
 
-export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist }: SettingsDrawerProps) {
+export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists }: SettingsDrawerProps) {
   const [view, setView] = useState<View>("menu");
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
@@ -86,6 +87,7 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
               userId={userId}
               playlist={activePlaylist}
               spotifyConnected={spotifyConnected}
+              onGeneratePlaylistFromArtists={onGeneratePlaylistFromArtists}
               onPlay={(queries) => {
                 onOpenChange(false);
                 onPlayPlaylist(queries, activePlaylist.name);
@@ -193,10 +195,11 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
 }
 
 function PlaylistDetailView({
-  userId, playlist, spotifyConnected, onPlay,
-}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void }) {
+  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists,
+}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]> }) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [query, setQuery] = useState("");
+  const [artistsSeed, setArtistsSeed] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -228,6 +231,39 @@ function PlaylistDetailView({
     }
   };
 
+  const handleGenerateFromArtists = async () => {
+    const artists = artistsSeed.split(",").map((artist) => artist.trim()).filter(Boolean);
+    if (artists.length === 0) {
+      toast.error("Escribe al menos un artista");
+      return;
+    }
+    try {
+      const generated = await onGeneratePlaylistFromArtists(artists);
+      if (generated.length === 0) {
+        toast.error("No pude generar canciones con esos artistas");
+        return;
+      }
+      const existing = new Set(tracks.map((track) => track.query.toLowerCase()));
+      const toInsert = generated.filter((item) => !existing.has(item.toLowerCase()));
+      if (toInsert.length === 0) {
+        toast.error("Esas canciones ya estaban en la playlist");
+        return;
+      }
+
+      const created: PlaylistTrack[] = [];
+      for (const [offset, item] of toInsert.entries()) {
+        const row = await addTrack(userId, playlist.id, item, tracks.length + offset);
+        created.push(row);
+      }
+      setTracks((xs) => [...xs, ...created]);
+      setArtistsSeed("");
+      toast.success(`Añadí ${created.length} canciones`);
+    } catch (e) {
+      console.error(e);
+      toast.error("No pude generar la playlist desde artistas");
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div>
@@ -246,6 +282,23 @@ function PlaylistDetailView({
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button onClick={handleAdd}><Plus className="h-4 w-4" /></Button>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card/50 p-3 space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <WandSparkles className="h-4 w-4 text-primary" />
+          Crear desde artistas
+        </div>
+        <Input
+          placeholder="Ej: Bad Bunny, Feid, Karol G"
+          value={artistsSeed}
+          maxLength={180}
+          onChange={(e) => setArtistsSeed(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleGenerateFromArtists()}
+        />
+        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists}>
+          Generar playlist
+        </Button>
       </div>
 
       <Button
