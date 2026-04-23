@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier } from "@/lib/spotify-storage";
-import { refreshSpotifyToken } from "@/server/spotify.functions";
+import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 const SCOPES = [
@@ -12,11 +12,8 @@ const SCOPES = [
   "user-read-currently-playing",
 ];
 
-// Client ID público (ofuscado: viene también en una server fn). Como Spotify
-// requiere que el client_id viaje en la URL de autorización, lo dejamos en el
-// frontend leyéndolo de un input env público sería ideal; aquí lo tomamos de
-// una variable Vite que el usuario expone.
-const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID as string | undefined;
+// El client_id se obtiene del servidor (que lo lee de SPOTIFY_CLIENT_ID secret)
+// para evitar tener que duplicarlo como variable VITE_ pública.
 
 export interface SpotifyTrack {
   id: string;
@@ -46,6 +43,7 @@ declare global {
 
 export function useSpotify(enabled: boolean) {
   const refreshFn = useServerFn(refreshSpotifyToken);
+  const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
   const playerRef = useRef<any>(null);
   const [state, setState] = useState<SpotifyState>({
     ready: false,
@@ -150,15 +148,16 @@ export function useSpotify(enabled: boolean) {
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
-    if (!CLIENT_ID) {
-      throw new Error("Falta VITE_SPOTIFY_CLIENT_ID en variables de entorno.");
+    const { clientId } = await getClientIdFn();
+    if (!clientId) {
+      throw new Error("Spotify no está configurado en el servidor (falta SPOTIFY_CLIENT_ID).");
     }
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
     sessionStorage.setItem("spotify_pkce_verifier", verifier);
     const redirectUri = `${window.location.origin}/spotify/callback`;
     const params = new URLSearchParams({
-      client_id: CLIENT_ID,
+      client_id: clientId,
       response_type: "code",
       redirect_uri: redirectUri,
       scope: SCOPES.join(" "),
@@ -166,7 +165,7 @@ export function useSpotify(enabled: boolean) {
       code_challenge: challenge,
     });
     window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
-  }, []);
+  }, [getClientIdFn]);
 
   const logout = useCallback(() => {
     clearSpotifyTokens();
