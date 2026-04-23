@@ -9,54 +9,102 @@ interface OrbProps {
 
 /**
  * Orbe central animado.
- * - NEVIRA: esfera 3D con estrella brillante central, anillos orbitales en perspectiva y planetas.
- * - NOVA: sistema solar con NOVA como sol y planetas orbitando.
+ * - NEVIRA: esfera limpia con anillos sutiles, SIN estrella en el centro.
+ * - NOVA: estrella brillante 3D con anillos orbitales en perspectiva y planetas.
  */
 export function Orb({ size = 280, active = false, variant, className }: OrbProps) {
-  if (variant === "nova") return <NovaSolarSystem size={size} active={active} className={className} />;
-  return <NeviraOrb3D size={size} active={active} className={className} />;
+  if (variant === "nova") return <NovaStar3D size={size} active={active} className={className} />;
+  return <NeviraOrb size={size} active={active} className={className} />;
 }
 
-/* ============== NEVIRA — Esfera 3D con estrella y anillos en perspectiva ============== */
+/* ============== NEVIRA — Esfera limpia (sin estrella) ============== */
+function NeviraOrb({ size, active, className }: { size: number; active: boolean; className?: string }) {
+  return (
+    <div
+      className={cn("relative flex items-center justify-center", className)}
+      style={{ width: size, height: size }}
+    >
+      {/* Anillos orbitales */}
+      <div className="absolute inset-0 animate-orb-rotate">
+        <div className="absolute inset-0 rounded-full border border-primary/20" />
+        <div className="absolute inset-4 rounded-full border border-primary/15 rotate-45" />
+        <div className="absolute inset-10 rounded-full border border-accent/20 -rotate-12" />
+      </div>
 
-interface NeviraRing {
-  /** Tamaño relativo del anillo (1 = igual al contenedor). */
+      {/* Halo externo */}
+      <div
+        className={cn(
+          "absolute inset-0 rounded-full blur-3xl opacity-70",
+          active && "animate-orb-pulse"
+        )}
+        style={{ background: "var(--gradient-orb)" }}
+      />
+
+      {/* Esfera central limpia, sin estrella */}
+      <div
+        className={cn(
+          "relative rounded-full shadow-glow animate-orb-pulse",
+          "flex items-center justify-center overflow-hidden"
+        )}
+        style={{
+          width: size * 0.45,
+          height: size * 0.45,
+          background: "var(--gradient-orb)",
+        }}
+      >
+        {/* Brillo interno (highlight tipo planeta) */}
+        <div
+          className="absolute rounded-full bg-foreground/40 blur-md"
+          style={{
+            width: "40%",
+            height: "40%",
+            top: "15%",
+            left: "20%",
+          }}
+        />
+      </div>
+
+      {/* Partículas orbitales */}
+      {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+        <div
+          key={deg}
+          className="absolute h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_currentColor]"
+          style={{
+            transform: `rotate(${deg}deg) translateX(${size / 2 - 10}px)`,
+            animation: `orb-rotate ${20 + i * 3}s linear infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ============== NOVA — Estrella 3D con anillos en perspectiva ============== */
+
+interface NovaRing {
   scale: number;
-  /** Rotación X (perspectiva vertical) en grados. */
   rotateX: number;
-  /** Rotación Y inicial. */
-  rotateY: number;
-  /** Rotación Z (inclinación) en grados. */
   rotateZ: number;
-  /** Duración de la rotación en segundos. */
   duration: number;
-  /** Dirección. */
   reverse?: boolean;
-  /** Color del anillo. */
   color: string;
-  /** Si es punteado. */
   dashed?: boolean;
-  /** Planetas/puntos en este anillo (cantidad). */
   dots?: { count: number; color: string; size: number }[];
 }
 
-const NEVIRA_RINGS: NeviraRing[] = [
-  // Anillo principal grande horizontal (tipo ecuador)
+const NOVA_RINGS: NovaRing[] = [
   {
     scale: 1.0,
     rotateX: 75,
-    rotateY: 0,
     rotateZ: 0,
     duration: 30,
     color: "oklch(0.7 0.15 280 / 0.5)",
     dashed: true,
     dots: [{ count: 2, color: "oklch(0.78 0.18 70)", size: 6 }],
   },
-  // Anillo vertical
   {
     scale: 0.92,
     rotateX: 75,
-    rotateY: 0,
     rotateZ: 90,
     duration: 22,
     reverse: true,
@@ -64,21 +112,17 @@ const NEVIRA_RINGS: NeviraRing[] = [
     dashed: true,
     dots: [{ count: 2, color: "oklch(0.75 0.16 290)", size: 5 }],
   },
-  // Anillo diagonal 1
   {
     scale: 0.95,
     rotateX: 70,
-    rotateY: 0,
     rotateZ: 35,
     duration: 26,
     color: "oklch(0.72 0.14 270 / 0.4)",
     dots: [{ count: 1, color: "oklch(0.78 0.18 70)", size: 5 }],
   },
-  // Anillo diagonal 2
   {
     scale: 0.88,
     rotateX: 72,
-    rotateY: 0,
     rotateZ: -40,
     duration: 34,
     reverse: true,
@@ -86,11 +130,9 @@ const NEVIRA_RINGS: NeviraRing[] = [
     dashed: true,
     dots: [{ count: 1, color: "oklch(0.8 0.16 60)", size: 5 }],
   },
-  // Anillo interno pequeño
   {
     scale: 0.7,
     rotateX: 70,
-    rotateY: 0,
     rotateZ: 60,
     duration: 18,
     color: "oklch(0.75 0.16 280 / 0.55)",
@@ -99,7 +141,7 @@ const NEVIRA_RINGS: NeviraRing[] = [
   },
 ];
 
-function NeviraOrb3D({ size, active, className }: { size: number; active: boolean; className?: string }) {
+function NovaStar3D({ size, active, className }: { size: number; active: boolean; className?: string }) {
   const total = size * 1.1;
   const starSize = size * 0.35;
 
@@ -138,7 +180,7 @@ function NeviraOrb3D({ size, active, className }: { size: number; active: boolea
       />
 
       {/* Anillos 3D con planetas */}
-      {NEVIRA_RINGS.map((ring, i) => (
+      {NOVA_RINGS.map((ring, i) => (
         <Ring3D key={`ring-${i}`} ring={ring} containerSize={total} />
       ))}
 
@@ -152,7 +194,7 @@ function NeviraOrb3D({ size, active, className }: { size: number; active: boolea
 }
 
 /* ---- Anillo 3D ---- */
-function Ring3D({ ring, containerSize }: { ring: NeviraRing; containerSize: number }) {
+function Ring3D({ ring, containerSize }: { ring: NovaRing; containerSize: number }) {
   const ringSize = containerSize * ring.scale;
   const animName = ring.reverse ? "ring-spin-reverse" : "ring-spin";
 
@@ -173,7 +215,6 @@ function Ring3D({ ring, containerSize }: { ring: NeviraRing; containerSize: numb
           animation: `${animName} ${ring.duration}s linear infinite`,
         }}
       >
-        {/* Anillo (borde) */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
@@ -181,7 +222,6 @@ function Ring3D({ ring, containerSize }: { ring: NeviraRing; containerSize: numb
             boxShadow: `0 0 12px ${ring.color}`,
           }}
         />
-        {/* Planetas/puntos sobre el anillo */}
         {ring.dots?.map((group, gi) =>
           Array.from({ length: group.count }).map((_, di) => {
             const angle = (360 / group.count) * di + gi * 45;
@@ -222,7 +262,6 @@ function Starburst({ size, active }: { size: number; active: boolean }) {
       className={cn("absolute flex items-center justify-center", active && "animate-orb-pulse")}
       style={{ width: size, height: size }}
     >
-      {/* Núcleo brillante */}
       <div
         className="absolute rounded-full"
         style={{
@@ -236,7 +275,6 @@ function Starburst({ size, active }: { size: number; active: boolean }) {
         }}
       />
 
-      {/* Halo de la estrella */}
       <div
         className="absolute rounded-full blur-2xl"
         style={{
@@ -247,7 +285,6 @@ function Starburst({ size, active }: { size: number; active: boolean }) {
         }}
       />
 
-      {/* Destello vertical */}
       <div
         className="absolute"
         style={{
@@ -260,7 +297,6 @@ function Starburst({ size, active }: { size: number; active: boolean }) {
         }}
       />
 
-      {/* Destello horizontal */}
       <div
         className="absolute"
         style={{
@@ -273,7 +309,6 @@ function Starburst({ size, active }: { size: number; active: boolean }) {
         }}
       />
 
-      {/* Destellos diagonales más sutiles */}
       <div
         className="absolute"
         style={{
@@ -323,155 +358,6 @@ function Sparkles({ count, radius }: { count: number; radius: number }) {
             top: `calc(50% + ${s.y}px)`,
             opacity: s.o,
             boxShadow: "0 0 4px currentColor",
-            animation: `orb-pulse ${3 + s.d}s ease-in-out infinite`,
-            animationDelay: `${s.d * 0.4}s`,
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-/* ============== NOVA — Sistema solar ============== */
-interface Planet {
-  distance: number;
-  size: number;
-  color: string;
-  duration: number;
-  tilt: number;
-  phase: number;
-}
-
-const PLANETS: Planet[] = [
-  { distance: 0.22, size: 0.025, color: "oklch(0.75 0.12 60)", duration: 6, tilt: 0, phase: 0.1 },
-  { distance: 0.31, size: 0.04, color: "oklch(0.78 0.16 80)", duration: 10, tilt: -8, phase: 0.3 },
-  { distance: 0.42, size: 0.045, color: "oklch(0.65 0.18 240)", duration: 14, tilt: 5, phase: 0.6 },
-  { distance: 0.54, size: 0.035, color: "oklch(0.6 0.2 30)", duration: 18, tilt: -3, phase: 0.85 },
-  { distance: 0.7, size: 0.07, color: "oklch(0.7 0.13 70)", duration: 26, tilt: 6, phase: 0.2 },
-  { distance: 0.86, size: 0.055, color: "oklch(0.78 0.1 95)", duration: 34, tilt: -10, phase: 0.55 },
-];
-
-function NovaSolarSystem({ size, active, className }: { size: number; active: boolean; className?: string }) {
-  const total = size * 1.05;
-  const sunSize = size * 0.28;
-
-  return (
-    <div
-      className={cn("relative flex items-center justify-center", className)}
-      style={{ width: total, height: total }}
-    >
-      <Stars count={40} radius={total / 2} />
-
-      {PLANETS.map((p, i) => {
-        const orbitSize = total * p.distance * 2;
-        return (
-          <div
-            key={`orbit-${i}`}
-            className="absolute rounded-full border border-primary/15"
-            style={{
-              width: orbitSize,
-              height: orbitSize,
-              transform: `rotate(${p.tilt}deg)`,
-            }}
-          />
-        );
-      })}
-
-      <div
-        className="absolute rounded-full shadow-glow animate-orb-pulse"
-        style={{
-          width: sunSize,
-          height: sunSize,
-          background:
-            "radial-gradient(circle at 35% 35%, oklch(0.92 0.15 75), oklch(0.7 0.22 35) 45%, oklch(0.45 0.22 295) 90%)",
-          boxShadow:
-            "0 0 60px oklch(0.82 0.15 80 / 0.7), 0 0 120px oklch(0.65 0.22 295 / 0.5), inset -10px -10px 30px oklch(0.3 0.15 295 / 0.5)",
-        }}
-      >
-        <div
-          className="absolute inset-0 rounded-full blur-xl opacity-80 animate-orb-pulse"
-          style={{
-            background: "radial-gradient(circle, oklch(0.82 0.15 80 / 0.6), transparent 70%)",
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="font-bold tracking-[0.25em] text-primary-foreground drop-shadow-[0_0_8px_oklch(0.82_0.15_80)]"
-            style={{ fontSize: sunSize * 0.18 }}
-          >
-            NOVA
-          </span>
-        </div>
-      </div>
-
-      {PLANETS.map((p, i) => {
-        const orbitSize = total * p.distance * 2;
-        const planetSize = Math.max(6, total * p.size);
-        return (
-          <div
-            key={`planet-${i}`}
-            className="absolute"
-            style={{
-              width: orbitSize,
-              height: orbitSize,
-              transform: `rotate(${p.tilt}deg)`,
-              animation: `orb-rotate ${p.duration}s linear infinite`,
-              animationDelay: `${-p.duration * p.phase}s`,
-              animationPlayState: active ? "running" : "running",
-            }}
-          >
-            <div
-              className="absolute rounded-full"
-              style={{
-                width: planetSize,
-                height: planetSize,
-                top: `calc(50% - ${planetSize / 2}px)`,
-                right: `-${planetSize / 2}px`,
-                background: p.color,
-                boxShadow: `0 0 ${planetSize}px ${p.color}, inset -2px -2px 4px oklch(0 0 0 / 0.4)`,
-              }}
-            />
-            {i === 5 && (
-              <div
-                className="absolute rounded-full border-2"
-                style={{
-                  width: planetSize * 2.4,
-                  height: planetSize * 0.6,
-                  top: `calc(50% - ${planetSize * 0.3}px)`,
-                  right: `-${planetSize * 1.2 - planetSize / 2}px`,
-                  borderColor: "oklch(0.78 0.1 95 / 0.5)",
-                  transform: "rotate(-20deg)",
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Stars({ count, radius }: { count: number; radius: number }) {
-  const stars = Array.from({ length: count }, (_, i) => {
-    const seed = i * 9301 + 49297;
-    const a = ((seed % 233280) / 233280) * Math.PI * 2;
-    const r = (((seed * 7) % 233280) / 233280) * radius;
-    const s = (((seed * 13) % 233280) / 233280) * 1.5 + 0.5;
-    const o = (((seed * 17) % 233280) / 233280) * 0.6 + 0.3;
-    return { x: Math.cos(a) * r, y: Math.sin(a) * r, s, o, d: i % 5 };
-  });
-  return (
-    <>
-      {stars.map((s, i) => (
-        <div
-          key={`star-${i}`}
-          className="absolute rounded-full bg-foreground"
-          style={{
-            width: s.s,
-            height: s.s,
-            left: `calc(50% + ${s.x}px)`,
-            top: `calc(50% + ${s.y}px)`,
-            opacity: s.o,
             animation: `orb-pulse ${3 + s.d}s ease-in-out infinite`,
             animationDelay: `${s.d * 0.4}s`,
           }}
