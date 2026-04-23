@@ -174,7 +174,6 @@ export function useSpotify(enabled: boolean) {
     }
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
-    setSpotifyPkce(verifier, redirectUri);
     // Si estamos dentro del iframe del preview de Lovable, usamos el origin "real"
     // (window.top) para que Spotify pueda redirigir correctamente y no rechazarnos
     // por X-Frame-Options.
