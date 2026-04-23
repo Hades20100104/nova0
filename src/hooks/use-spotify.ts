@@ -211,18 +211,73 @@ export function useSpotify(enabled: boolean) {
     });
   }, [getAccessToken]);
 
-  /** Busca canción/playlist y reproduce la primera. */
+  /**
+   * Busca y reproduce. Soporta:
+   *  - "playlist <nombre>"  → reproduce playlist completa
+   *  - "album <nombre>"     → reproduce álbum completo
+   *  - "<canción>"          → reproduce la canción + cola con tracks del mismo artista
+   */
   const playSearch = useCallback(async (query: string) => {
     if (!state.deviceId) throw new Error("Reproductor aún no listo.");
-    const res = await api(`/search?q=${encodeURIComponent(query)}&type=track&limit=1`);
+
+    const lower = query.toLowerCase().trim();
+    const isPlaylist = /^(playlist|lista)\s+/.test(lower);
+    const isAlbum = /^(album|álbum|disco)\s+/.test(lower);
+    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco)\s+/i, "").trim();
+
+    // PLAYLIST
+    if (isPlaylist) {
+      const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=playlist&limit=1`);
+      const json = await res.json();
+      const pl = json.playlists?.items?.[0];
+      if (!pl) throw new Error("No encontré esa playlist.");
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ context_uri: pl.uri }),
+      });
+      return `playlist ${pl.name}`;
+    }
+
+    // ÁLBUM
+    if (isAlbum) {
+      const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=album&limit=1`);
+      const json = await res.json();
+      const al = json.albums?.items?.[0];
+      if (!al) throw new Error("No encontré ese álbum.");
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ context_uri: al.uri }),
+      });
+      return `álbum ${al.name}`;
+    }
+
+    // CANCIÓN + cola del artista (para que siga sonando música después)
+    const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=1`);
     const json = await res.json();
-    const uri = json.tracks?.items?.[0]?.uri;
-    if (!uri) throw new Error("No encontré esa canción.");
+    const track = json.tracks?.items?.[0];
+    if (!track) throw new Error("No encontré esa canción.");
+
+    const artistId: string | undefined = track.artists?.[0]?.id;
+    let uris: string[] = [track.uri];
+
+    if (artistId) {
+      try {
+        const topRes = await api(`/artists/${artistId}/top-tracks?market=from_token`);
+        const topJson = await topRes.json();
+        const topUris: string[] = (topJson.tracks ?? [])
+          .map((t: any) => t.uri)
+          .filter((u: string) => u && u !== track.uri);
+        uris = [track.uri, ...topUris.slice(0, 9)];
+      } catch {
+        /* si falla, reproducimos solo la canción */
+      }
+    }
+
     await api(`/me/player/play?device_id=${state.deviceId}`, {
       method: "PUT",
-      body: JSON.stringify({ uris: [uri] }),
+      body: JSON.stringify({ uris }),
     });
-    return json.tracks.items[0].name as string;
+    return track.name as string;
   }, [api, state.deviceId]);
 
   const togglePlay = useCallback(async () => {
