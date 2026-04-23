@@ -157,7 +157,7 @@ function AssistantApp() {
 
     // RENAME
     if (intent === "rename") {
-      const m = t.match(/(?:llamame|dime|cambia mi nombre a|mi nombre es)\s+([\p{L}\s]{2,30})/u);
+      const m = t.match(/(?:llamame|cambia mi nombre a|mi nombre es)\s+([\p{L}\s]{2,30})/u);
       if (m) {
         setMessages((m2) => [...m2, { role: "assistant", content: "Puedes cambiar tu nombre solo desde **Ajustes** para evitar cambios accidentales.", time: timeNow() }]);
         return true;
