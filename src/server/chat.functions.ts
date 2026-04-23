@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { withSupabaseAuth } from "@/integrations/supabase/auth-client-middleware";
 
 interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -15,10 +16,39 @@ interface ChatInput {
 /**
  * Server function que llama a Lovable AI Gateway (NO streaming en esta fase
  * para mantenerlo simple). Devuelve el texto completo.
+ *
+ * Requiere usuario autenticado y aplica límites estrictos sobre el payload
+ * para evitar abuso de créditos / inflado de contexto.
  */
 export const chatWithAssistant = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
   .inputValidator((input: ChatInput) => {
-    if (!Array.isArray(input?.messages)) throw new Error("messages requerido");
+    if (!input || typeof input !== "object") throw new Error("Payload inválido");
+    if (!Array.isArray(input.messages)) throw new Error("messages requerido");
+    if (input.messages.length === 0) throw new Error("Sin mensajes");
+    if (input.messages.length > 50) throw new Error("Demasiados mensajes");
+    for (const m of input.messages) {
+      if (!m || typeof m !== "object") throw new Error("Mensaje inválido");
+      if (!["user", "assistant", "system"].includes(m.role)) {
+        throw new Error("Rol inválido");
+      }
+      if (typeof m.content !== "string" || m.content.length === 0 || m.content.length > 4000) {
+        throw new Error("Contenido de mensaje inválido");
+      }
+    }
+    if (input.userName != null) {
+      if (typeof input.userName !== "string" || input.userName.length > 60) {
+        throw new Error("Nombre demasiado largo");
+      }
+    }
+    if (!Array.isArray(input.notes)) throw new Error("Notas inválidas");
+    if (input.notes.length > 50) throw new Error("Demasiadas notas");
+    for (const n of input.notes) {
+      if (typeof n !== "string" || n.length > 500) throw new Error("Nota inválida");
+    }
+    if (!["NEVIRA", "NOVA"].includes(input.themeName)) {
+      throw new Error("Tema inválido");
+    }
     return input;
   })
   .handler(async ({ data }) => {
