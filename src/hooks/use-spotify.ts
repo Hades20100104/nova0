@@ -155,7 +155,18 @@ export function useSpotify(enabled: boolean) {
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
     sessionStorage.setItem("spotify_pkce_verifier", verifier);
-    const redirectUri = `${window.location.origin}/spotify/callback`;
+    // Si estamos dentro del iframe del preview de Lovable, usamos el origin "real"
+    // (window.top) para que Spotify pueda redirigir correctamente y no rechazarnos
+    // por X-Frame-Options.
+    let origin = window.location.origin;
+    try {
+      if (window.top && window.top !== window.self) {
+        origin = window.top.location.origin;
+      }
+    } catch {
+      // Cross-origin iframe (publicado dentro de otro sitio): mantenemos origin propio.
+    }
+    const redirectUri = `${origin}/spotify/callback`;
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: "code",
@@ -164,7 +175,19 @@ export function useSpotify(enabled: boolean) {
       code_challenge_method: "S256",
       code_challenge: challenge,
     });
-    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    // Forzar navegación de la ventana superior para escapar del iframe del preview.
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.location.href = authUrl;
+        return;
+      }
+    } catch {
+      // Si no podemos acceder a top (cross-origin), abrimos pestaña nueva.
+      window.open(authUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    window.location.href = authUrl;
   }, [getClientIdFn]);
 
   const logout = useCallback(() => {

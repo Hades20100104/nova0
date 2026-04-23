@@ -30,7 +30,7 @@ export const generateImage = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-2.5-flash-image-preview",
         messages: [
           {
             role: "user",
@@ -50,7 +50,7 @@ export const generateImage = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text();
       console.error("Image gen error:", res.status, text);
-      return { error: "No se pudo generar la imagen.", dataUrl: null };
+      return { error: `No se pudo generar la imagen (${res.status}).`, dataUrl: null };
     }
 
     const json = await res.json();
