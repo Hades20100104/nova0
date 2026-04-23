@@ -41,12 +41,12 @@ export type Intent =
 const INTENT_MAP: Record<Exclude<Intent, null>, string[]> = {
   whatsapp: ["whatsapp", "wasap", "wsp", "manda mensaje", "envia mensaje"],
   music: ["pon musica", "reproduce", "spotify", "playlist", "cancion"],
-  image: ["genera imagen", "crea imagen", "dibuja", "imagina"],
+  image: ["genera imagen", "crea imagen", "dibuja", "imagina", "busca imagen", "busqueda de imagen", "imagen de"],
   youtube: ["busca en youtube", "youtube"],
   google: ["busca en google", "google", "buscar"],
   reminder: ["recuerdame", "recordatorio", "rutina", "agenda"],
   analyze: ["analiza", "resume archivo", "lee documento", "pdf", "docx"],
-  rename: ["llamame", "dime", "cambia mi nombre", "mi nombre es"],
+  rename: ["llamame", "cambia mi nombre", "mi nombre es"],
 };
 
 export function detectIntent(text: string): Intent {

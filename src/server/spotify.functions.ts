@@ -22,6 +22,15 @@ interface SpotifyTokenResponse {
 
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
+async function readSpotifyTokenResponse(res: Response): Promise<SpotifyTokenResponse & { rawText?: string }> {
+  const rawText = await res.text();
+  try {
+    return { ...(JSON.parse(rawText) as SpotifyTokenResponse), rawText };
+  } catch {
+    return { error: rawText || "Respuesta inválida de Spotify.", rawText };
+  }
+}
+
 /**
  * Intercambia el `code` de Spotify por un access/refresh token usando PKCE.
  * El client_secret se lee del entorno (server-only).
@@ -59,8 +68,9 @@ export const exchangeSpotifyCode = createServerFn({ method: "POST" })
       body: body.toString(),
     });
 
-    const json = (await res.json()) as SpotifyTokenResponse;
+    const json = await readSpotifyTokenResponse(res);
     if (!res.ok || !json.access_token) {
+      console.error("Spotify exchange error:", res.status, json.rawText ?? json.error);
       return {
         error: json.error_description || json.error || "No se pudo intercambiar el código.",
         access_token: null,
@@ -108,8 +118,9 @@ export const refreshSpotifyToken = createServerFn({ method: "POST" })
       body: body.toString(),
     });
 
-    const json = (await res.json()) as SpotifyTokenResponse;
+    const json = await readSpotifyTokenResponse(res);
     if (!res.ok || !json.access_token) {
+      console.error("Spotify refresh error:", res.status, json.rawText ?? json.error);
       return {
         error: json.error_description || json.error || "No se pudo refrescar el token.",
         access_token: null,

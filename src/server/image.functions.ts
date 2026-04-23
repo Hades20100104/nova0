@@ -27,46 +27,59 @@ export const generateImage = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no configurada.", dataUrl: null as string | null };
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: `Genera una imagen de alta calidad: ${data.prompt}`,
-          },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
+    const models = ["google/gemini-2.5-flash-image", "google/gemini-3.1-flash-image-preview"] as const;
+    let lastStatus = 0;
+    let lastText = "";
 
-    if (res.status === 429) {
-      return { error: "Demasiadas peticiones. Espera un momento.", dataUrl: null };
-    }
-    if (res.status === 402) {
-      return { error: "Sin créditos de IA. Añade fondos en Settings → Workspace → Usage.", dataUrl: null };
-    }
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error("Image gen error:", res.status, text);
-      return { error: "No se pudo generar la imagen. Intenta de nuevo.", dataUrl: null };
+    for (const model of models) {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "user",
+              content: `Genera una imagen de alta calidad basada en esta descripción: ${data.prompt}`,
+            },
+          ],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      lastStatus = res.status;
+
+      if (res.status === 429) {
+        return { error: "Demasiadas peticiones. Espera un momento.", dataUrl: null };
+      }
+      if (res.status === 402) {
+        return { error: "Sin créditos de IA. Añade fondos en Settings → Workspace → Usage.", dataUrl: null };
+      }
+      if (!res.ok) {
+        lastText = await res.text().catch(() => "");
+        console.error("Image gen error:", model, res.status, lastText);
+        if (res.status === 404 || res.status === 410) continue;
+        return { error: "No se pudo generar la imagen. Intenta de nuevo.", dataUrl: null };
+      }
+
+      const json = await res.json().catch((e) => {
+        console.error("Image gen JSON parse error:", model, e);
+        return null;
+      });
+      if (!json) {
+        return { error: "Respuesta inválida del servicio de imagen.", dataUrl: null };
+      }
+      const dataUrl: string | undefined = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (dataUrl) {
+        return { error: null as string | null, dataUrl };
+      }
+      lastText = JSON.stringify(json);
+      console.error("Image gen empty image:", model, lastText);
     }
 
-    const json = await res.json().catch((e) => {
-      console.error("Image gen JSON parse error:", e);
-      return null;
-    });
-    if (!json) {
-      return { error: "Respuesta inválida del servicio de imagen.", dataUrl: null };
-    }
-    const dataUrl: string | undefined = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!dataUrl) {
-      return { error: "La IA no devolvió ninguna imagen.", dataUrl: null };
-    }
-    return { error: null as string | null, dataUrl };
+    console.error("Image gen failed for all models:", lastStatus, lastText);
+    return { error: "La IA no devolvió ninguna imagen.", dataUrl: null };
   });
