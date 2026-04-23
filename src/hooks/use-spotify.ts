@@ -110,6 +110,23 @@ export function useSpotify(enabled: boolean) {
       player.addListener("player_state_changed", (st: any) => {
         if (!mounted || !st) return;
         const t = st.track_window?.current_track;
+        // Detectar fin de track para autoplay de cola personal
+        // Spotify SDK marca: paused=true, position=0, y duration > 0 cuando termina la última pista
+        const finished =
+          st.paused === true &&
+          st.position === 0 &&
+          (st.duration ?? 0) > 0 &&
+          (st.track_window?.next_tracks?.length ?? 0) === 0;
+        if (finished && queueRef.current) {
+          const q = queueRef.current;
+          if (q.index + 1 < q.items.length) {
+            q.index += 1;
+            // Disparar siguiente sin bloquear el listener
+            void playNextFromQueue();
+          } else {
+            queueRef.current = null;
+          }
+        }
         setState((prev) => ({
           ...prev,
           paused: st.paused,
