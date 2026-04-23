@@ -54,7 +54,7 @@ export const generateImage = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error("Image gen error:", res.status, text);
-      return { error: `No se pudo generar la imagen (${res.status}): ${text.slice(0, 200)}`, dataUrl: null };
+      return { error: "No se pudo generar la imagen. Intenta de nuevo.", dataUrl: null };
     }
 
     const json = await res.json().catch((e) => {
