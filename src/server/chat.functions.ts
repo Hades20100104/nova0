@@ -76,7 +76,7 @@ Responde en formato Markdown limpio. Sé directo, evita rodeos.${memoryBlock}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [{ role: "system", content: systemPrompt }, ...data.messages],
       }),
     });
