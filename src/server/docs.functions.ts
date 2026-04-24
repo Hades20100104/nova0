@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { withSupabaseAuth } from "@/integrations/supabase/auth-client-middleware";
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 import PptxGenJS from "pptxgenjs";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx";
 
 interface GenerateDocInput {
   format: "docx" | "xlsx" | "pptx";
