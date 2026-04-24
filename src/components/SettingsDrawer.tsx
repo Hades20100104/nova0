@@ -17,20 +17,35 @@ import {
   type Playlist, type PlaylistTrack,
 } from "@/lib/playlists";
 
+export interface ArtistSuggestion {
+  id: string;
+  name: string;
+  image: string | null;
+  followers: number;
+}
+
+export interface ArtistResolutionLog {
+  artist: string;
+  resolvedAs: string | null;
+  tracks: number;
+  reason?: string;
+}
+
 interface SettingsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
-  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]>;
+  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>;
+  onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
   themeName: "NEVIRA" | "NOVA";
   initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 }
 
 type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 
-export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
+export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, onSearchArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
   const [view, setView] = useState<View>(initialView);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
