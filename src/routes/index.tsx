@@ -291,10 +291,15 @@ function AssistantApp() {
         setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${result.error}`, time: timeNow() }]);
       } else {
         setMessages((m) => [...m, { role: "assistant", content: result.text, time: timeNow() }]);
-        // Guardar pequeña nota si la conversación parece importante (heurística simple)
-        if (text.length > 20 && /(me gusta|prefiero|mi |soy |trabajo|estudio)/i.test(text)) {
-          await addNote(auth.user.id, text);
-          setNotes((n) => [text, ...n].slice(0, 50));
+        // Memoria contextual con IA: extrae datos relevantes del último turno.
+        try {
+          const ext = await memoryFn({ data: { userText: text, assistantText: result.text } });
+          if (ext.note) {
+            await addNote(auth.user.id, ext.note);
+            setNotes((n) => [ext.note as string, ...n].slice(0, 50));
+          }
+        } catch (e) {
+          console.error("extract memory error", e);
         }
       }
     } catch (e) {
