@@ -374,6 +374,7 @@ function AssistantApp() {
           initialView={settingsView}
           spotifyConnected={spotify.isAuthenticated && spotify.state.ready}
           onGeneratePlaylistFromArtists={spotify.generateArtistPlaylistQueries}
+          onSearchArtists={spotify.searchArtists}
           onPlayPlaylist={async (queries, name) => {
             try {
               setShowPlayer(true);

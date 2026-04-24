@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { generateDocument } from "@/server/docs.functions";
+import { generateDocument, listDocuments, downloadDocument, deleteDocument } from "@/server/docs.functions";
 import {
   fetchContacts, addContact, deleteContact, normalizePhone, type WhatsAppContact,
 } from "@/lib/contacts";
@@ -17,20 +17,35 @@ import {
   type Playlist, type PlaylistTrack,
 } from "@/lib/playlists";
 
+export interface ArtistSuggestion {
+  id: string;
+  name: string;
+  image: string | null;
+  followers: number;
+}
+
+export interface ArtistResolutionLog {
+  artist: string;
+  resolvedAs: string | null;
+  tracks: number;
+  reason?: string;
+}
+
 interface SettingsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
-  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]>;
+  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>;
+  onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
   themeName: "NEVIRA" | "NOVA";
   initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 }
 
 type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 
-export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
+export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, onSearchArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
   const [view, setView] = useState<View>(initialView);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
@@ -102,6 +117,7 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
               playlist={activePlaylist}
               spotifyConnected={spotifyConnected}
               onGeneratePlaylistFromArtists={onGeneratePlaylistFromArtists}
+              onSearchArtists={onSearchArtists}
               onPlay={(queries) => {
                 onOpenChange(false);
                 onPlayPlaylist(queries, activePlaylist.name);
@@ -211,12 +227,16 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
 }
 
 function PlaylistDetailView({
-  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists,
-}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]> }) {
+  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists, onSearchArtists,
+}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>; onSearchArtists: (query: string) => Promise<ArtistSuggestion[]> }) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [query, setQuery] = useState("");
   const [artistsSeed, setArtistsSeed] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [lastLog, setLastLog] = useState<ArtistResolutionLog[]>([]);
+  const [suggestions, setSuggestions] = useState<ArtistSuggestion[]>([]);
+  const [searchingArtists, setSearchingArtists] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -224,6 +244,30 @@ function PlaylistDetailView({
       setLoading(false);
     })();
   }, [playlist.id]);
+
+  // Autocompletado: extrae el último fragmento (después de la última coma) y lo busca
+  useEffect(() => {
+    if (!spotifyConnected) { setSuggestions([]); return; }
+    const lastFragment = artistsSeed.split(",").pop()?.trim() ?? "";
+    if (lastFragment.length < 2) { setSuggestions([]); return; }
+    const handle = setTimeout(async () => {
+      setSearchingArtists(true);
+      try {
+        const results = await onSearchArtists(lastFragment);
+        setSuggestions(results);
+      } finally {
+        setSearchingArtists(false);
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [artistsSeed, onSearchArtists, spotifyConnected]);
+
+  const pickSuggestion = (artist: ArtistSuggestion) => {
+    const parts = artistsSeed.split(",").map((p) => p.trim());
+    parts[parts.length - 1] = artist.name;
+    setArtistsSeed(parts.filter(Boolean).join(", ") + ", ");
+    setSuggestions([]);
+  };
 
   const handleAdd = async () => {
     const trimmed = query.trim();
@@ -253,10 +297,14 @@ function PlaylistDetailView({
       toast.error("Escribe al menos un artista");
       return;
     }
+    setGenerating(true);
+    setLastLog([]);
     try {
-      const generated = await onGeneratePlaylistFromArtists(artists);
+      const { queries: generated, log } = await onGeneratePlaylistFromArtists(artists);
+      setLastLog(log);
       if (generated.length === 0) {
-        toast.error("No pude generar canciones con esos artistas");
+        const failedNames = log.filter((l) => l.tracks === 0).map((l) => l.artist).join(", ");
+        toast.error(failedNames ? `No encontré canciones de: ${failedNames}` : "No pude generar canciones con esos artistas");
         return;
       }
       const existing = new Set(tracks.map((track) => track.query.toLowerCase()));
@@ -278,6 +326,8 @@ function PlaylistDetailView({
       console.error(e);
       const msg = e instanceof Error ? e.message : "No pude generar la playlist desde artistas";
       toast.error(msg);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -306,16 +356,62 @@ function PlaylistDetailView({
           <WandSparkles className="h-4 w-4 text-primary" />
           Crear desde artistas
         </div>
-        <Input
-          placeholder="Ej: Bad Bunny, Feid, Karol G"
-          value={artistsSeed}
-          maxLength={180}
-          onChange={(e) => setArtistsSeed(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleGenerateFromArtists()}
-        />
-        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists}>
-          Generar playlist
+        <div className="relative">
+          <Input
+            placeholder="Ej: Arcángel, Bad Bunny, Feid"
+            value={artistsSeed}
+            maxLength={180}
+            onChange={(e) => setArtistsSeed(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGenerateFromArtists()}
+          />
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => pickSuggestion(a)}
+                    className="flex w-full items-center gap-2 p-2 text-left hover:bg-muted"
+                  >
+                    {a.image ? (
+                      <img src={a.image} alt="" className="h-8 w-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{a.name}</div>
+                      <div className="text-xs text-muted-foreground">{a.followers.toLocaleString()} seguidores</div>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {searchingArtists && (
+            <p className="absolute right-2 top-2 text-xs text-muted-foreground">Buscando…</p>
+          )}
+        </div>
+        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists} disabled={generating}>
+          {generating ? "Generando…" : "Generar playlist"}
         </Button>
+        {lastLog.length > 0 && (
+          <div className="rounded-lg border border-border bg-background/40 p-2 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Resultado:</p>
+            {lastLog.map((entry, i) => (
+              <div key={i} className="text-xs">
+                <span className="font-medium">{entry.artist}</span>{" "}
+                {entry.resolvedAs && entry.resolvedAs.toLowerCase() !== entry.artist.toLowerCase() && (
+                  <span className="text-muted-foreground">→ {entry.resolvedAs}</span>
+                )}{" "}
+                {entry.tracks > 0 ? (
+                  <span className="text-primary">✓ {entry.tracks} canciones</span>
+                ) : (
+                  <span className="text-destructive">✗ {entry.reason ?? "sin tracks"}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Button
@@ -438,11 +534,25 @@ function ContactsView({ userId }: { userId: string }) {
   );
 }
 
+interface DocHistoryItem {
+  id: string;
+  format: "docx" | "xlsx" | "pptx";
+  title: string;
+  fileName: string;
+  mimeType: string;
+  createdAt: string;
+}
+
 function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
   const docFn = useServerFn(generateDocument);
+  const listFn = useServerFn(listDocuments);
+  const downloadFn = useServerFn(downloadDocument);
+  const deleteFn = useServerFn(deleteDocument);
   const [format, setFormat] = useState<"docx" | "xlsx" | "pptx">("docx");
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<DocHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   const downloadBase64 = (base64: string, mimeType: string, fileName: string) => {
     const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
@@ -457,6 +567,20 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
     URL.revokeObjectURL(url);
   };
 
+  const reloadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await listFn({});
+      setHistory(res.items);
+    } catch {
+      // silencio: el historial no es crítico
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => { void reloadHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
   const handleGenerate = async () => {
     if (prompt.trim().length < 6) {
       toast.error("Describe un poco más el documento");
@@ -467,11 +591,37 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
       const res = await docFn({ data: { format, prompt: prompt.trim(), themeName } });
       downloadBase64(res.base64, res.mimeType, res.fileName);
       toast.success(`${res.title} listo para descargar`);
+      void reloadHistory();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No pude generar el archivo");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRedownload = async (item: DocHistoryItem) => {
+    try {
+      const res = await downloadFn({ data: { id: item.id } });
+      downloadBase64(res.base64, res.mimeType, res.fileName);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No pude descargar el archivo");
+    }
+  };
+
+  const handleHistoryDelete = async (id: string) => {
+    if (!confirm("¿Borrar este documento del historial?")) return;
+    try {
+      await deleteFn({ data: { id } });
+      setHistory((xs) => xs.filter((x) => x.id !== id));
+    } catch {
+      toast.error("No pude borrarlo");
+    }
+  };
+
+  const formatLabel: Record<DocHistoryItem["format"], string> = {
+    docx: "Word",
+    xlsx: "Excel",
+    pptx: "PowerPoint",
   };
 
   return (
@@ -507,6 +657,35 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
         <Download className="mr-2 h-4 w-4" />
         {loading ? "Generando…" : "Generar archivo"}
       </Button>
+
+      <div className="pt-2">
+        <h4 className="mb-2 text-sm font-semibold">Tus últimos documentos</h4>
+        {historyLoading ? (
+          <p className="text-sm text-muted-foreground">Cargando…</p>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aquí aparecerán los documentos que generes para volver a descargarlos.</p>
+        ) : (
+          <ul className="space-y-2">
+            {history.map((item) => (
+              <li key={item.id} className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{item.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatLabel[item.format]} · {new Date(item.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => handleRedownload(item)} aria-label="Descargar">
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleHistoryDelete(item.id)} aria-label="Borrar">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

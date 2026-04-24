@@ -180,7 +180,7 @@ export const generateDocument = createServerFn({ method: "POST" })
     if (!input.themeName || !["NEVIRA", "NOVA"].includes(input.themeName)) throw new Error("Tema inválido");
     return input;
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const plan = await buildPlan(data.prompt.trim());
     const filename = `${sanitizeFilename(plan.title)}.${data.format}`;
     const file = data.format === "docx"
@@ -189,6 +189,31 @@ export const generateDocument = createServerFn({ method: "POST" })
         ? await createXlsx(plan)
         : await createPptx(plan);
 
+    // Guardar en storage para historial / re-descarga
+    const { supabase, userId } = context;
+    const storagePath = `${userId}/${Date.now()}-${filename}`;
+    try {
+      const bytes = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
+      const { error: upErr } = await supabase.storage
+        .from("generated-docs")
+        .upload(storagePath, bytes, { contentType: file.mimeType, upsert: false });
+      if (!upErr) {
+        await supabase.from("generated_documents").insert({
+          user_id: userId,
+          format: data.format,
+          title: plan.title,
+          prompt: data.prompt.trim().slice(0, 1000),
+          file_name: filename,
+          mime_type: file.mimeType,
+          storage_path: storagePath,
+        });
+      } else {
+        console.warn("doc upload failed:", upErr.message);
+      }
+    } catch (e) {
+      console.warn("doc history save failed:", e);
+    }
+
     return {
       fileName: filename,
       mimeType: file.mimeType,
@@ -196,4 +221,91 @@ export const generateDocument = createServerFn({ method: "POST" })
       title: plan.title,
       summary: plan.summary,
     };
+  });
+
+interface DocHistoryItem {
+  id: string;
+  format: "docx" | "xlsx" | "pptx";
+  title: string;
+  fileName: string;
+  mimeType: string;
+  createdAt: string;
+}
+
+export const listDocuments = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .handler(async ({ context }): Promise<{ items: DocHistoryItem[] }> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("generated_documents")
+      .select("id, format, title, file_name, mime_type, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) {
+      console.error("listDocuments", error);
+      return { items: [] };
+    }
+    return {
+      items: (data ?? []).map((row) => ({
+        id: row.id,
+        format: row.format as "docx" | "xlsx" | "pptx",
+        title: row.title,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        createdAt: row.created_at,
+      })),
+    };
+  });
+
+export const downloadDocument = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .inputValidator((input: { id: string }) => {
+    if (!input?.id || typeof input.id !== "string") throw new Error("id requerido");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("generated_documents")
+      .select("storage_path, file_name, mime_type")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !row) {
+      throw new Error("Documento no encontrado");
+    }
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from("generated-docs")
+      .download(row.storage_path);
+    if (dlErr || !blob) {
+      throw new Error("No pude leer el archivo guardado");
+    }
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    return {
+      fileName: row.file_name,
+      mimeType: row.mime_type,
+      base64: buffer.toString("base64"),
+    };
+  });
+
+export const deleteDocument = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .inputValidator((input: { id: string }) => {
+    if (!input?.id || typeof input.id !== "string") throw new Error("id requerido");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("generated_documents")
+      .select("storage_path")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (row?.storage_path) {
+      await supabase.storage.from("generated-docs").remove([row.storage_path]);
+    }
+    await supabase.from("generated_documents").delete().eq("id", data.id).eq("user_id", userId);
+    return { ok: true };
   });
