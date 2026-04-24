@@ -403,6 +403,21 @@ export function useSpotify(enabled: boolean) {
     }
 
     return Array.from(new Set(out));
+  }, [api, getAccessToken]);
+
+  /** Lista los dispositivos Spotify Connect disponibles del usuario. */
+  const listDevices = useCallback(async () => {
+    const res = await api(`/me/player/devices`);
+    const json = await res.json();
+    return (json.devices ?? []) as Array<{ id: string; name: string; type: string; is_active: boolean; volume_percent: number }>;
+  }, [api]);
+
+  /** Transfiere la reproducción al dispositivo indicado (Spotify Connect). */
+  const transferPlayback = useCallback(async (deviceId: string, play = true) => {
+    await api(`/me/player`, {
+      method: "PUT",
+      body: JSON.stringify({ device_ids: [deviceId], play }),
+    });
   }, [api]);
 
   const togglePlay = useCallback(async () => {
