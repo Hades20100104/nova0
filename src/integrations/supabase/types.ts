@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      generated_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          format: string
+          id: string
+          mime_type: string
+          prompt: string
+          storage_path: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          format: string
+          id?: string
+          mime_type: string
+          prompt: string
+          storage_path: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          format?: string
+          id?: string
+          mime_type?: string
+          prompt?: string
+          storage_path?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           created_at: string
