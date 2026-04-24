@@ -58,6 +58,7 @@ function AssistantApp() {
   const auth = useAuth();
   const chatFn = useServerFn(chatWithAssistant);
   const imageFn = useServerFn(generateImage);
+  const memoryFn = useServerFn(extractMemoryNote);
 
   const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova" } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
