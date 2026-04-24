@@ -431,6 +431,8 @@ function AssistantApp() {
                     onNext={spotify.next}
                     onPrev={spotify.prev}
                     onVolume={spotify.setVolume}
+                    onListDevices={spotify.listDevices}
+                    onTransfer={spotify.transferPlayback}
                   />
                 </div>
               )}
