@@ -509,6 +509,8 @@ function AssistantApp() {
                     onNext={spotify.next}
                     onPrev={spotify.prev}
                     onVolume={spotify.setVolume}
+                    onListDevices={spotify.listDevices}
+                    onTransfer={spotify.transferPlayback}
                   />
                   <div className="glass rounded-2xl p-4">
                     <div className="flex items-center gap-2 text-sm font-medium">
