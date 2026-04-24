@@ -117,6 +117,7 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
               playlist={activePlaylist}
               spotifyConnected={spotifyConnected}
               onGeneratePlaylistFromArtists={onGeneratePlaylistFromArtists}
+              onSearchArtists={onSearchArtists}
               onPlay={(queries) => {
                 onOpenChange(false);
                 onPlayPlaylist(queries, activePlaylist.name);
