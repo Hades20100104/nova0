@@ -374,6 +374,12 @@ export function useSpotify(enabled: boolean) {
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
     if (cleanArtists.length === 0) return [] as string[];
+    // Pre-check: necesitamos token válido (no requiere que el reproductor esté listo,
+    // porque solo consultamos /search y /artists/top-tracks, no reproducción).
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
+    }
 
     const out: string[] = [];
     for (const artistName of cleanArtists) {
