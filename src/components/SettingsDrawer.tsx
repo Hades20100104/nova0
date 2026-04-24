@@ -227,12 +227,16 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
 }
 
 function PlaylistDetailView({
-  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists,
-}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]> }) {
+  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists, onSearchArtists,
+}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>; onSearchArtists: (query: string) => Promise<ArtistSuggestion[]> }) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [query, setQuery] = useState("");
   const [artistsSeed, setArtistsSeed] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [lastLog, setLastLog] = useState<ArtistResolutionLog[]>([]);
+  const [suggestions, setSuggestions] = useState<ArtistSuggestion[]>([]);
+  const [searchingArtists, setSearchingArtists] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -240,6 +244,30 @@ function PlaylistDetailView({
       setLoading(false);
     })();
   }, [playlist.id]);
+
+  // Autocompletado: extrae el último fragmento (después de la última coma) y lo busca
+  useEffect(() => {
+    if (!spotifyConnected) { setSuggestions([]); return; }
+    const lastFragment = artistsSeed.split(",").pop()?.trim() ?? "";
+    if (lastFragment.length < 2) { setSuggestions([]); return; }
+    const handle = setTimeout(async () => {
+      setSearchingArtists(true);
+      try {
+        const results = await onSearchArtists(lastFragment);
+        setSuggestions(results);
+      } finally {
+        setSearchingArtists(false);
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [artistsSeed, onSearchArtists, spotifyConnected]);
+
+  const pickSuggestion = (artist: ArtistSuggestion) => {
+    const parts = artistsSeed.split(",").map((p) => p.trim());
+    parts[parts.length - 1] = artist.name;
+    setArtistsSeed(parts.filter(Boolean).join(", ") + ", ");
+    setSuggestions([]);
+  };
 
   const handleAdd = async () => {
     const trimmed = query.trim();
@@ -269,10 +297,14 @@ function PlaylistDetailView({
       toast.error("Escribe al menos un artista");
       return;
     }
+    setGenerating(true);
+    setLastLog([]);
     try {
-      const generated = await onGeneratePlaylistFromArtists(artists);
+      const { queries: generated, log } = await onGeneratePlaylistFromArtists(artists);
+      setLastLog(log);
       if (generated.length === 0) {
-        toast.error("No pude generar canciones con esos artistas");
+        const failedNames = log.filter((l) => l.tracks === 0).map((l) => l.artist).join(", ");
+        toast.error(failedNames ? `No encontré canciones de: ${failedNames}` : "No pude generar canciones con esos artistas");
         return;
       }
       const existing = new Set(tracks.map((track) => track.query.toLowerCase()));
@@ -294,6 +326,8 @@ function PlaylistDetailView({
       console.error(e);
       const msg = e instanceof Error ? e.message : "No pude generar la playlist desde artistas";
       toast.error(msg);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -322,16 +356,62 @@ function PlaylistDetailView({
           <WandSparkles className="h-4 w-4 text-primary" />
           Crear desde artistas
         </div>
-        <Input
-          placeholder="Ej: Bad Bunny, Feid, Karol G"
-          value={artistsSeed}
-          maxLength={180}
-          onChange={(e) => setArtistsSeed(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleGenerateFromArtists()}
-        />
-        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists}>
-          Generar playlist
+        <div className="relative">
+          <Input
+            placeholder="Ej: Arcángel, Bad Bunny, Feid"
+            value={artistsSeed}
+            maxLength={180}
+            onChange={(e) => setArtistsSeed(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGenerateFromArtists()}
+          />
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => pickSuggestion(a)}
+                    className="flex w-full items-center gap-2 p-2 text-left hover:bg-muted"
+                  >
+                    {a.image ? (
+                      <img src={a.image} alt="" className="h-8 w-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{a.name}</div>
+                      <div className="text-xs text-muted-foreground">{a.followers.toLocaleString()} seguidores</div>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {searchingArtists && (
+            <p className="absolute right-2 top-2 text-xs text-muted-foreground">Buscando…</p>
+          )}
+        </div>
+        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists} disabled={generating}>
+          {generating ? "Generando…" : "Generar playlist"}
         </Button>
+        {lastLog.length > 0 && (
+          <div className="rounded-lg border border-border bg-background/40 p-2 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Resultado:</p>
+            {lastLog.map((entry, i) => (
+              <div key={i} className="text-xs">
+                <span className="font-medium">{entry.artist}</span>{" "}
+                {entry.resolvedAs && entry.resolvedAs.toLowerCase() !== entry.artist.toLowerCase() && (
+                  <span className="text-muted-foreground">→ {entry.resolvedAs}</span>
+                )}{" "}
+                {entry.tracks > 0 ? (
+                  <span className="text-primary">✓ {entry.tracks} canciones</span>
+                ) : (
+                  <span className="text-destructive">✗ {entry.reason ?? "sin tracks"}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Button
