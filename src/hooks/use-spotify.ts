@@ -530,6 +530,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     playSearch,
     playLocalPlaylist,
     generateArtistPlaylistQueries,
+    searchArtists,
     listDevices,
     transferPlayback,
     togglePlay,
