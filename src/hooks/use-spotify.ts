@@ -392,57 +392,94 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
-    if (cleanArtists.length === 0) return [] as string[];
-    // Pre-check: necesitamos token válido (no requiere que el reproductor esté listo,
-    // porque solo consultamos /search y /artists/top-tracks, no reproducción).
+    if (cleanArtists.length === 0) return { queries: [] as string[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
     const token = await getAccessToken();
     if (!token) {
       throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
     }
 
     const out: string[] = [];
+    const log: Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> = [];
+
     for (const artistName of cleanArtists) {
-      const artistRes = await api(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`);
-      const artistJson = await artistRes.json();
-      const artist = artistJson.artists?.items?.[0];
-      if (!artist?.id) continue;
+      const entry: { artist: string; resolvedAs: string | null; tracks: number; reason?: string } = { artist: artistName, resolvedAs: null, tracks: 0 };
+      try {
+        const artistRes = await api(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`);
+        const artistJson = await artistRes.json();
+        const artist = artistJson.artists?.items?.[0];
+        if (!artist?.id) {
+          entry.reason = "Spotify no devolvió ningún artista con ese nombre";
+          log.push(entry);
+          continue;
+        }
+        entry.resolvedAs = artist.name;
 
-      let tracks: string[] = [];
-      for (const market of ["from_token", "US", "ES"] as const) {
-        const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
-        const topJson = await topRes.json();
-        tracks = (topJson.tracks ?? [])
-          .map((track: any) => {
-            const title = track?.name;
-            const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-            return title ? `${primaryArtist} - ${title}` : null;
-          })
-          .filter(Boolean)
-          .slice(0, 6);
-        if (tracks.length > 0) break;
+        let tracks: string[] = [];
+        for (const market of ["from_token", "US", "ES", "MX"] as const) {
+          const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+          const topJson = await topRes.json();
+          tracks = (topJson.tracks ?? [])
+            .map((track: any) => {
+              const title = track?.name;
+              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+              return title ? `${primaryArtist} - ${title}` : null;
+            })
+            .filter(Boolean)
+            .slice(0, 6);
+          if (tracks.length > 0) break;
+        }
+
+        if (tracks.length === 0) {
+          const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:"${artist.name}"`)}&type=track&limit=10`);
+          const fallbackJson = await fallbackRes.json();
+          tracks = (fallbackJson.tracks?.items ?? [])
+            .map((track: any) => {
+              const title = track?.name;
+              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+              return title ? `${primaryArtist} - ${title}` : null;
+            })
+            .filter(Boolean)
+            .slice(0, 6);
+        }
+
+        if (tracks.length === 0) {
+          entry.reason = "El artista existe pero no tiene tracks reproducibles en tu mercado";
+        }
+
+        entry.tracks = tracks.length;
+        out.push(...tracks);
+      } catch (e) {
+        entry.reason = e instanceof Error ? e.message : "Error desconocido";
       }
-
-      if (tracks.length === 0) {
-        const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:${artist.name}`)}&type=track&limit=6`);
-        const fallbackJson = await fallbackRes.json();
-        tracks = (fallbackJson.tracks?.items ?? [])
-        .map((track: any) => {
-          const title = track?.name;
-          const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-          return title ? `${primaryArtist} - ${title}` : null;
-        })
-        .filter(Boolean)
-        .slice(0, 6);
-      }
-
-      out.push(...tracks);
+      log.push(entry);
     }
 
     if (out.length === 0 && cleanArtists.length === 1) {
-      return [cleanArtists[0], `artista ${cleanArtists[0]}`];
+      return { queries: [cleanArtists[0], `artista ${cleanArtists[0]}`], log };
     }
 
-    return Array.from(new Set(out));
+    return { queries: Array.from(new Set(out)), log };
+  }, [api, getAccessToken]);
+
+  /** Busca artistas para autocompletado (top 5). */
+  const searchArtists = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) return [] as Array<{ id: string; name: string; image: string | null; followers: number }>;
+    const token = await getAccessToken();
+    if (!token) return [];
+    try {
+      const res = await api(`/search?q=${encodeURIComponent(trimmed)}&type=artist&limit=5`);
+      const json = await res.json();
+      return (json.artists?.items ?? []).map((a: any) => ({
+        id: a.id as string,
+        name: a.name as string,
+        image: a.images?.[0]?.url ?? null,
+        followers: a.followers?.total ?? 0,
+      }));
+    } catch (e) {
+      console.warn("searchArtists", e);
+      return [];
+    }
   }, [api, getAccessToken]);
 
   /** Lista los dispositivos Spotify Connect disponibles del usuario. */
