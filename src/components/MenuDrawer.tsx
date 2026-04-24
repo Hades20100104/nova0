@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Music, Image as ImageIcon, MessageCircle, Brain, LogOut, Sparkles, Bell, Calendar, Settings } from "lucide-react";
+import { Music, Image as ImageIcon, MessageCircle, Brain, LogOut, Sparkles, Bell, Calendar, Settings, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
@@ -12,7 +12,7 @@ interface MenuDrawerProps {
   userName: string | null;
   notesCount: number;
   onThemeChange: (theme: "nevira" | "nova") => void;
-  onSection: (section: "music" | "images" | "whatsapp" | "settings") => void;
+  onSection: (section: "music" | "images" | "whatsapp" | "settings" | "docs") => void;
   onClearMemory: () => void;
   onLogout: () => void;
 }
@@ -58,6 +58,7 @@ export function MenuDrawer({
                 <MenuTile icon={ImageIcon} label="Mi galería" desc="Imágenes guardadas" />
               </Link>
               <MenuTile icon={Settings} label="Ajustes" desc="Playlists y contactos" onClick={() => onSection("settings")} />
+              <MenuTile icon={FileText} label="Docs" desc="Word, Excel y PowerPoint" onClick={() => onSection("docs")} />
               <MenuTile icon={Bell} label="Recordatorios" desc="Próximamente" disabled />
               <MenuTile icon={Calendar} label="Calendario" desc="Próximamente" disabled />
             </div>
