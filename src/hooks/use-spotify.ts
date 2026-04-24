@@ -374,6 +374,12 @@ export function useSpotify(enabled: boolean) {
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
     if (cleanArtists.length === 0) return [] as string[];
+    // Pre-check: necesitamos token válido (no requiere que el reproductor esté listo,
+    // porque solo consultamos /search y /artists/top-tracks, no reproducción).
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
+    }
 
     const out: string[] = [];
     for (const artistName of cleanArtists) {
@@ -397,6 +403,21 @@ export function useSpotify(enabled: boolean) {
     }
 
     return Array.from(new Set(out));
+  }, [api, getAccessToken]);
+
+  /** Lista los dispositivos Spotify Connect disponibles del usuario. */
+  const listDevices = useCallback(async () => {
+    const res = await api(`/me/player/devices`);
+    const json = await res.json();
+    return (json.devices ?? []) as Array<{ id: string; name: string; type: string; is_active: boolean; volume_percent: number }>;
+  }, [api]);
+
+  /** Transfiere la reproducción al dispositivo indicado (Spotify Connect). */
+  const transferPlayback = useCallback(async (deviceId: string, play = true) => {
+    await api(`/me/player`, {
+      method: "PUT",
+      body: JSON.stringify({ device_ids: [deviceId], play }),
+    });
   }, [api]);
 
   const togglePlay = useCallback(async () => {
@@ -431,6 +452,8 @@ export function useSpotify(enabled: boolean) {
     playSearch,
     playLocalPlaylist,
     generateArtistPlaylistQueries,
+    listDevices,
+    transferPlayback,
     togglePlay,
     next,
     prev,
