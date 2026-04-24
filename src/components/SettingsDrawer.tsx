@@ -260,7 +260,8 @@ function PlaylistDetailView({
       toast.success(`Añadí ${created.length} canciones`);
     } catch (e) {
       console.error(e);
-      toast.error("No pude generar la playlist desde artistas");
+      const msg = e instanceof Error ? e.message : "No pude generar la playlist desde artistas";
+      toast.error(msg);
     }
   };
 
