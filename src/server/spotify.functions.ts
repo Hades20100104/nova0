@@ -76,7 +76,22 @@ export const exchangeSpotifyCode = createServerFn({ method: "POST" })
         access_token: null,
         refresh_token: null,
         expires_in: 0,
+        spotify_user_id: null as string | null,
       };
+    }
+
+    // Identificar al usuario real de Spotify dueño de este token.
+    let spotifyUserId: string | null = null;
+    try {
+      const meRes = await fetch("https://api.spotify.com/v1/me", {
+        headers: { Authorization: `Bearer ${json.access_token}` },
+      });
+      if (meRes.ok) {
+        const me = (await meRes.json()) as { id?: string };
+        spotifyUserId = me.id ?? null;
+      }
+    } catch (e) {
+      console.warn("Spotify /me lookup failed:", e);
     }
 
     return {
@@ -84,6 +99,7 @@ export const exchangeSpotifyCode = createServerFn({ method: "POST" })
       access_token: json.access_token,
       refresh_token: json.refresh_token ?? null,
       expires_in: json.expires_in ?? 3600,
+      spotify_user_id: spotifyUserId,
     };
   });
 
