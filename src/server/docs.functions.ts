@@ -99,13 +99,6 @@ async function buildPlan(prompt: string): Promise<DocPlan> {
   };
 }
 
-async function toBase64(buffer: ArrayBuffer | Uint8Array) {
-  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
 async function createDocx(plan: DocPlan) {
   const doc = new Document({
     sections: [{
@@ -169,8 +162,11 @@ async function createPptx(plan: DocPlan) {
     });
   });
 
-  const arrayBuffer = await pptx.write({ outputType: "arraybuffer" });
-  return { base64: await toBase64(arrayBuffer), mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" };
+  const base64 = await pptx.write({ outputType: "base64" });
+  if (typeof base64 !== "string") {
+    throw new Error("No pude exportar la presentación.");
+  }
+  return { base64, mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" };
 }
 
 export const generateDocument = createServerFn({ method: "POST" })
