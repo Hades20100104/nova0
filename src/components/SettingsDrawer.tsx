@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { generateDocument } from "@/server/docs.functions";
+import { generateDocument, listDocuments, downloadDocument, deleteDocument } from "@/server/docs.functions";
 import {
   fetchContacts, addContact, deleteContact, normalizePhone, type WhatsAppContact,
 } from "@/lib/contacts";
@@ -534,11 +534,25 @@ function ContactsView({ userId }: { userId: string }) {
   );
 }
 
+interface DocHistoryItem {
+  id: string;
+  format: "docx" | "xlsx" | "pptx";
+  title: string;
+  fileName: string;
+  mimeType: string;
+  createdAt: string;
+}
+
 function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
   const docFn = useServerFn(generateDocument);
+  const listFn = useServerFn(listDocuments);
+  const downloadFn = useServerFn(downloadDocument);
+  const deleteFn = useServerFn(deleteDocument);
   const [format, setFormat] = useState<"docx" | "xlsx" | "pptx">("docx");
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<DocHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   const downloadBase64 = (base64: string, mimeType: string, fileName: string) => {
     const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
@@ -553,6 +567,20 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
     URL.revokeObjectURL(url);
   };
 
+  const reloadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await listFn({});
+      setHistory(res.items);
+    } catch {
+      // silencio: el historial no es crítico
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => { void reloadHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
   const handleGenerate = async () => {
     if (prompt.trim().length < 6) {
       toast.error("Describe un poco más el documento");
@@ -563,11 +591,37 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
       const res = await docFn({ data: { format, prompt: prompt.trim(), themeName } });
       downloadBase64(res.base64, res.mimeType, res.fileName);
       toast.success(`${res.title} listo para descargar`);
+      void reloadHistory();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No pude generar el archivo");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRedownload = async (item: DocHistoryItem) => {
+    try {
+      const res = await downloadFn({ data: { id: item.id } });
+      downloadBase64(res.base64, res.mimeType, res.fileName);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No pude descargar el archivo");
+    }
+  };
+
+  const handleHistoryDelete = async (id: string) => {
+    if (!confirm("¿Borrar este documento del historial?")) return;
+    try {
+      await deleteFn({ data: { id } });
+      setHistory((xs) => xs.filter((x) => x.id !== id));
+    } catch {
+      toast.error("No pude borrarlo");
+    }
+  };
+
+  const formatLabel: Record<DocHistoryItem["format"], string> = {
+    docx: "Word",
+    xlsx: "Excel",
+    pptx: "PowerPoint",
   };
 
   return (
@@ -603,6 +657,35 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
         <Download className="mr-2 h-4 w-4" />
         {loading ? "Generando…" : "Generar archivo"}
       </Button>
+
+      <div className="pt-2">
+        <h4 className="mb-2 text-sm font-semibold">Tus últimos documentos</h4>
+        {historyLoading ? (
+          <p className="text-sm text-muted-foreground">Cargando…</p>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aquí aparecerán los documentos que generes para volver a descargarlos.</p>
+        ) : (
+          <ul className="space-y-2">
+            {history.map((item) => (
+              <li key={item.id} className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{item.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatLabel[item.format]} · {new Date(item.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => handleRedownload(item)} aria-label="Descargar">
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleHistoryDelete(item.id)} aria-label="Borrar">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
