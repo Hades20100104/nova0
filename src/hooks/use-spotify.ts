@@ -452,6 +452,8 @@ export function useSpotify(enabled: boolean) {
     playSearch,
     playLocalPlaylist,
     generateArtistPlaylistQueries,
+    listDevices,
+    transferPlayback,
     togglePlay,
     next,
     prev,
