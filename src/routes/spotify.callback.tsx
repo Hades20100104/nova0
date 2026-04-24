@@ -48,6 +48,7 @@ function SpotifyCallbackPage() {
           access_token: res.access_token,
           refresh_token: res.refresh_token ?? null,
           expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
+          spotify_user_id: res.spotify_user_id ?? null,
         });
         clearSpotifyPkce();
         setStatus("ok");
