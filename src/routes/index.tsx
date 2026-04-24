@@ -68,11 +68,12 @@ function AssistantApp() {
   const [activeMenu, setActiveMenu] = useState("home");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsView, setSettingsView] = useState<"menu" | "playlists" | "playlist-detail" | "contacts" | "docs">("menu");
   const [showPlayer, setShowPlayer] = useState(false);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const spotify = useSpotify(!!auth.user);
+  const spotify = useSpotify(!!auth.user, auth.user?.id ?? null);
 
   // Cargar perfil + memoria + contactos
   useEffect(() => {
@@ -351,7 +352,8 @@ function AssistantApp() {
           if (s === "music") setShowPlayer(true);
           if (s === "images") sendMessage("Genera una imagen de ");
           if (s === "whatsapp") sendMessage("WhatsApp a +52 diciendo ");
-          if (s === "settings") setSettingsOpen(true);
+           if (s === "settings") { setSettingsView("menu"); setSettingsOpen(true); }
+           if (s === "docs") { setSettingsView("docs"); setSettingsOpen(true); }
         }}
         onClearMemory={handleClearMemory}
         onLogout={handleLogout}
@@ -368,6 +370,8 @@ function AssistantApp() {
             }
           }}
           userId={auth.user.id}
+          themeName={themeName}
+          initialView={settingsView}
           spotifyConnected={spotify.isAuthenticated && spotify.state.ready}
           onGeneratePlaylistFromArtists={spotify.generateArtistPlaylistQueries}
           onPlayPlaylist={async (queries, name) => {
