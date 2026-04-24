@@ -2,14 +2,16 @@
  * Almacena tokens de Spotify en localStorage. Cada usuario en su propia clave
  * derivada del id (lo seteamos cuando hay sesión).
  */
-const KEY = "spotify.tokens.v1";
+const KEY = "spotify.tokens.v2";
 const PKCE_VERIFIER_KEY = "spotify.pkce.verifier.v1";
 const PKCE_REDIRECT_KEY = "spotify.pkce.redirect.v1";
+const SPOTIFY_USER_HINT_KEY = "spotify.user-hint.v1";
 
 export interface SpotifyTokens {
   access_token: string;
   refresh_token: string | null;
   expires_at: number; // ms epoch
+  spotify_user_id?: string | null;
 }
 
 export function setSpotifyTokens(t: SpotifyTokens) {
@@ -31,6 +33,20 @@ export function getSpotifyTokens(): SpotifyTokens | null {
 export function clearSpotifyTokens() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
+}
+
+export function setSpotifyUserHint(userId: string | null) {
+  if (typeof window === "undefined") return;
+  if (!userId) {
+    localStorage.removeItem(SPOTIFY_USER_HINT_KEY);
+    return;
+  }
+  localStorage.setItem(SPOTIFY_USER_HINT_KEY, userId);
+}
+
+export function getSpotifyUserHint() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(SPOTIFY_USER_HINT_KEY);
 }
 
 export function setSpotifyPkce(verifier: string, redirectUri: string) {

@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { generateDocument } from "@/server/docs.functions";
 import {
   fetchContacts, addContact, deleteContact, normalizePhone, type WhatsAppContact,
 } from "@/lib/contacts";
@@ -20,20 +24,24 @@ interface SettingsDrawerProps {
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
   onGeneratePlaylistFromArtists: (artists: string[]) => Promise<string[]>;
+  themeName: "NEVIRA" | "NOVA";
+  initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 }
 
-type View = "menu" | "playlists" | "playlist-detail" | "contacts";
+type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 
-export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists }: SettingsDrawerProps) {
-  const [view, setView] = useState<View>("menu");
+export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
+  const [view, setView] = useState<View>(initialView);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
   // Reset al cerrar
   useEffect(() => {
     if (!open) {
       setTimeout(() => { setView("menu"); setActivePlaylist(null); }, 250);
+    } else {
+      setView(initialView);
     }
-  }, [open]);
+  }, [initialView, open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -72,6 +80,12 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
                 desc="Manda mensajes diciendo solo el nombre"
                 onClick={() => setView("contacts")}
               />
+              <SettingsTile
+                icon={FileText}
+                label="Docs"
+                desc="Genera Word, Excel o PowerPoint"
+                onClick={() => setView("docs")}
+              />
             </div>
           )}
 
@@ -96,6 +110,8 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
           )}
 
           {view === "contacts" && <ContactsView userId={userId} />}
+
+          {view === "docs" && <DocsView themeName={themeName} />}
         </div>
       </SheetContent>
     </Sheet>
@@ -418,6 +434,79 @@ function ContactsView({ userId }: { userId: string }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
+  const docFn = useServerFn(generateDocument);
+  const [format, setFormat] = useState<"docx" | "xlsx" | "pptx">("docx");
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const downloadBase64 = (base64: string, mimeType: string, fileName: string) => {
+    const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+    const blob = new Blob([bytes], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleGenerate = async () => {
+    if (prompt.trim().length < 6) {
+      toast.error("Describe un poco más el documento");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await docFn({ data: { format, prompt: prompt.trim(), themeName } });
+      downloadBase64(res.base64, res.mimeType, res.fileName);
+      toast.success(`${res.title} listo para descargar`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No pude generar el archivo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-base font-semibold">Generador de Docs</h3>
+        <p className="text-xs text-muted-foreground">Crea archivos descargables para reportes, tablas, presentaciones y resúmenes.</p>
+      </div>
+
+      <Select value={format} onValueChange={(value: "docx" | "xlsx" | "pptx") => setFormat(value)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Formato" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="docx">Word (.docx)</SelectItem>
+          <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+          <SelectItem value="pptx">PowerPoint (.pptx)</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Ej: Hazme un PowerPoint de ventas del mes con objetivos, métricas y próximos pasos"
+        className="min-h-32"
+      />
+
+      <div className="rounded-xl border border-border bg-card/50 p-3 text-xs text-muted-foreground">
+        Útil para: propuestas, reportes, tablas comparativas, resúmenes ejecutivos, presupuestos y presentaciones rápidas.
+      </div>
+
+      <Button className="w-full" onClick={handleGenerate} disabled={loading}>
+        <Download className="mr-2 h-4 w-4" />
+        {loading ? "Generando…" : "Generar archivo"}
+      </Button>
     </div>
   );
 }

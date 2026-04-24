@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce } from "@/lib/spotify-storage";
+import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
 import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -41,7 +41,7 @@ declare global {
   }
 }
 
-export function useSpotify(enabled: boolean) {
+export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const refreshFn = useServerFn(refreshSpotifyToken);
   const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
   const playerRef = useRef<any>(null);
@@ -61,6 +61,12 @@ export function useSpotify(enabled: boolean) {
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     const t = getSpotifyTokens();
     if (!t) return null;
+    const tokenOwner = getSpotifyUserHint();
+    if (appUserId && tokenOwner && tokenOwner !== appUserId) {
+      clearSpotifyTokens();
+      setSpotifyUserHint(null);
+      return null;
+    }
     if (Date.now() < t.expires_at - 60_000) return t.access_token;
     if (!t.refresh_token) {
       clearSpotifyTokens();
@@ -77,11 +83,21 @@ export function useSpotify(enabled: boolean) {
       expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
     });
     return res.access_token;
-  }, [refreshFn]);
+  }, [appUserId, refreshFn]);
 
   // Cargar SDK + crear player
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
+    const tokenOwner = getSpotifyUserHint();
+    if (appUserId && tokenOwner && tokenOwner !== appUserId) {
+      clearSpotifyTokens();
+      setSpotifyUserHint(appUserId);
+      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+      return;
+    }
+    if (appUserId && !tokenOwner && getSpotifyTokens()) {
+      setSpotifyUserHint(appUserId);
+    }
     const tokens = getSpotifyTokens();
     if (!tokens) return;
 
@@ -164,10 +180,12 @@ export function useSpotify(enabled: boolean) {
       try { playerRef.current?.disconnect(); } catch { /* noop */ }
       playerRef.current = null;
     };
-  }, [enabled, getAccessToken]);
+  }, [appUserId, enabled, getAccessToken]);
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
+    clearSpotifyTokens();
+    if (appUserId) setSpotifyUserHint(appUserId);
     const { clientId } = await getClientIdFn();
     if (!clientId) {
       throw new Error("Spotify no está configurado en el servidor (falta SPOTIFY_CLIENT_ID).");
@@ -208,10 +226,11 @@ export function useSpotify(enabled: boolean) {
       return;
     }
     window.location.href = authUrl;
-  }, [getClientIdFn]);
+  }, [appUserId, getClientIdFn]);
 
   const logout = useCallback(() => {
     clearSpotifyTokens();
+    setSpotifyUserHint(null);
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
     setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
@@ -388,18 +407,39 @@ export function useSpotify(enabled: boolean) {
       const artist = artistJson.artists?.items?.[0];
       if (!artist?.id) continue;
 
-      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
-      const topJson = await topRes.json();
-      const tracks: string[] = (topJson.tracks ?? [])
+      let tracks: string[] = [];
+      for (const market of ["from_token", "US", "ES"] as const) {
+        const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+        const topJson = await topRes.json();
+        tracks = (topJson.tracks ?? [])
+          .map((track: any) => {
+            const title = track?.name;
+            const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+            return title ? `${primaryArtist} - ${title}` : null;
+          })
+          .filter(Boolean)
+          .slice(0, 6);
+        if (tracks.length > 0) break;
+      }
+
+      if (tracks.length === 0) {
+        const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:${artist.name}`)}&type=track&limit=6`);
+        const fallbackJson = await fallbackRes.json();
+        tracks = (fallbackJson.tracks?.items ?? [])
         .map((track: any) => {
           const title = track?.name;
           const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
           return title ? `${primaryArtist} - ${title}` : null;
         })
         .filter(Boolean)
-        .slice(0, 4);
+        .slice(0, 6);
+      }
 
       out.push(...tracks);
+    }
+
+    if (out.length === 0 && cleanArtists.length === 1) {
+      return [cleanArtists[0], `artista ${cleanArtists[0]}`];
     }
 
     return Array.from(new Set(out));
@@ -442,7 +482,8 @@ export function useSpotify(enabled: boolean) {
   }, [playNextFromQueue]);
   const setVolume = useCallback(async (v: number) => { await playerRef.current?.setVolume(v); }, []);
 
-  const isAuthenticated = !!getSpotifyTokens();
+  const rawTokens = getSpotifyTokens();
+  const isAuthenticated = !!rawTokens && (!appUserId || !getSpotifyUserHint() || getSpotifyUserHint() === appUserId);
 
   return {
     state,
