@@ -61,8 +61,10 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     const t = getSpotifyTokens();
     if (!t) return null;
-    if (appUserId && getSpotifyUserHint() && getSpotifyUserHint() !== appUserId) {
+    const tokenOwner = getSpotifyUserHint();
+    if (appUserId && tokenOwner && tokenOwner !== appUserId) {
       clearSpotifyTokens();
+      setSpotifyUserHint(null);
       return null;
     }
     if (Date.now() < t.expires_at - 60_000) return t.access_token;
@@ -86,7 +88,16 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   // Cargar SDK + crear player
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
-    if (appUserId) setSpotifyUserHint(appUserId);
+    const tokenOwner = getSpotifyUserHint();
+    if (appUserId && tokenOwner && tokenOwner !== appUserId) {
+      clearSpotifyTokens();
+      setSpotifyUserHint(appUserId);
+      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+      return;
+    }
+    if (appUserId && !tokenOwner && getSpotifyTokens()) {
+      setSpotifyUserHint(appUserId);
+    }
     const tokens = getSpotifyTokens();
     if (!tokens) return;
 
@@ -173,6 +184,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
+    clearSpotifyTokens();
     if (appUserId) setSpotifyUserHint(appUserId);
     const { clientId } = await getClientIdFn();
     if (!clientId) {
@@ -218,6 +230,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   const logout = useCallback(() => {
     clearSpotifyTokens();
+    setSpotifyUserHint(null);
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
     setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
@@ -394,9 +407,25 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       const artist = artistJson.artists?.items?.[0];
       if (!artist?.id) continue;
 
-      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
-      const topJson = await topRes.json();
-      const tracks: string[] = (topJson.tracks ?? [])
+      let tracks: string[] = [];
+      for (const market of ["from_token", "US", "ES"] as const) {
+        const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+        const topJson = await topRes.json();
+        tracks = (topJson.tracks ?? [])
+          .map((track: any) => {
+            const title = track?.name;
+            const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
+            return title ? `${primaryArtist} - ${title}` : null;
+          })
+          .filter(Boolean)
+          .slice(0, 6);
+        if (tracks.length > 0) break;
+      }
+
+      if (tracks.length === 0) {
+        const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:${artist.name}`)}&type=track&limit=6`);
+        const fallbackJson = await fallbackRes.json();
+        tracks = (fallbackJson.tracks?.items ?? [])
         .map((track: any) => {
           const title = track?.name;
           const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
@@ -404,6 +433,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         })
         .filter(Boolean)
         .slice(0, 6);
+      }
 
       out.push(...tracks);
     }
