@@ -12,6 +12,22 @@ const SCOPES = [
   "user-read-currently-playing",
 ];
 
+function toResolvedTrack(track: any): SpotifyResolvedTrack | null {
+  const title = track?.name;
+  const uri = track?.uri;
+  const id = track?.id;
+  const artist = track?.artists?.map((a: any) => a.name).filter(Boolean).join(", ") ?? "";
+  if (!title || !uri || !id) return null;
+  return {
+    query: artist ? `${artist} - ${title}` : title,
+    spotify_uri: uri,
+    spotify_track_id: id,
+    spotify_artist: artist,
+    spotify_album: track?.album?.name ?? "",
+    cover_url: track?.album?.images?.[0]?.url ?? null,
+  };
+}
+
 // El client_id se obtiene del servidor (que lo lee de SPOTIFY_CLIENT_ID secret)
 // para evitar tener que duplicarlo como variable VITE_ pública.
 
@@ -23,6 +39,15 @@ export interface SpotifyTrack {
   cover: string | null;
   uri: string;
   durationMs: number;
+}
+
+export interface SpotifyResolvedTrack {
+  query: string;
+  spotify_uri: string;
+  spotify_track_id: string;
+  spotify_artist: string;
+  spotify_album: string;
+  cover_url: string | null;
 }
 
 export interface SpotifyState {
