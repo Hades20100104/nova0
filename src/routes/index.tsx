@@ -375,7 +375,11 @@ function AssistantApp() {
         theme={profile.theme}
         userName={profile.assistantName}
         notesCount={notes.length}
+        neviraColor={profile.neviraColor}
+        novaColor={profile.novaColor}
         onThemeChange={handleThemeChange}
+        onNeviraColorChange={handleNeviraColorChange}
+        onNovaColorChange={handleNovaColorChange}
         onSection={(s) => {
           setDrawerOpen(false);
           if (s === "music") setShowPlayer(true);
