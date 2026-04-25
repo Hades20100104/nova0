@@ -1,8 +1,10 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Music, Image as ImageIcon, MessageCircle, Brain, LogOut, Sparkles, Bell, Calendar, Settings, FileText } from "lucide-react";
+import { Music, Image as ImageIcon, MessageCircle, Brain, LogOut, Sparkles, Bell, Calendar, Settings, FileText, Palette } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
+import type { NeviraColor, NovaColor } from "@/lib/cloud-memory";
+import { cn } from "@/lib/utils";
 
 interface MenuDrawerProps {
   open: boolean;
@@ -11,11 +13,30 @@ interface MenuDrawerProps {
   theme: "nevira" | "nova";
   userName: string | null;
   notesCount: number;
+  neviraColor: NeviraColor;
+  novaColor: NovaColor;
   onThemeChange: (theme: "nevira" | "nova") => void;
+  onNeviraColorChange: (color: NeviraColor) => void;
+  onNovaColorChange: (color: NovaColor) => void;
   onSection: (section: "music" | "images" | "whatsapp" | "settings" | "docs") => void;
   onClearMemory: () => void;
   onLogout: () => void;
 }
+
+const NEVIRA_SWATCHES: { id: NeviraColor; label: string; from: string; to: string }[] = [
+  { id: "aqua",    label: "Cobalto",  from: "oklch(0.7 0.18 245)",  to: "oklch(0.78 0.16 230)" },
+  { id: "emerald", label: "Esmeralda", from: "oklch(0.72 0.18 165)", to: "oklch(0.82 0.16 155)" },
+  { id: "coral",   label: "Coral",    from: "oklch(0.72 0.18 30)",  to: "oklch(0.82 0.16 50)" },
+  { id: "rose",    label: "Rosa",     from: "oklch(0.72 0.2 350)",  to: "oklch(0.82 0.16 0)" },
+];
+
+const NOVA_SWATCHES: { id: NovaColor; label: string; from: string; to: string }[] = [
+  { id: "violet",  label: "Violeta",  from: "oklch(0.65 0.22 295)", to: "oklch(0.75 0.2 305)" },
+  { id: "magenta", label: "Magenta",  from: "oklch(0.65 0.25 340)", to: "oklch(0.78 0.22 350)" },
+  { id: "cyan",    label: "Cian",     from: "oklch(0.7 0.2 210)",   to: "oklch(0.78 0.18 195)" },
+  { id: "emerald", label: "Esmeralda", from: "oklch(0.7 0.2 155)",  to: "oklch(0.8 0.18 145)" },
+  { id: "gold",    label: "Oro",      from: "oklch(0.78 0.16 75)",  to: "oklch(0.85 0.15 90)" },
+];
 
 export function MenuDrawer({
   open, onOpenChange, themeName, theme, userName, notesCount,
