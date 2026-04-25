@@ -128,7 +128,7 @@ function AssistantApp() {
   const handleOnboarding = async (name: string) => {
     if (!auth.user) return;
     await updateProfile(auth.user.id, { assistant_name: name });
-    setProfile((p) => ({ ...(p ?? { theme: "nevira" }), assistantName: name }));
+    setProfile((p) => p ? { ...p, assistantName: name } : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" });
     setShowOnboarding(false);
     setMessages([{
       role: "assistant",
@@ -141,6 +141,18 @@ function AssistantApp() {
     if (!auth.user) return;
     setProfile((p) => p ? { ...p, theme } : p);
     await updateProfile(auth.user.id, { theme });
+  };
+
+  const handleNeviraColorChange = async (neviraColor: NeviraColor) => {
+    if (!auth.user) return;
+    setProfile((p) => p ? { ...p, neviraColor } : p);
+    await updateProfile(auth.user.id, { nevira_color: neviraColor });
+  };
+
+  const handleNovaColorChange = async (novaColor: NovaColor) => {
+    if (!auth.user) return;
+    setProfile((p) => p ? { ...p, novaColor } : p);
+    await updateProfile(auth.user.id, { nova_color: novaColor });
   };
 
   /** Sube imagen base64 al bucket y guarda en tabla. Devuelve signed URL. */
