@@ -315,6 +315,68 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [getAccessToken]);
 
   /**
+   * Asegura que nuestro Web Playback device es el dispositivo activo del usuario
+   * antes de mandar comandos /me/player/play. Esto soluciona el error
+   * "No active device found" / "Restriction violated" que aparece cuando el
+   * usuario tiene Spotify abierto en otro dispositivo (TV, móvil) o nunca
+   * "transfirió" la reproducción al navegador.
+   */
+  const ensureActiveDevice = useCallback(async () => {
+    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    try {
+      const res = await api(`/me/player/devices`);
+      const json = await res.json();
+      const devices: any[] = json.devices ?? [];
+      const ours = devices.find((d) => d.id === state.deviceId);
+      if (!ours || !ours.is_active) {
+        await api(`/me/player`, {
+          method: "PUT",
+          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+        });
+        // Pequeña espera para que Spotify registre el cambio
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    } catch (e) {
+      console.warn("ensureActiveDevice", e);
+    }
+  }, [api, state.deviceId]);
+
+  /**
+   * Llama /me/player/play con manejo de errores específicos de Spotify
+   * (404 NO_ACTIVE_DEVICE → re-transfiere y reintenta; 403 PREMIUM_REQUIRED → mensaje claro).
+   */
+  const playOnDevice = useCallback(async (body: any) => {
+    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    await ensureActiveDevice();
+    try {
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/premium/i.test(msg)) {
+        throw new Error("La reproducción dentro de la app requiere Spotify Premium.");
+      }
+      // Reintento: forzar transferencia y reproducir
+      try {
+        await api(`/me/player`, {
+          method: "PUT",
+          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+        });
+        await new Promise((r) => setTimeout(r, 500));
+        await api(`/me/player/play?device_id=${state.deviceId}`, {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+      } catch (e2) {
+        const m = e2 instanceof Error ? e2.message : String(e2);
+        throw new Error(`Spotify no aceptó la reproducción: ${m}. Asegúrate de tener Spotify Premium y de no estar en modo privado en otra app.`);
+      }
+    }
+  }, [api, ensureActiveDevice, state.deviceId]);
+
+  /**
    * Busca y reproduce. Soporta:
    *  - "playlist <nombre>"  → reproduce playlist completa
    *  - "album <nombre>"     → reproduce álbum completo
