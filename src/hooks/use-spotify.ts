@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
-import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
+import { getSpotifyTokensForUser, setSpotifyTokensForUser, clearSpotifyTokensForUser, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
+import { clearStoredSpotifyConnection, getStoredSpotifyConnection, refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 const SCOPES = [
@@ -44,6 +44,8 @@ declare global {
 export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const refreshFn = useServerFn(refreshSpotifyToken);
   const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
+  const getStoredConnectionFn = useServerFn(getStoredSpotifyConnection);
+  const clearStoredConnectionFn = useServerFn(clearStoredSpotifyConnection);
   const playerRef = useRef<any>(null);
   // Cola personal: lista de queries (canción/artista) que se reproducen en orden
   // y avanzan automáticamente cuando termina cada track.
@@ -57,30 +59,49 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     positionMs: 0,
   });
 
+  useEffect(() => {
+    if (!enabled || !appUserId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const stored = await getStoredConnectionFn({});
+        if (cancelled) return;
+        if (stored.tokens) {
+          setSpotifyTokensForUser(appUserId, stored.tokens);
+          setSpotifyUserHint(appUserId);
+        }
+      } catch (e) {
+        console.warn("getStoredSpotifyConnection", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [appUserId, enabled, getStoredConnectionFn]);
+
   /** Devuelve un access token vigente (refresca si expira). */
   const getAccessToken = useCallback(async (): Promise<string | null> => {
-    const t = getSpotifyTokens();
+    const t = getSpotifyTokensForUser(appUserId);
     if (!t) return null;
     const tokenOwner = getSpotifyUserHint();
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(null);
       return null;
     }
     if (Date.now() < t.expires_at - 60_000) return t.access_token;
     if (!t.refresh_token) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       return null;
     }
     const res = await refreshFn({ data: { refreshToken: t.refresh_token } });
     if (res.error || !res.access_token) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       return null;
     }
-    setSpotifyTokens({
+    setSpotifyTokensForUser(appUserId, {
       access_token: res.access_token,
       refresh_token: res.refresh_token ?? t.refresh_token,
       expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
+      spotify_user_id: t.spotify_user_id ?? null,
     });
     return res.access_token;
   }, [appUserId, refreshFn]);
