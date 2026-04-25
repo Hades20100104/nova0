@@ -180,7 +180,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         }));
       });
       player.addListener("authentication_error", () => {
-        clearSpotifyTokens();
+        clearSpotifyTokensForUser(appUserId);
         setState((s) => ({ ...s, connected: false, ready: false }));
       });
       player.connect();
@@ -205,7 +205,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
-    clearSpotifyTokens();
+    clearSpotifyTokensForUser(appUserId);
     if (appUserId) setSpotifyUserHint(appUserId);
     const { clientId } = await getClientIdFn();
     if (!clientId) {
@@ -279,7 +279,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       } catch {
         if (raw) message = raw;
       }
-      if (res.status === 401) clearSpotifyTokens();
+      if (res.status === 401) clearSpotifyTokensForUser(appUserId);
       throw new Error(message);
     }
     return res;
