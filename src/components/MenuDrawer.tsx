@@ -40,8 +40,17 @@ const NOVA_SWATCHES: { id: NovaColor; label: string; from: string; to: string }[
 
 export function MenuDrawer({
   open, onOpenChange, themeName, theme, userName, notesCount,
-  onThemeChange, onSection, onClearMemory, onLogout,
+  neviraColor, novaColor,
+  onThemeChange, onNeviraColorChange, onNovaColorChange,
+  onSection, onClearMemory, onLogout,
 }: MenuDrawerProps) {
+  const swatches = theme === "nova" ? NOVA_SWATCHES : NEVIRA_SWATCHES;
+  const activeSwatch = theme === "nova" ? novaColor : neviraColor;
+  const handleSwatch = (id: string) => {
+    if (theme === "nova") onNovaColorChange(id as NovaColor);
+    else onNeviraColorChange(id as NeviraColor);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card/95 backdrop-blur-xl">
@@ -59,12 +68,43 @@ export function MenuDrawer({
           {/* Tema */}
           <section>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Apariencia</h3>
-            <div className="rounded-xl border border-border bg-card/50 p-3 flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium">Modo {theme === "nova" ? "Noche" : "Día"}</div>
-                <div className="text-xs text-muted-foreground">Cambia entre NEVIRA y NOVA</div>
+            <div className="rounded-xl border border-border bg-card/50 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Modo {theme === "nova" ? "Noche" : "Día"}</div>
+                  <div className="text-xs text-muted-foreground">Cambia entre NEVIRA y NOVA</div>
+                </div>
+                <ThemeSwitch theme={theme} onChange={onThemeChange} />
               </div>
-              <ThemeSwitch theme={theme} onChange={onThemeChange} />
+
+              <div className="border-t border-border pt-3">
+                <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Palette className="h-3.5 w-3.5" />
+                  Color de {themeName}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {swatches.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleSwatch(s.id)}
+                      className={cn(
+                        "group relative flex flex-col items-center gap-1 rounded-lg border-2 p-1.5 transition-all",
+                        activeSwatch === s.id
+                          ? "border-foreground/80 scale-105"
+                          : "border-transparent hover:border-border"
+                      )}
+                      aria-label={`Color ${s.label}`}
+                    >
+                      <span
+                        className="h-7 w-7 rounded-full shadow-glow"
+                        style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }}
+                      />
+                      <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
