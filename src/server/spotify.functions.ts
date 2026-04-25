@@ -131,25 +131,83 @@ export const exchangeSpotifyCode = createServerFn({ method: "POST" })
     }
 
     // Identificar al usuario real de Spotify dueño de este token.
-    let spotifyUserId: string | null = null;
-    try {
-      const meRes = await fetch("https://api.spotify.com/v1/me", {
-        headers: { Authorization: `Bearer ${json.access_token}` },
-      });
-      if (meRes.ok) {
-        const me = (await meRes.json()) as { id?: string };
-        spotifyUserId = me.id ?? null;
-      }
-    } catch (e) {
-      console.warn("Spotify /me lookup failed:", e);
-    }
+    const spotifyProfile = await fetchSpotifyProfile(json.access_token);
 
     return {
       error: null as string | null,
       access_token: json.access_token,
       refresh_token: json.refresh_token ?? null,
       expires_in: json.expires_in ?? 3600,
-      spotify_user_id: spotifyUserId,
+      spotify_user_id: spotifyProfile.id,
+      spotify_display_name: spotifyProfile.displayName,
+      scope: json.scope ?? "",
+    };
+  });
+
+export const exchangeAndStoreSpotifyCode = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .inputValidator((input: ExchangeInput) => {
+    if (!input?.code) throw new Error("code requerido");
+    if (!input?.codeVerifier) throw new Error("codeVerifier requerido");
+    if (!input?.redirectUri) throw new Error("redirectUri requerido");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      return { error: "Spotify no está configurado en el servidor.", connected: false };
+    }
+
+    const basic = btoa(`${clientId}:${clientSecret}`);
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basic}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: data.code,
+        redirect_uri: data.redirectUri,
+        client_id: clientId,
+        code_verifier: data.codeVerifier,
+      }).toString(),
+    });
+
+    const json = await readSpotifyTokenResponse(res);
+    if (!res.ok || !json.access_token) {
+      console.error("Spotify exchange/store error:", res.status, json.rawText ?? json.error);
+      return { error: json.error_description || json.error || "No se pudo conectar Spotify.", connected: false };
+    }
+
+    const spotifyProfile = await fetchSpotifyProfile(json.access_token);
+    const expiresAt = new Date(Date.now() + (json.expires_in ?? 3600) * 1000).toISOString();
+    const scopes = (json.scope ?? "").split(" ").map((scope) => scope.trim()).filter(Boolean);
+
+    const { error } = await context.supabase.from("spotify_connections").upsert({
+      user_id: context.userId,
+      spotify_user_id: spotifyProfile.id,
+      spotify_display_name: spotifyProfile.displayName,
+      access_token: json.access_token,
+      refresh_token: json.refresh_token ?? null,
+      expires_at: expiresAt,
+      scopes,
+    }, { onConflict: "user_id" });
+
+    if (error) {
+      console.error("spotify connection upsert error:", error);
+      return { error: "Spotify conectó, pero no pude guardar la sesión del usuario.", connected: false };
+    }
+
+    return {
+      error: null as string | null,
+      connected: true,
+      access_token: json.access_token,
+      refresh_token: json.refresh_token ?? null,
+      expires_in: json.expires_in ?? 3600,
+      spotify_user_id: spotifyProfile.id,
+      spotify_display_name: spotifyProfile.displayName,
     };
   });
 
