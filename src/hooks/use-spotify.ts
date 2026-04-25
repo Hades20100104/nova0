@@ -111,15 +111,15 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (!enabled || typeof window === "undefined") return;
     const tokenOwner = getSpotifyUserHint();
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(appUserId);
       setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
       return;
     }
-    if (appUserId && !tokenOwner && getSpotifyTokens()) {
+    if (appUserId && !tokenOwner && getSpotifyTokensForUser(appUserId)) {
       setSpotifyUserHint(appUserId);
     }
-    const tokens = getSpotifyTokens();
+    const tokens = getSpotifyTokensForUser(appUserId);
     if (!tokens) return;
 
     let mounted = true;
@@ -540,7 +540,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [playNextFromQueue]);
   const setVolume = useCallback(async (v: number) => { await playerRef.current?.setVolume(v); }, []);
 
-  const rawTokens = getSpotifyTokens();
+  const rawTokens = getSpotifyTokensForUser(appUserId);
   const isAuthenticated = !!rawTokens && (!appUserId || !getSpotifyUserHint() || getSpotifyUserHint() === appUserId);
 
   return {
