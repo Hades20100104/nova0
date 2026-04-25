@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokensForUser, setSpotifyTokensForUser, clearSpotifyTokensForUser, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
+import { getSpotifyTokensForUser, setSpotifyTokensForUser, clearSpotifyTokensForUser, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
 import { clearStoredSpotifyConnection, getStoredSpotifyConnection, refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -250,12 +250,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [appUserId, getClientIdFn]);
 
   const logout = useCallback(() => {
-    clearSpotifyTokens();
+    clearSpotifyTokensForUser(appUserId);
     setSpotifyUserHint(null);
+    if (appUserId) void clearStoredConnectionFn({});
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
     setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
-  }, []);
+  }, [appUserId, clearStoredConnectionFn]);
 
   /** Llama API de Spotify con token vigente. */
   const api = useCallback(async (path: string, init?: RequestInit) => {
