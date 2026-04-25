@@ -1,16 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type NeviraColor = "aqua" | "emerald" | "coral" | "rose";
+export type NovaColor = "violet" | "magenta" | "cyan" | "emerald" | "gold";
+
 export interface CloudProfile {
   id: string;
   display_name: string | null;
   assistant_name: string | null;
   theme: "nevira" | "nova";
+  nevira_color: NeviraColor;
+  nova_color: NovaColor;
 }
 
 export async function fetchProfile(userId: string): Promise<CloudProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, assistant_name, theme")
+    .select("id, display_name, assistant_name, theme, nevira_color, nova_color")
     .eq("id", userId)
     .maybeSingle();
   if (error) {
