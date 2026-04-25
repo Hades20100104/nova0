@@ -14,7 +14,7 @@ import {
 import {
   fetchPlaylists, createPlaylist, deletePlaylist,
   fetchTracks, addTrack, deleteTrack,
-  type Playlist, type PlaylistTrack,
+  type Playlist, type PlaylistTrack, type PlaylistTrackInput,
 } from "@/lib/playlists";
 
 export interface ArtistSuggestion {
@@ -37,7 +37,7 @@ interface SettingsDrawerProps {
   userId: string;
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
-  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>;
+  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>;
   onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
   themeName: "NEVIRA" | "NOVA";
   initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
@@ -228,7 +228,7 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
 
 function PlaylistDetailView({
   userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists, onSearchArtists,
-}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; log: ArtistResolutionLog[] }>; onSearchArtists: (query: string) => Promise<ArtistSuggestion[]> }) {
+}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>; onSearchArtists: (query: string) => Promise<ArtistSuggestion[]> }) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [query, setQuery] = useState("");
   const [artistsSeed, setArtistsSeed] = useState("");
@@ -300,15 +300,16 @@ function PlaylistDetailView({
     setGenerating(true);
     setLastLog([]);
     try {
-      const { queries: generated, log } = await onGeneratePlaylistFromArtists(artists);
+      const { queries: generated, tracks: generatedTracks, log } = await onGeneratePlaylistFromArtists(artists);
       setLastLog(log);
       if (generated.length === 0) {
         const failedNames = log.filter((l) => l.tracks === 0).map((l) => l.artist).join(", ");
         toast.error(failedNames ? `No encontré canciones de: ${failedNames}` : "No pude generar canciones con esos artistas");
         return;
       }
-      const existing = new Set(tracks.map((track) => track.query.toLowerCase()));
-      const toInsert = generated.filter((item) => !existing.has(item.toLowerCase()));
+      const existing = new Set(tracks.map((track) => (track.spotify_track_id ?? track.query).toLowerCase()));
+      const candidates = generatedTracks?.length ? generatedTracks : generated.map((query) => ({ query }));
+      const toInsert = candidates.filter((item) => !existing.has((item.spotify_track_id ?? item.query).toLowerCase()));
       if (toInsert.length === 0) {
         toast.error("Esas canciones ya estaban en la playlist");
         return;
@@ -417,7 +418,7 @@ function PlaylistDetailView({
       <Button
         className="w-full bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
         disabled={tracks.length === 0 || !spotifyConnected}
-        onClick={() => onPlay(tracks.map((t) => t.query))}
+        onClick={() => onPlay(tracks.map((t) => t.spotify_uri ?? t.query))}
       >
         <Play className="mr-2 h-4 w-4" />
         {spotifyConnected ? "Reproducir" : "Conecta Spotify primero"}
