@@ -215,6 +215,90 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Sound waves: barras animadas que respiran y se sincronizan con la música */
+@keyframes sw-bar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
 .animate-orb-pulse { animation: orb-pulse 4s ease-in-out infinite; }
 .animate-orb-rotate { animation: orb-rotate 30s linear infinite; }
 .animate-float-up { animation: float-up 0.4s ease-out both; }
+
+/* ============== Variantes de color por tema ============== */
+/* NEVIRA — variantes (modo día) */
+.nevira-aqua {
+  --primary: oklch(0.7 0.18 245);
+  --primary-glow: oklch(0.78 0.16 230);
+  --accent: oklch(0.78 0.16 230);
+  --ring: oklch(0.7 0.18 245);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.78 0.16 230 / 0.9), oklch(0.5 0.18 250 / 0.4) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.7 0.18 245 / 0.4), 0 0 120px oklch(0.78 0.16 230 / 0.2);
+}
+.nevira-emerald {
+  --primary: oklch(0.72 0.18 165);
+  --primary-glow: oklch(0.82 0.16 155);
+  --accent: oklch(0.82 0.16 155);
+  --ring: oklch(0.72 0.18 165);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.82 0.16 155 / 0.9), oklch(0.5 0.18 170 / 0.4) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.72 0.18 165 / 0.4), 0 0 120px oklch(0.82 0.16 155 / 0.2);
+}
+.nevira-coral {
+  --primary: oklch(0.72 0.18 30);
+  --primary-glow: oklch(0.82 0.16 50);
+  --accent: oklch(0.82 0.16 50);
+  --ring: oklch(0.72 0.18 30);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.82 0.16 50 / 0.9), oklch(0.55 0.18 25 / 0.4) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.72 0.18 30 / 0.4), 0 0 120px oklch(0.82 0.16 50 / 0.2);
+}
+.nevira-rose {
+  --primary: oklch(0.72 0.2 350);
+  --primary-glow: oklch(0.82 0.16 0);
+  --accent: oklch(0.82 0.16 0);
+  --ring: oklch(0.72 0.2 350);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.82 0.16 0 / 0.9), oklch(0.55 0.2 340 / 0.4) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.72 0.2 350 / 0.4), 0 0 120px oklch(0.82 0.16 0 / 0.2);
+}
+
+/* NOVA — variantes (modo noche) */
+.nova.nova-violet {
+  --primary: oklch(0.65 0.22 295);
+  --primary-glow: oklch(0.75 0.2 305);
+  --accent: oklch(0.82 0.15 80);
+  --ring: oklch(0.65 0.22 295);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.75 0.2 305 / 0.95), oklch(0.45 0.22 295 / 0.5) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.65 0.22 295 / 0.5), 0 0 120px oklch(0.82 0.15 80 / 0.15);
+}
+.nova.nova-magenta {
+  --primary: oklch(0.65 0.25 340);
+  --primary-glow: oklch(0.78 0.22 350);
+  --accent: oklch(0.82 0.18 60);
+  --ring: oklch(0.65 0.25 340);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.78 0.22 350 / 0.95), oklch(0.45 0.25 340 / 0.5) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.65 0.25 340 / 0.5), 0 0 120px oklch(0.82 0.18 60 / 0.15);
+}
+.nova.nova-cyan {
+  --primary: oklch(0.7 0.2 210);
+  --primary-glow: oklch(0.78 0.18 195);
+  --accent: oklch(0.85 0.15 95);
+  --ring: oklch(0.7 0.2 210);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.78 0.18 195 / 0.95), oklch(0.45 0.2 215 / 0.5) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.7 0.2 210 / 0.5), 0 0 120px oklch(0.85 0.15 95 / 0.15);
+}
+.nova.nova-emerald {
+  --primary: oklch(0.7 0.2 155);
+  --primary-glow: oklch(0.8 0.18 145);
+  --accent: oklch(0.85 0.15 95);
+  --ring: oklch(0.7 0.2 155);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.8 0.18 145 / 0.95), oklch(0.45 0.2 160 / 0.5) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.7 0.2 155 / 0.5), 0 0 120px oklch(0.85 0.15 95 / 0.15);
+}
+.nova.nova-gold {
+  --primary: oklch(0.78 0.16 75);
+  --primary-glow: oklch(0.85 0.15 90);
+  --accent: oklch(0.7 0.22 30);
+  --ring: oklch(0.78 0.16 75);
+  --gradient-orb: radial-gradient(circle at 50% 50%, oklch(0.85 0.15 90 / 0.95), oklch(0.55 0.18 70 / 0.5) 45%, transparent 70%);
+  --shadow-glow: 0 0 60px oklch(0.78 0.16 75 / 0.5), 0 0 120px oklch(0.7 0.22 30 / 0.15);
+}
+

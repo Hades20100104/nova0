@@ -10,6 +10,7 @@ import { fetchProfile, updateProfile, fetchNotes, addNote, clearNotes } from "@/
 import { useSpotify } from "@/hooks/use-spotify";
 import { detectIntent, normalize } from "@/lib/normalize";
 import { Orb } from "@/components/Orb";
+import { SoundWaves } from "@/components/SoundWaves";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -24,6 +25,7 @@ import { ImageMessage } from "@/components/ImageMessage";
 import { Menu, Activity, Lock, LayoutPanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
+import type { NeviraColor, NovaColor } from "@/lib/cloud-memory";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -60,7 +62,7 @@ function AssistantApp() {
   const imageFn = useServerFn(generateImage);
   const memoryFn = useServerFn(extractMemoryNote);
 
-  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova" } | null>(null);
+  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova"; neviraColor: NeviraColor; novaColor: NovaColor } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -82,18 +84,33 @@ function AssistantApp() {
       const p = await fetchProfile(auth.user!.id);
       const n = await fetchNotes(auth.user!.id);
       const c = await fetchContacts(auth.user!.id);
-      setProfile({ assistantName: p?.assistant_name ?? null, theme: (p?.theme as "nevira" | "nova") ?? "nevira" });
+      setProfile({
+        assistantName: p?.assistant_name ?? null,
+        theme: (p?.theme as "nevira" | "nova") ?? "nevira",
+        neviraColor: (p?.nevira_color as NeviraColor) ?? "aqua",
+        novaColor: (p?.nova_color as NovaColor) ?? "violet",
+      });
       setNotes(n);
       setContacts(c);
       if (!p?.assistant_name) setShowOnboarding(true);
     })();
   }, [auth.user]);
 
-  // Aplicar tema al <html>
+  // Aplicar tema y color al <html>
   useEffect(() => {
     if (!profile) return;
-    document.documentElement.classList.toggle("nova", profile.theme === "nova");
-  }, [profile?.theme]);
+    const root = document.documentElement;
+    root.classList.toggle("nova", profile.theme === "nova");
+    // Limpiar variantes anteriores
+    root.classList.forEach((c) => {
+      if (c.startsWith("nevira-") || c.startsWith("nova-")) root.classList.remove(c);
+    });
+    if (profile.theme === "nova") {
+      root.classList.add(`nova-${profile.novaColor}`);
+    } else {
+      root.classList.add(`nevira-${profile.neviraColor}`);
+    }
+  }, [profile?.theme, profile?.neviraColor, profile?.novaColor]);
 
   // Auto-scroll
   useEffect(() => {
@@ -111,7 +128,7 @@ function AssistantApp() {
   const handleOnboarding = async (name: string) => {
     if (!auth.user) return;
     await updateProfile(auth.user.id, { assistant_name: name });
-    setProfile((p) => ({ ...(p ?? { theme: "nevira" }), assistantName: name }));
+    setProfile((p) => p ? { ...p, assistantName: name } : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" });
     setShowOnboarding(false);
     setMessages([{
       role: "assistant",
@@ -124,6 +141,18 @@ function AssistantApp() {
     if (!auth.user) return;
     setProfile((p) => p ? { ...p, theme } : p);
     await updateProfile(auth.user.id, { theme });
+  };
+
+  const handleNeviraColorChange = async (neviraColor: NeviraColor) => {
+    if (!auth.user) return;
+    setProfile((p) => p ? { ...p, neviraColor } : p);
+    await updateProfile(auth.user.id, { nevira_color: neviraColor });
+  };
+
+  const handleNovaColorChange = async (novaColor: NovaColor) => {
+    if (!auth.user) return;
+    setProfile((p) => p ? { ...p, novaColor } : p);
+    await updateProfile(auth.user.id, { nova_color: novaColor });
   };
 
   /** Sube imagen base64 al bucket y guarda en tabla. Devuelve signed URL. */
@@ -346,7 +375,11 @@ function AssistantApp() {
         theme={profile.theme}
         userName={profile.assistantName}
         notesCount={notes.length}
+        neviraColor={profile.neviraColor}
+        novaColor={profile.novaColor}
         onThemeChange={handleThemeChange}
+        onNeviraColorChange={handleNeviraColorChange}
+        onNovaColorChange={handleNovaColorChange}
         onSection={(s) => {
           setDrawerOpen(false);
           if (s === "music") setShowPlayer(true);
@@ -445,6 +478,7 @@ function AssistantApp() {
               {messages.length === 0 ? (
                 <div className="flex min-h-[56svh] flex-col items-center justify-center gap-6 py-8 text-center lg:min-h-[70svh]">
                   <Orb size={220} active variant={profile.theme} className="sm:[transform:scale(1.05)]" />
+                  <SoundWaves active={!spotify.state.paused && !!spotify.state.current} variant={profile.theme} bars={32} height={56} className="w-full max-w-md" />
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                       Modo <span className="text-gradient">{themeName}</span> activo
@@ -456,6 +490,11 @@ function AssistantApp() {
                 </div>
               ) : (
                 <div className="w-full space-y-4 pb-4">
+                  {/* Orbe + ondas siempre visibles aunque haya mensajes */}
+                  <div className="sticky top-0 z-10 -mx-4 mb-2 flex items-center gap-3 bg-background/80 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8">
+                    <Orb size={56} active variant={profile.theme} />
+                    <SoundWaves active={!spotify.state.paused && !!spotify.state.current} variant={profile.theme} bars={22} height={32} className="flex-1" />
+                  </div>
                   {messages.map((m, i) => {
                     if (m.image) {
                       return (

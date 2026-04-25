@@ -315,6 +315,68 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [getAccessToken]);
 
   /**
+   * Asegura que nuestro Web Playback device es el dispositivo activo del usuario
+   * antes de mandar comandos /me/player/play. Esto soluciona el error
+   * "No active device found" / "Restriction violated" que aparece cuando el
+   * usuario tiene Spotify abierto en otro dispositivo (TV, móvil) o nunca
+   * "transfirió" la reproducción al navegador.
+   */
+  const ensureActiveDevice = useCallback(async () => {
+    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    try {
+      const res = await api(`/me/player/devices`);
+      const json = await res.json();
+      const devices: any[] = json.devices ?? [];
+      const ours = devices.find((d) => d.id === state.deviceId);
+      if (!ours || !ours.is_active) {
+        await api(`/me/player`, {
+          method: "PUT",
+          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+        });
+        // Pequeña espera para que Spotify registre el cambio
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    } catch (e) {
+      console.warn("ensureActiveDevice", e);
+    }
+  }, [api, state.deviceId]);
+
+  /**
+   * Llama /me/player/play con manejo de errores específicos de Spotify
+   * (404 NO_ACTIVE_DEVICE → re-transfiere y reintenta; 403 PREMIUM_REQUIRED → mensaje claro).
+   */
+  const playOnDevice = useCallback(async (body: any) => {
+    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    await ensureActiveDevice();
+    try {
+      await api(`/me/player/play?device_id=${state.deviceId}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/premium/i.test(msg)) {
+        throw new Error("La reproducción dentro de la app requiere Spotify Premium.");
+      }
+      // Reintento: forzar transferencia y reproducir
+      try {
+        await api(`/me/player`, {
+          method: "PUT",
+          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+        });
+        await new Promise((r) => setTimeout(r, 500));
+        await api(`/me/player/play?device_id=${state.deviceId}`, {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+      } catch (e2) {
+        const m = e2 instanceof Error ? e2.message : String(e2);
+        throw new Error(`Spotify no aceptó la reproducción: ${m}. Asegúrate de tener Spotify Premium y de no estar en modo privado en otra app.`);
+      }
+    }
+  }, [api, ensureActiveDevice, state.deviceId]);
+
+  /**
    * Busca y reproduce. Soporta:
    *  - "playlist <nombre>"  → reproduce playlist completa
    *  - "album <nombre>"     → reproduce álbum completo
@@ -337,10 +399,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       const json = await res.json();
       const pl = json.playlists?.items?.[0];
       if (!pl) throw new Error("No encontré esa playlist.");
-      await api(`/me/player/play?device_id=${state.deviceId}`, {
-        method: "PUT",
-        body: JSON.stringify({ context_uri: pl.uri }),
-      });
+      await playOnDevice({ context_uri: pl.uri });
       return `playlist ${pl.name}`;
     }
 
@@ -350,10 +409,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       const json = await res.json();
       const al = json.albums?.items?.[0];
       if (!al) throw new Error("No encontré ese álbum.");
-      await api(`/me/player/play?device_id=${state.deviceId}`, {
-        method: "PUT",
-        body: JSON.stringify({ context_uri: al.uri }),
-      });
+      await playOnDevice({ context_uri: al.uri });
       return `álbum ${al.name}`;
     }
 
@@ -363,15 +419,16 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       const artist = artistJson.artists?.items?.[0];
       if (!artist) throw new Error("No encontré ese artista.");
 
-      const topRes = await api(`/artists/${artist.id}/top-tracks?market=from_token`);
-      const topJson = await topRes.json();
-      const uris: string[] = (topJson.tracks ?? []).map((t: any) => t.uri).filter(Boolean).slice(0, 10);
+      let uris: string[] = [];
+      for (const market of ["from_token", "US", "ES", "MX"] as const) {
+        const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+        const topJson = await topRes.json();
+        uris = (topJson.tracks ?? []).map((t: any) => t.uri).filter(Boolean).slice(0, 10);
+        if (uris.length > 0) break;
+      }
       if (uris.length === 0) throw new Error("No encontré canciones reproducibles de ese artista.");
 
-      await api(`/me/player/play?device_id=${state.deviceId}`, {
-        method: "PUT",
-        body: JSON.stringify({ uris }),
-      });
+      await playOnDevice({ uris });
       return `artista ${artist.name}`;
     }
 
@@ -397,42 +454,39 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       }
     }
 
-    await api(`/me/player/play?device_id=${state.deviceId}`, {
-      method: "PUT",
-      body: JSON.stringify({ uris }),
-    });
+    await playOnDevice({ uris });
     return track.name as string;
-  }, [api, state.deviceId]);
+  }, [api, playOnDevice, state.deviceId]);
 
   /**
    * Reproduce la cola personal (queueRef) desde el índice actual.
-   * Cada `query` se busca como track y se reproduce; al terminar, el listener
-   * de `player_state_changed` avanza al siguiente.
+   * Cada item puede ser una URI directa (`spotify:track:...`) o un texto
+   * libre que buscamos en /search. Avanzamos al siguiente cuando termina.
    */
   const playNextRef = useRef<(() => Promise<void>) | null>(null);
   const playNextFromQueue = useCallback(async () => {
     const q = queueRef.current;
     if (!q || !state.deviceId) return;
-    const query = q.items[q.index];
-    if (!query) return;
+    const item = q.items[q.index];
+    if (!item) return;
     try {
-      const res = await api(`/search?q=${encodeURIComponent(query)}&type=track&limit=1`);
-      const json = await res.json();
-      const track = json.tracks?.items?.[0];
-      if (!track) return;
-      await api(`/me/player/play?device_id=${state.deviceId}`, {
-        method: "PUT",
-        body: JSON.stringify({ uris: [track.uri] }),
-      });
+      let uri = item.startsWith("spotify:track:") ? item : null;
+      if (!uri) {
+        const res = await api(`/search?q=${encodeURIComponent(item)}&type=track&limit=1`);
+        const json = await res.json();
+        const track = json.tracks?.items?.[0];
+        if (!track) return;
+        uri = track.uri;
+      }
+      await playOnDevice({ uris: [uri] });
     } catch (e) {
       console.error("playNextFromQueue", e);
     }
-  }, [api, state.deviceId]);
+  }, [api, playOnDevice, state.deviceId]);
   playNextRef.current = playNextFromQueue;
 
   /**
-   * Reproduce una playlist personal (lista de queries).
-   * Inicia con el primer item y deja que el autoplay continúe.
+   * Reproduce una playlist personal (lista de queries o URIs `spotify:track:...`).
    */
   const playLocalPlaylist = useCallback(async (queries: string[]) => {
     if (!state.deviceId) throw new Error("Reproductor aún no listo.");
@@ -440,6 +494,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     queueRef.current = { items: queries, index: 0 };
     await playNextFromQueue();
   }, [state.deviceId, playNextFromQueue]);
+
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
