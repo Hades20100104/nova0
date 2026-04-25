@@ -308,7 +308,7 @@ function PlaylistDetailView({
         return;
       }
       const existing = new Set(tracks.map((track) => (track.spotify_track_id ?? track.query).toLowerCase()));
-      const candidates = generatedTracks?.length ? generatedTracks : generated.map((query) => ({ query }));
+      const candidates: PlaylistTrackInput[] = generatedTracks?.length ? generatedTracks : generated.map((query) => ({ query }));
       const toInsert = candidates.filter((item) => !existing.has((item.spotify_track_id ?? item.query).toLowerCase()));
       if (toInsert.length === 0) {
         toast.error("Esas canciones ya estaban en la playlist");
