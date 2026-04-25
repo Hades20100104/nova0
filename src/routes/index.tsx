@@ -478,6 +478,7 @@ function AssistantApp() {
               {messages.length === 0 ? (
                 <div className="flex min-h-[56svh] flex-col items-center justify-center gap-6 py-8 text-center lg:min-h-[70svh]">
                   <Orb size={220} active variant={profile.theme} className="sm:[transform:scale(1.05)]" />
+                  <SoundWaves active={!spotify.state.paused && !!spotify.state.current} variant={profile.theme} bars={32} height={56} className="w-full max-w-md" />
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                       Modo <span className="text-gradient">{themeName}</span> activo
@@ -489,6 +490,11 @@ function AssistantApp() {
                 </div>
               ) : (
                 <div className="w-full space-y-4 pb-4">
+                  {/* Orbe + ondas siempre visibles aunque haya mensajes */}
+                  <div className="sticky top-0 z-10 -mx-4 mb-2 flex items-center gap-3 bg-background/80 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8">
+                    <Orb size={56} active variant={profile.theme} />
+                    <SoundWaves active={!spotify.state.paused && !!spotify.state.current} variant={profile.theme} bars={22} height={32} className="flex-1" />
+                  </div>
                   {messages.map((m, i) => {
                     if (m.image) {
                       return (
