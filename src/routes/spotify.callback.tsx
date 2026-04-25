@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { exchangeSpotifyCode } from "@/server/spotify.functions";
+import { exchangeAndStoreSpotifyCode } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { clearSpotifyPkce, getSpotifyPkce, setSpotifyTokens } from "@/lib/spotify-storage";
+import { clearSpotifyPkce, getSpotifyPkce, setSpotifyTokensForUser, setSpotifyUserHint } from "@/lib/spotify-storage";
 import { Orb } from "@/components/Orb";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/spotify/callback")({
   head: () => ({
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/spotify/callback")({
 
 function SpotifyCallbackPage() {
   const navigate = useNavigate();
-  const exchangeFn = useServerFn(exchangeSpotifyCode);
+  const exchangeFn = useServerFn(exchangeAndStoreSpotifyCode);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [message, setMessage] = useState("Conectando con Spotify…");
 
@@ -38,18 +39,20 @@ function SpotifyCallbackPage() {
 
     const redirectUri = pkce?.redirectUri ?? `${window.location.origin}/spotify/callback`;
     exchangeFn({ data: { code, codeVerifier: verifier, redirectUri } })
-      .then((res) => {
+      .then(async (res) => {
         if (res.error || !res.access_token) {
           setStatus("error");
           setMessage(res.error ?? "No se pudo conectar con Spotify.");
           return;
         }
-        setSpotifyTokens({
+        const { data: { user } } = await supabase.auth.getUser();
+        setSpotifyTokensForUser(user?.id ?? null, {
           access_token: res.access_token,
           refresh_token: res.refresh_token ?? null,
           expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
           spotify_user_id: res.spotify_user_id ?? null,
         });
+        if (user?.id) setSpotifyUserHint(user.id);
         clearSpotifyPkce();
         setStatus("ok");
         setMessage("¡Spotify conectado! Volviendo al asistente…");

@@ -79,27 +79,42 @@ export type Database = {
       }
       playlist_tracks: {
         Row: {
+          cover_url: string | null
           created_at: string
           id: string
           playlist_id: string
           position: number
           query: string
+          spotify_album: string | null
+          spotify_artist: string | null
+          spotify_track_id: string | null
+          spotify_uri: string | null
           user_id: string
         }
         Insert: {
+          cover_url?: string | null
           created_at?: string
           id?: string
           playlist_id: string
           position?: number
           query: string
+          spotify_album?: string | null
+          spotify_artist?: string | null
+          spotify_track_id?: string | null
+          spotify_uri?: string | null
           user_id: string
         }
         Update: {
+          cover_url?: string | null
           created_at?: string
           id?: string
           playlist_id?: string
           position?: number
           query?: string
+          spotify_album?: string | null
+          spotify_artist?: string | null
+          spotify_track_id?: string | null
+          spotify_uri?: string | null
           user_id?: string
         }
         Relationships: [
@@ -142,6 +157,8 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          nevira_color: string
+          nova_color: string
           theme: string
           updated_at: string
         }
@@ -150,6 +167,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          nevira_color?: string
+          nova_color?: string
           theme?: string
           updated_at?: string
         }
@@ -158,8 +177,49 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          nevira_color?: string
+          nova_color?: string
           theme?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      spotify_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          refresh_token: string | null
+          scopes: string[]
+          spotify_display_name: string | null
+          spotify_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          refresh_token?: string | null
+          scopes?: string[]
+          spotify_display_name?: string | null
+          spotify_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string | null
+          scopes?: string[]
+          spotify_display_name?: string | null
+          spotify_user_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

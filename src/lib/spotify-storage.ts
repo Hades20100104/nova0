@@ -19,6 +19,17 @@ export function setSpotifyTokens(t: SpotifyTokens) {
   localStorage.setItem(KEY, JSON.stringify(t));
 }
 
+export function getSpotifyTokenKey(userId?: string | null) {
+  return userId ? `${KEY}.${userId}` : KEY;
+}
+
+export function setSpotifyTokensForUser(userId: string | null | undefined, t: SpotifyTokens) {
+  if (typeof window === "undefined") return;
+  const key = getSpotifyTokenKey(userId);
+  localStorage.setItem(key, JSON.stringify(t));
+  if (userId) setSpotifyUserHint(userId);
+}
+
 export function getSpotifyTokens(): SpotifyTokens | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(KEY);
@@ -30,9 +41,27 @@ export function getSpotifyTokens(): SpotifyTokens | null {
   }
 }
 
+export function getSpotifyTokensForUser(userId?: string | null): SpotifyTokens | null {
+  if (typeof window === "undefined") return null;
+  const key = getSpotifyTokenKey(userId);
+  const raw = localStorage.getItem(key) ?? (userId ? localStorage.getItem(KEY) : null);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as SpotifyTokens;
+  } catch {
+    return null;
+  }
+}
+
 export function clearSpotifyTokens() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
+}
+
+export function clearSpotifyTokensForUser(userId?: string | null) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(getSpotifyTokenKey(userId));
+  if (userId) localStorage.removeItem(KEY);
 }
 
 export function setSpotifyUserHint(userId: string | null) {

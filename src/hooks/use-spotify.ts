@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokens, setSpotifyTokens, clearSpotifyTokens, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
-import { refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
+import { getSpotifyTokensForUser, setSpotifyTokensForUser, clearSpotifyTokensForUser, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
+import { clearStoredSpotifyConnection, getStoredSpotifyConnection, refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 const SCOPES = [
@@ -11,6 +11,22 @@ const SCOPES = [
   "user-read-playback-state",
   "user-read-currently-playing",
 ];
+
+function toResolvedTrack(track: any): SpotifyResolvedTrack | null {
+  const title = track?.name;
+  const uri = track?.uri;
+  const id = track?.id;
+  const artist = track?.artists?.map((a: any) => a.name).filter(Boolean).join(", ") ?? "";
+  if (!title || !uri || !id) return null;
+  return {
+    query: artist ? `${artist} - ${title}` : title,
+    spotify_uri: uri,
+    spotify_track_id: id,
+    spotify_artist: artist,
+    spotify_album: track?.album?.name ?? "",
+    cover_url: track?.album?.images?.[0]?.url ?? null,
+  };
+}
 
 // El client_id se obtiene del servidor (que lo lee de SPOTIFY_CLIENT_ID secret)
 // para evitar tener que duplicarlo como variable VITE_ pública.
@@ -23,6 +39,15 @@ export interface SpotifyTrack {
   cover: string | null;
   uri: string;
   durationMs: number;
+}
+
+export interface SpotifyResolvedTrack {
+  query: string;
+  spotify_uri: string;
+  spotify_track_id: string;
+  spotify_artist: string;
+  spotify_album: string;
+  cover_url: string | null;
 }
 
 export interface SpotifyState {
@@ -44,7 +69,10 @@ declare global {
 export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const refreshFn = useServerFn(refreshSpotifyToken);
   const getClientIdFn = useServerFn(SPOTIFY_CLIENT_ID_PUBLIC);
+  const getStoredConnectionFn = useServerFn(getStoredSpotifyConnection);
+  const clearStoredConnectionFn = useServerFn(clearStoredSpotifyConnection);
   const playerRef = useRef<any>(null);
+  const [tokenVersion, setTokenVersion] = useState(0);
   // Cola personal: lista de queries (canción/artista) que se reproducen en orden
   // y avanzan automáticamente cuando termina cada track.
   const queueRef = useRef<{ items: string[]; index: number } | null>(null);
@@ -57,30 +85,50 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     positionMs: 0,
   });
 
+  useEffect(() => {
+    if (!enabled || !appUserId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const stored = await getStoredConnectionFn({});
+        if (cancelled) return;
+        if (stored.tokens) {
+          setSpotifyTokensForUser(appUserId, stored.tokens);
+          setSpotifyUserHint(appUserId);
+          setTokenVersion((version) => version + 1);
+        }
+      } catch (e) {
+        console.warn("getStoredSpotifyConnection", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [appUserId, enabled, getStoredConnectionFn]);
+
   /** Devuelve un access token vigente (refresca si expira). */
   const getAccessToken = useCallback(async (): Promise<string | null> => {
-    const t = getSpotifyTokens();
+    const t = getSpotifyTokensForUser(appUserId);
     if (!t) return null;
     const tokenOwner = getSpotifyUserHint();
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(null);
       return null;
     }
     if (Date.now() < t.expires_at - 60_000) return t.access_token;
     if (!t.refresh_token) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       return null;
     }
     const res = await refreshFn({ data: { refreshToken: t.refresh_token } });
     if (res.error || !res.access_token) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       return null;
     }
-    setSpotifyTokens({
+    setSpotifyTokensForUser(appUserId, {
       access_token: res.access_token,
       refresh_token: res.refresh_token ?? t.refresh_token,
       expires_at: Date.now() + (res.expires_in ?? 3600) * 1000,
+      spotify_user_id: t.spotify_user_id ?? null,
     });
     return res.access_token;
   }, [appUserId, refreshFn]);
@@ -90,15 +138,15 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (!enabled || typeof window === "undefined") return;
     const tokenOwner = getSpotifyUserHint();
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
-      clearSpotifyTokens();
+      clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(appUserId);
       setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
       return;
     }
-    if (appUserId && !tokenOwner && getSpotifyTokens()) {
+    if (appUserId && !tokenOwner && getSpotifyTokensForUser(appUserId)) {
       setSpotifyUserHint(appUserId);
     }
-    const tokens = getSpotifyTokens();
+    const tokens = getSpotifyTokensForUser(appUserId);
     if (!tokens) return;
 
     let mounted = true;
@@ -159,7 +207,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         }));
       });
       player.addListener("authentication_error", () => {
-        clearSpotifyTokens();
+        clearSpotifyTokensForUser(appUserId);
         setState((s) => ({ ...s, connected: false, ready: false }));
       });
       player.connect();
@@ -180,12 +228,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       try { playerRef.current?.disconnect(); } catch { /* noop */ }
       playerRef.current = null;
     };
-  }, [appUserId, enabled, getAccessToken]);
+  }, [appUserId, enabled, getAccessToken, tokenVersion]);
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
-    clearSpotifyTokens();
+    clearSpotifyTokensForUser(appUserId);
     if (appUserId) setSpotifyUserHint(appUserId);
+    setTokenVersion((version) => version + 1);
     const { clientId } = await getClientIdFn();
     if (!clientId) {
       throw new Error("Spotify no está configurado en el servidor (falta SPOTIFY_CLIENT_ID).");
@@ -229,12 +278,14 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [appUserId, getClientIdFn]);
 
   const logout = useCallback(() => {
-    clearSpotifyTokens();
+    clearSpotifyTokensForUser(appUserId);
     setSpotifyUserHint(null);
+    if (appUserId) void clearStoredConnectionFn({});
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
     setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
-  }, []);
+    setTokenVersion((version) => version + 1);
+  }, [appUserId, clearStoredConnectionFn]);
 
   /** Llama API de Spotify con token vigente. */
   const api = useCallback(async (path: string, init?: RequestInit) => {
@@ -257,7 +308,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       } catch {
         if (raw) message = raw;
       }
-      if (res.status === 401) clearSpotifyTokens();
+      if (res.status === 401) clearSpotifyTokensForUser(appUserId);
       throw new Error(message);
     }
     return res;
@@ -392,13 +443,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
-    if (cleanArtists.length === 0) return { queries: [] as string[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
+    if (cleanArtists.length === 0) return { queries: [] as string[], tracks: [] as SpotifyResolvedTrack[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
     const token = await getAccessToken();
     if (!token) {
       throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
     }
 
-    const out: string[] = [];
+    const out: SpotifyResolvedTrack[] = [];
     const log: Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> = [];
 
     for (const artistName of cleanArtists) {
@@ -414,16 +465,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         }
         entry.resolvedAs = artist.name;
 
-        let tracks: string[] = [];
+        let tracks: SpotifyResolvedTrack[] = [];
         for (const market of ["from_token", "US", "ES", "MX"] as const) {
           const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
           const topJson = await topRes.json();
           tracks = (topJson.tracks ?? [])
-            .map((track: any) => {
-              const title = track?.name;
-              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-              return title ? `${primaryArtist} - ${title}` : null;
-            })
+            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+            .map(toResolvedTrack)
             .filter(Boolean)
             .slice(0, 6);
           if (tracks.length > 0) break;
@@ -433,11 +481,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
           const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:"${artist.name}"`)}&type=track&limit=10`);
           const fallbackJson = await fallbackRes.json();
           tracks = (fallbackJson.tracks?.items ?? [])
-            .map((track: any) => {
-              const title = track?.name;
-              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-              return title ? `${primaryArtist} - ${title}` : null;
-            })
+            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+            .map(toResolvedTrack)
             .filter(Boolean)
             .slice(0, 6);
         }
@@ -454,11 +499,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       log.push(entry);
     }
 
-    if (out.length === 0 && cleanArtists.length === 1) {
-      return { queries: [cleanArtists[0], `artista ${cleanArtists[0]}`], log };
-    }
-
-    return { queries: Array.from(new Set(out)), log };
+    const unique = Array.from(new Map(out.map((track) => [track.spotify_track_id, track])).values());
+    return { queries: unique.map((track) => track.query), tracks: unique, log };
   }, [api, getAccessToken]);
 
   /** Busca artistas para autocompletado (top 5). */
@@ -519,7 +561,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   }, [playNextFromQueue]);
   const setVolume = useCallback(async (v: number) => { await playerRef.current?.setVolume(v); }, []);
 
-  const rawTokens = getSpotifyTokens();
+  const rawTokens = getSpotifyTokensForUser(appUserId);
   const isAuthenticated = !!rawTokens && (!appUserId || !getSpotifyUserHint() || getSpotifyUserHint() === appUserId);
 
   return {
