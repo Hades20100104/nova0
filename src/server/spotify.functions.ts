@@ -261,6 +261,56 @@ export const refreshSpotifyToken = createServerFn({ method: "POST" })
     };
   });
 
+export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: row, error } = await context.supabase
+      .from("spotify_connections")
+      .select("access_token, refresh_token, expires_at, spotify_user_id, spotify_display_name, scopes")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error || !row) return { connected: false, tokens: null, error: null as string | null };
+
+    const connection = row as StoredSpotifyConnection;
+    let accessToken = connection.access_token;
+    let refreshToken = connection.refresh_token;
+    let expiresAt = new Date(connection.expires_at).getTime();
+
+    if (Date.now() >= expiresAt - 60_000) {
+      if (!refreshToken) return { connected: false, tokens: null, error: "La sesión de Spotify expiró. Conéctala otra vez." };
+      const refreshed = await refreshWithSpotify(refreshToken);
+      if (refreshed.error || !refreshed.access_token) {
+        return { connected: false, tokens: null, error: refreshed.error_description || refreshed.error || "No pude refrescar Spotify." };
+      }
+      accessToken = refreshed.access_token;
+      refreshToken = refreshed.refresh_token ?? refreshToken;
+      expiresAt = Date.now() + (refreshed.expires_in ?? 3600) * 1000;
+      await context.supabase
+        .from("spotify_connections")
+        .update({ access_token: accessToken, refresh_token: refreshToken, expires_at: new Date(expiresAt).toISOString() })
+        .eq("user_id", context.userId);
+    }
+
+    return {
+      connected: true,
+      error: null as string | null,
+      tokens: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: expiresAt,
+        spotify_user_id: connection.spotify_user_id,
+        spotify_display_name: connection.spotify_display_name,
+      },
+    };
+  });
+
+export const clearStoredSpotifyConnection = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAuth])
+  .handler(async ({ context }) => {
+    await context.supabase.from("spotify_connections").delete().eq("user_id", context.userId);
+    return { ok: true };
+  });
+
 export const SPOTIFY_CLIENT_ID_PUBLIC = createServerFn({ method: "GET" }).handler(async () => {
   return { clientId: process.env.SPOTIFY_CLIENT_ID ?? null };
 });
