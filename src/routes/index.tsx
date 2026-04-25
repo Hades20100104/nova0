@@ -10,6 +10,7 @@ import { fetchProfile, updateProfile, fetchNotes, addNote, clearNotes } from "@/
 import { useSpotify } from "@/hooks/use-spotify";
 import { detectIntent, normalize } from "@/lib/normalize";
 import { Orb } from "@/components/Orb";
+import { SoundWaves } from "@/components/SoundWaves";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -24,6 +25,7 @@ import { ImageMessage } from "@/components/ImageMessage";
 import { Menu, Activity, Lock, LayoutPanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
+import type { NeviraColor, NovaColor } from "@/lib/cloud-memory";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
