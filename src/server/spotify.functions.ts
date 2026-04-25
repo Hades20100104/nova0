@@ -185,7 +185,7 @@ export const exchangeAndStoreSpotifyCode = createServerFn({ method: "POST" })
     const expiresAt = new Date(Date.now() + (json.expires_in ?? 3600) * 1000).toISOString();
     const scopes = (json.scope ?? "").split(" ").map((scope) => scope.trim()).filter(Boolean);
 
-    const { error } = await context.supabase.from("spotify_connections").upsert({
+    const { error } = await (context.supabase as any).from("spotify_connections").upsert({
       user_id: context.userId,
       spotify_user_id: spotifyProfile.id,
       spotify_display_name: spotifyProfile.displayName,
@@ -264,7 +264,7 @@ export const refreshSpotifyToken = createServerFn({ method: "POST" })
 export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
   .middleware([withSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: row, error } = await context.supabase
+    const { data: row, error } = await (context.supabase as any)
       .from("spotify_connections")
       .select("access_token, refresh_token, expires_at, spotify_user_id, spotify_display_name, scopes")
       .eq("user_id", context.userId)
@@ -285,7 +285,7 @@ export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
       accessToken = refreshed.access_token;
       refreshToken = refreshed.refresh_token ?? refreshToken;
       expiresAt = Date.now() + (refreshed.expires_in ?? 3600) * 1000;
-      await context.supabase
+      await (context.supabase as any)
         .from("spotify_connections")
         .update({ access_token: accessToken, refresh_token: refreshToken, expires_at: new Date(expiresAt).toISOString() })
         .eq("user_id", context.userId);
@@ -307,7 +307,7 @@ export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
 export const clearStoredSpotifyConnection = createServerFn({ method: "POST" })
   .middleware([withSupabaseAuth])
   .handler(async ({ context }) => {
-    await context.supabase.from("spotify_connections").delete().eq("user_id", context.userId);
+    await (context.supabase as any).from("spotify_connections").delete().eq("user_id", context.userId);
     return { ok: true };
   });
 
