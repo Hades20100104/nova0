@@ -443,13 +443,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
     const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
-    if (cleanArtists.length === 0) return { queries: [] as string[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
+    if (cleanArtists.length === 0) return { queries: [] as string[], tracks: [] as SpotifyResolvedTrack[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
     const token = await getAccessToken();
     if (!token) {
       throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
     }
 
-    const out: string[] = [];
+    const out: SpotifyResolvedTrack[] = [];
     const log: Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> = [];
 
     for (const artistName of cleanArtists) {
@@ -465,16 +465,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         }
         entry.resolvedAs = artist.name;
 
-        let tracks: string[] = [];
+        let tracks: SpotifyResolvedTrack[] = [];
         for (const market of ["from_token", "US", "ES", "MX"] as const) {
           const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
           const topJson = await topRes.json();
           tracks = (topJson.tracks ?? [])
-            .map((track: any) => {
-              const title = track?.name;
-              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-              return title ? `${primaryArtist} - ${title}` : null;
-            })
+            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+            .map(toResolvedTrack)
             .filter(Boolean)
             .slice(0, 6);
           if (tracks.length > 0) break;
@@ -484,11 +481,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
           const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:"${artist.name}"`)}&type=track&limit=10`);
           const fallbackJson = await fallbackRes.json();
           tracks = (fallbackJson.tracks?.items ?? [])
-            .map((track: any) => {
-              const title = track?.name;
-              const primaryArtist = track?.artists?.[0]?.name ?? artist.name;
-              return title ? `${primaryArtist} - ${title}` : null;
-            })
+            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+            .map(toResolvedTrack)
             .filter(Boolean)
             .slice(0, 6);
         }
@@ -505,11 +499,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       log.push(entry);
     }
 
-    if (out.length === 0 && cleanArtists.length === 1) {
-      return { queries: [cleanArtists[0], `artista ${cleanArtists[0]}`], log };
-    }
-
-    return { queries: Array.from(new Set(out)), log };
+    const unique = Array.from(new Map(out.map((track) => [track.spotify_track_id, track])).values());
+    return { queries: unique.map((track) => track.query), tracks: unique, log };
   }, [api, getAccessToken]);
 
   /** Busca artistas para autocompletado (top 5). */
