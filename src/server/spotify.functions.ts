@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { withSupabaseAuth } from "@/integrations/supabase/auth-client-middleware";
 
 interface ExchangeInput {
   code: string;
@@ -20,6 +21,15 @@ interface SpotifyTokenResponse {
   error_description?: string;
 }
 
+interface StoredSpotifyConnection {
+  access_token: string;
+  refresh_token: string | null;
+  expires_at: string;
+  spotify_user_id: string | null;
+  spotify_display_name: string | null;
+  scopes: string[] | null;
+}
+
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
 async function readSpotifyTokenResponse(res: Response): Promise<SpotifyTokenResponse & { rawText?: string }> {
@@ -29,6 +39,46 @@ async function readSpotifyTokenResponse(res: Response): Promise<SpotifyTokenResp
   } catch {
     return { error: rawText || "Respuesta inválida de Spotify.", rawText };
   }
+}
+
+async function fetchSpotifyProfile(accessToken: string): Promise<{ id: string | null; displayName: string | null }> {
+  try {
+    const meRes = await fetch("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!meRes.ok) return { id: null, displayName: null };
+    const me = (await meRes.json()) as { id?: string; display_name?: string };
+    return { id: me.id ?? null, displayName: me.display_name ?? me.id ?? null };
+  } catch (e) {
+    console.warn("Spotify /me lookup failed:", e);
+    return { id: null, displayName: null };
+  }
+}
+
+async function refreshWithSpotify(refreshToken: string): Promise<SpotifyTokenResponse> {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return { error: "Spotify no está configurado en el servidor." };
+  }
+  const basic = btoa(`${clientId}:${clientSecret}`);
+  const res = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${basic}`,
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+    }).toString(),
+  });
+  const json = await readSpotifyTokenResponse(res);
+  if (!res.ok || !json.access_token) {
+    console.error("Spotify refresh error:", res.status, json.rawText ?? json.error);
+  }
+  return json;
 }
 
 /**
