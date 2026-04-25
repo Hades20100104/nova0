@@ -79,27 +79,42 @@ export type Database = {
       }
       playlist_tracks: {
         Row: {
+          cover_url: string | null
           created_at: string
           id: string
           playlist_id: string
           position: number
           query: string
+          spotify_album: string | null
+          spotify_artist: string | null
+          spotify_track_id: string | null
+          spotify_uri: string | null
           user_id: string
         }
         Insert: {
+          cover_url?: string | null
           created_at?: string
           id?: string
           playlist_id: string
           position?: number
           query: string
+          spotify_album?: string | null
+          spotify_artist?: string | null
+          spotify_track_id?: string | null
+          spotify_uri?: string | null
           user_id: string
         }
         Update: {
+          cover_url?: string | null
           created_at?: string
           id?: string
           playlist_id?: string
           position?: number
           query?: string
+          spotify_album?: string | null
+          spotify_artist?: string | null
+          spotify_track_id?: string | null
+          spotify_uri?: string | null
           user_id?: string
         }
         Relationships: [
