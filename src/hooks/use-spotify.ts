@@ -47,6 +47,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const getStoredConnectionFn = useServerFn(getStoredSpotifyConnection);
   const clearStoredConnectionFn = useServerFn(clearStoredSpotifyConnection);
   const playerRef = useRef<any>(null);
+  const [tokenVersion, setTokenVersion] = useState(0);
   // Cola personal: lista de queries (canción/artista) que se reproducen en orden
   // y avanzan automáticamente cuando termina cada track.
   const queueRef = useRef<{ items: string[]; index: number } | null>(null);
@@ -69,6 +70,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         if (stored.tokens) {
           setSpotifyTokensForUser(appUserId, stored.tokens);
           setSpotifyUserHint(appUserId);
+          setTokenVersion((version) => version + 1);
         }
       } catch (e) {
         console.warn("getStoredSpotifyConnection", e);
@@ -201,12 +203,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       try { playerRef.current?.disconnect(); } catch { /* noop */ }
       playerRef.current = null;
     };
-  }, [appUserId, enabled, getAccessToken]);
+  }, [appUserId, enabled, getAccessToken, tokenVersion]);
 
   /** Lanza el flujo OAuth con PKCE. */
   const startLogin = useCallback(async () => {
     clearSpotifyTokensForUser(appUserId);
     if (appUserId) setSpotifyUserHint(appUserId);
+    setTokenVersion((version) => version + 1);
     const { clientId } = await getClientIdFn();
     if (!clientId) {
       throw new Error("Spotify no está configurado en el servidor (falta SPOTIFY_CLIENT_ID).");
@@ -256,6 +259,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
     setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+    setTokenVersion((version) => version + 1);
   }, [appUserId, clearStoredConnectionFn]);
 
   /** Llama API de Spotify con token vigente. */
