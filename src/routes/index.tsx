@@ -62,7 +62,7 @@ function AssistantApp() {
   const imageFn = useServerFn(generateImage);
   const memoryFn = useServerFn(extractMemoryNote);
 
-  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova" } | null>(null);
+  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova"; neviraColor: NeviraColor; novaColor: NovaColor } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -84,18 +84,33 @@ function AssistantApp() {
       const p = await fetchProfile(auth.user!.id);
       const n = await fetchNotes(auth.user!.id);
       const c = await fetchContacts(auth.user!.id);
-      setProfile({ assistantName: p?.assistant_name ?? null, theme: (p?.theme as "nevira" | "nova") ?? "nevira" });
+      setProfile({
+        assistantName: p?.assistant_name ?? null,
+        theme: (p?.theme as "nevira" | "nova") ?? "nevira",
+        neviraColor: (p?.nevira_color as NeviraColor) ?? "aqua",
+        novaColor: (p?.nova_color as NovaColor) ?? "violet",
+      });
       setNotes(n);
       setContacts(c);
       if (!p?.assistant_name) setShowOnboarding(true);
     })();
   }, [auth.user]);
 
-  // Aplicar tema al <html>
+  // Aplicar tema y color al <html>
   useEffect(() => {
     if (!profile) return;
-    document.documentElement.classList.toggle("nova", profile.theme === "nova");
-  }, [profile?.theme]);
+    const root = document.documentElement;
+    root.classList.toggle("nova", profile.theme === "nova");
+    // Limpiar variantes anteriores
+    root.classList.forEach((c) => {
+      if (c.startsWith("nevira-") || c.startsWith("nova-")) root.classList.remove(c);
+    });
+    if (profile.theme === "nova") {
+      root.classList.add(`nova-${profile.novaColor}`);
+    } else {
+      root.classList.add(`nevira-${profile.neviraColor}`);
+    }
+  }, [profile?.theme, profile?.neviraColor, profile?.novaColor]);
 
   // Auto-scroll
   useEffect(() => {
