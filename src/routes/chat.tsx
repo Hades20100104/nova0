@@ -123,6 +123,18 @@ function AssistantApp() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  // Auto-enviar query inicial cuando llegamos desde el dashboard con ?q=...
+  useEffect(() => {
+    if (autoSent || !profile || !auth.user) return;
+    const q = search.q?.trim();
+    if (!q) return;
+    setAutoSent(true);
+    void sendMessage(q);
+    // Limpiamos el search param para no re-enviar al recargar
+    router.navigate({ to: "/chat", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, auth.user, search.q, autoSent]);
+
   const themeName: "NEVIRA" | "NOVA" = profile?.theme === "nova" ? "NOVA" : "NEVIRA";
   const greeting = useMemo(() => {
     const h = new Date().getHours();
