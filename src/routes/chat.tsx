@@ -72,7 +72,7 @@ function AssistantApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [sending, setSending] = useState(false);
-  const [activeMenu, setActiveMenu] = useState("home");
+  const [autoSent, setAutoSent] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsView, setSettingsView] = useState<"menu" | "playlists" | "playlist-detail" | "contacts" | "docs">("menu");
@@ -433,8 +433,6 @@ function AssistantApp() {
         <AppSidebar
           themeName={themeName}
           userName={profile.assistantName}
-          active={activeMenu}
-          onSelect={setActiveMenu}
         />
 
         <main className="flex min-h-screen flex-1 flex-col">
