@@ -28,15 +28,18 @@ import { toast } from "sonner";
 import { fetchContacts, findContactByName, type WhatsAppContact } from "@/lib/contacts";
 import type { NeviraColor, NovaColor } from "@/lib/cloud-memory";
 
+const chatSearchSchema = z.object({ q: z.string().optional() });
+
 export const Route = createFileRoute("/chat")({
+  validateSearch: chatSearchSchema,
   beforeLoad: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
     meta: [
-      { title: "NEVIRA & NOVA — Tu asistente inteligente" },
-      { name: "description", content: "Asistente personal con dos modos: NEVIRA (día) y NOVA (noche). Música, imágenes, WhatsApp y más." },
+      { title: "Chat — NEVIRA & NOVA" },
+      { name: "description", content: "Conversa con NEVIRA o NOVA: música, imágenes, WhatsApp y más por voz o texto." },
     ],
   }),
   component: AssistantApp,
