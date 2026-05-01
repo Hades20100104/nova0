@@ -15,6 +15,7 @@ import { SoundWaves } from "@/components/SoundWaves";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { AppSidebar } from "@/components/AppSidebar";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { ChatComposer } from "@/components/ChatComposer";
 import { ChatBubble } from "@/components/ChatBubble";
 import { QuickActions } from "@/components/QuickActions";
@@ -589,6 +590,8 @@ function AssistantApp() {
           </div>
         </main>
       </div>
+
+      <MobileTabBar onMenu={() => setDrawerOpen(true)} />
     </>
   );
 }
