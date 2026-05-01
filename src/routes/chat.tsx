@@ -61,6 +61,7 @@ function timeNow() {
 
 function AssistantApp() {
   const router = useRouter();
+  const search = useSearch({ from: "/chat" });
   const auth = useAuth();
   const chatFn = useServerFn(chatWithAssistant);
   const imageFn = useServerFn(generateImage);
