@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SpotifyCallbackRouteImport } from './routes/spotify.callback'
@@ -17,6 +18,11 @@ import { Route as SpotifyCallbackRouteImport } from './routes/spotify.callback'
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -38,12 +44,14 @@ const SpotifyCallbackRoute = SpotifyCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/gallery' | '/spotify/callback'
+  fullPaths: '/' | '/auth' | '/chat' | '/gallery' | '/spotify/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/gallery' | '/spotify/callback'
-  id: '__root__' | '/' | '/auth' | '/gallery' | '/spotify/callback'
+  to: '/' | '/auth' | '/chat' | '/gallery' | '/spotify/callback'
+  id: '__root__' | '/' | '/auth' | '/chat' | '/gallery' | '/spotify/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ChatRoute: typeof ChatRoute
   GalleryRoute: typeof GalleryRoute
   SpotifyCallbackRoute: typeof SpotifyCallbackRoute
 }
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ChatRoute: ChatRoute,
   GalleryRoute: GalleryRoute,
   SpotifyCallbackRoute: SpotifyCallbackRoute,
 }

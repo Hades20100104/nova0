@@ -1,4 +1,5 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter, useSearch } from "@tanstack/react-router";
+import { z } from "zod";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { chatWithAssistant } from "@/server/chat.functions";
