@@ -478,7 +478,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const playNextRef = useRef<(() => Promise<void>) | null>(null);
   const playNextFromQueue = useCallback(async () => {
     const q = queueRef.current;
-    if (!q || !state.deviceId) return;
+    if (!q) return;
     const item = q.items[q.index];
     if (!item) return;
     try {
