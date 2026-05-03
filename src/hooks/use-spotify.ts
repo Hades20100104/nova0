@@ -321,8 +321,27 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    * usuario tiene Spotify abierto en otro dispositivo (TV, móvil) o nunca
    * "transfirió" la reproducción al navegador.
    */
+  /**
+   * Espera hasta `timeout` ms a que el SDK reporte un deviceId. Resuelve con el
+   * deviceId actual o null si pasa el timeout. Evita el error inmediato
+   * "Reproductor aún no listo" cuando el usuario pulsa play justo después de
+   * conectar Spotify y el SDK aún no terminó de inicializar.
+   */
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  const waitForDevice = useCallback(async (timeout = 8000): Promise<string | null> => {
+    if (stateRef.current.deviceId) return stateRef.current.deviceId;
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      await new Promise((r) => setTimeout(r, 200));
+      if (stateRef.current.deviceId) return stateRef.current.deviceId;
+    }
+    return stateRef.current.deviceId ?? null;
+  }, []);
+
   const ensureActiveDevice = useCallback(async () => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    const deviceId = await waitForDevice();
+    if (!deviceId) throw new Error("Reproductor aún no listo. Espera unos segundos a que Spotify cargue o recarga la página.");
     try {
       const res = await api(`/me/player/devices`);
       const json = await res.json();
