@@ -217,6 +217,8 @@ function HomePage() {
                 themeName={themeName}
                 theme={profile.theme}
                 musicActive={musicActive}
+                bpm={spotify.state.tempo}
+                energy={spotify.state.energy}
                 onSearch={sendToChat}
               />
 
