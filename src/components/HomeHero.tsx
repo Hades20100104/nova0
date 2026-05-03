@@ -9,6 +9,8 @@ interface HomeHeroProps {
   themeName: "NEVIRA" | "NOVA";
   theme: "nevira" | "nova";
   musicActive: boolean;
+  bpm?: number | null;
+  energy?: number | null;
   onSearch: (q: string) => void;
 }
 
@@ -16,7 +18,7 @@ interface HomeHeroProps {
  * Hero del dashboard: orbe grande + ondas siempre vivas + barra de búsqueda
  * que envía el texto al chat.
  */
-export function HomeHero({ themeName, theme, musicActive, onSearch }: HomeHeroProps) {
+export function HomeHero({ themeName, theme, musicActive, bpm, energy, onSearch }: HomeHeroProps) {
   const [text, setText] = useState("");
   const voice = useVoice((finalText) => {
     setText(finalText);
