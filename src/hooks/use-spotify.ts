@@ -87,6 +87,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     current: null,
     paused: true,
     positionMs: 0,
+    tempo: null,
+    energy: null,
   });
 
   useEffect(() => {
@@ -144,7 +146,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
       clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(appUserId);
-      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
       return;
     }
     if (appUserId && !tokenOwner && getSpotifyTokensForUser(appUserId)) {
@@ -287,7 +289,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (appUserId) void clearStoredConnectionFn({});
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
-    setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+    setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
     setTokenVersion((version) => version + 1);
   }, [appUserId, clearStoredConnectionFn]);
 
