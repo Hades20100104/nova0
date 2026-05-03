@@ -57,6 +57,10 @@ export interface SpotifyState {
   current: SpotifyTrack | null;
   paused: boolean;
   positionMs: number;
+  /** BPM del track actual (de /audio-features). Null si no se conoce todavía. */
+  tempo: number | null;
+  /** Energía 0-1 (de /audio-features). Modula amplitud de las ondas. */
+  energy: number | null;
 }
 
 declare global {
@@ -83,6 +87,8 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     current: null,
     paused: true,
     positionMs: 0,
+    tempo: null,
+    energy: null,
   });
 
   useEffect(() => {
@@ -140,7 +146,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
       clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(appUserId);
-      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
       return;
     }
     if (appUserId && !tokenOwner && getSpotifyTokensForUser(appUserId)) {
@@ -283,7 +289,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (appUserId) void clearStoredConnectionFn({});
     try { playerRef.current?.disconnect(); } catch { /* noop */ }
     playerRef.current = null;
-    setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0 });
+    setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
     setTokenVersion((version) => version + 1);
   }, [appUserId, clearStoredConnectionFn]);
 
@@ -314,6 +320,31 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     return res;
   }, [getAccessToken]);
 
+  // Cuando cambia el track, obtenemos tempo + energía para sincronizar las ondas.
+  const currentTrackId = state.current?.id ?? null;
+  useEffect(() => {
+    if (!currentTrackId) {
+      setState((s) => ({ ...s, tempo: null, energy: null }));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api(`/audio-features/${currentTrackId}`);
+        const f = await res.json();
+        if (cancelled) return;
+        setState((s) => ({
+          ...s,
+          tempo: typeof f?.tempo === "number" ? f.tempo : null,
+          energy: typeof f?.energy === "number" ? f.energy : null,
+        }));
+      } catch (e) {
+        console.warn("audio-features", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentTrackId, api]);
+
   /**
    * Asegura que nuestro Web Playback device es el dispositivo activo del usuario
    * antes de mandar comandos /me/player/play. Esto soluciona el error
@@ -321,35 +352,49 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    * usuario tiene Spotify abierto en otro dispositivo (TV, móvil) o nunca
    * "transfirió" la reproducción al navegador.
    */
+  /**
+   * Espera hasta `timeout` ms a que el SDK reporte un deviceId. Resuelve con el
+   * deviceId actual o null si pasa el timeout. Evita el error inmediato
+   * "Reproductor aún no listo" cuando el usuario pulsa play justo después de
+   * conectar Spotify y el SDK aún no terminó de inicializar.
+   */
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  const waitForDevice = useCallback(async (timeout = 8000): Promise<string | null> => {
+    if (stateRef.current.deviceId) return stateRef.current.deviceId;
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      await new Promise((r) => setTimeout(r, 200));
+      if (stateRef.current.deviceId) return stateRef.current.deviceId;
+    }
+    return stateRef.current.deviceId ?? null;
+  }, []);
+
   const ensureActiveDevice = useCallback(async () => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
+    const deviceId = await waitForDevice();
+    if (!deviceId) throw new Error("Reproductor aún no listo. Espera unos segundos a que Spotify cargue o recarga la página.");
     try {
       const res = await api(`/me/player/devices`);
       const json = await res.json();
       const devices: any[] = json.devices ?? [];
-      const ours = devices.find((d) => d.id === state.deviceId);
+      const ours = devices.find((d) => d.id === deviceId);
       if (!ours || !ours.is_active) {
         await api(`/me/player`, {
           method: "PUT",
-          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+          body: JSON.stringify({ device_ids: [deviceId], play: false }),
         });
-        // Pequeña espera para que Spotify registre el cambio
         await new Promise((r) => setTimeout(r, 350));
       }
     } catch (e) {
       console.warn("ensureActiveDevice", e);
     }
-  }, [api, state.deviceId]);
+    return deviceId;
+  }, [api, waitForDevice]);
 
-  /**
-   * Llama /me/player/play con manejo de errores específicos de Spotify
-   * (404 NO_ACTIVE_DEVICE → re-transfiere y reintenta; 403 PREMIUM_REQUIRED → mensaje claro).
-   */
   const playOnDevice = useCallback(async (body: any) => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
-    await ensureActiveDevice();
+    const deviceId = await ensureActiveDevice();
     try {
-      await api(`/me/player/play?device_id=${state.deviceId}`, {
+      await api(`/me/player/play?device_id=${deviceId}`, {
         method: "PUT",
         body: JSON.stringify(body),
       });
@@ -358,14 +403,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
       if (/premium/i.test(msg)) {
         throw new Error("La reproducción dentro de la app requiere Spotify Premium.");
       }
-      // Reintento: forzar transferencia y reproducir
       try {
         await api(`/me/player`, {
           method: "PUT",
-          body: JSON.stringify({ device_ids: [state.deviceId], play: false }),
+          body: JSON.stringify({ device_ids: [deviceId], play: false }),
         });
         await new Promise((r) => setTimeout(r, 500));
-        await api(`/me/player/play?device_id=${state.deviceId}`, {
+        await api(`/me/player/play?device_id=${deviceId}`, {
           method: "PUT",
           body: JSON.stringify(body),
         });
@@ -374,7 +418,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         throw new Error(`Spotify no aceptó la reproducción: ${m}. Asegúrate de tener Spotify Premium y de no estar en modo privado en otra app.`);
       }
     }
-  }, [api, ensureActiveDevice, state.deviceId]);
+  }, [api, ensureActiveDevice]);
 
   /**
    * Busca y reproduce. Soporta:
@@ -383,8 +427,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    *  - "<canción>"          → reproduce la canción + cola con tracks del mismo artista
    */
   const playSearch = useCallback(async (query: string) => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
-    // Cualquier reproducción manual cancela la cola personal en curso
+    // ensureActiveDevice (dentro de playOnDevice) espera al SDK; no fallamos aquí.
     queueRef.current = null;
 
     const lower = query.toLowerCase().trim();
@@ -456,7 +499,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
     await playOnDevice({ uris });
     return track.name as string;
-  }, [api, playOnDevice, state.deviceId]);
+  }, [api, playOnDevice]);
 
   /**
    * Reproduce la cola personal (queueRef) desde el índice actual.
@@ -466,7 +509,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   const playNextRef = useRef<(() => Promise<void>) | null>(null);
   const playNextFromQueue = useCallback(async () => {
     const q = queueRef.current;
-    if (!q || !state.deviceId) return;
+    if (!q) return;
     const item = q.items[q.index];
     if (!item) return;
     try {
@@ -482,18 +525,17 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     } catch (e) {
       console.error("playNextFromQueue", e);
     }
-  }, [api, playOnDevice, state.deviceId]);
+  }, [api, playOnDevice]);
   playNextRef.current = playNextFromQueue;
 
   /**
    * Reproduce una playlist personal (lista de queries o URIs `spotify:track:...`).
    */
   const playLocalPlaylist = useCallback(async (queries: string[]) => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
     if (queries.length === 0) throw new Error("Esta playlist está vacía.");
     queueRef.current = { items: queries, index: 0 };
     await playNextFromQueue();
-  }, [state.deviceId, playNextFromQueue]);
+  }, [playNextFromQueue]);
 
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
