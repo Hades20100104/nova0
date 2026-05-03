@@ -501,11 +501,10 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    * Reproduce una playlist personal (lista de queries o URIs `spotify:track:...`).
    */
   const playLocalPlaylist = useCallback(async (queries: string[]) => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
     if (queries.length === 0) throw new Error("Esta playlist está vacía.");
     queueRef.current = { items: queries, index: 0 };
     await playNextFromQueue();
-  }, [state.deviceId, playNextFromQueue]);
+  }, [playNextFromQueue]);
 
 
   const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
