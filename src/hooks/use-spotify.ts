@@ -320,6 +320,31 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     return res;
   }, [getAccessToken]);
 
+  // Cuando cambia el track, obtenemos tempo + energía para sincronizar las ondas.
+  const currentTrackId = state.current?.id ?? null;
+  useEffect(() => {
+    if (!currentTrackId) {
+      setState((s) => ({ ...s, tempo: null, energy: null }));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api(`/audio-features/${currentTrackId}`);
+        const f = await res.json();
+        if (cancelled) return;
+        setState((s) => ({
+          ...s,
+          tempo: typeof f?.tempo === "number" ? f.tempo : null,
+          energy: typeof f?.energy === "number" ? f.energy : null,
+        }));
+      } catch (e) {
+        console.warn("audio-features", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentTrackId, api]);
+
   /**
    * Asegura que nuestro Web Playback device es el dispositivo activo del usuario
    * antes de mandar comandos /me/player/play. Esto soluciona el error
