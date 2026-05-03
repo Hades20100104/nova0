@@ -494,7 +494,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     } catch (e) {
       console.error("playNextFromQueue", e);
     }
-  }, [api, playOnDevice, state.deviceId]);
+  }, [api, playOnDevice]);
   playNextRef.current = playNextFromQueue;
 
   /**
