@@ -54,6 +54,8 @@ export function HomeHero({ themeName, theme, musicActive, bpm, energy, onSearch 
         <Orb size={220} active variant={theme} className="sm:[transform:scale(1.1)]" />
         <SoundWaves
           active={musicActive}
+          bpm={bpm}
+          energy={energy}
           variant={theme}
           bars={36}
           height={48}
