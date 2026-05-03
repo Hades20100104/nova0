@@ -468,7 +468,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
     await playOnDevice({ uris });
     return track.name as string;
-  }, [api, playOnDevice, state.deviceId]);
+  }, [api, playOnDevice]);
 
   /**
    * Reproduce la cola personal (queueRef) desde el índice actual.
