@@ -396,8 +396,7 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    *  - "<canción>"          → reproduce la canción + cola con tracks del mismo artista
    */
   const playSearch = useCallback(async (query: string) => {
-    if (!state.deviceId) throw new Error("Reproductor aún no listo.");
-    // Cualquier reproducción manual cancela la cola personal en curso
+    // ensureActiveDevice (dentro de playOnDevice) espera al SDK; no fallamos aquí.
     queueRef.current = null;
 
     const lower = query.toLowerCase().trim();
