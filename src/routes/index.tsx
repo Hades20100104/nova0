@@ -271,7 +271,7 @@ function HomePage() {
                       {spotify.isAuthenticated ? "Pídeme una canción y la reproduzco aquí." : "Conecta tu Spotify para reproducir música directamente."}
                     </p>
                   )}
-                  <SoundWaves active={musicActive} variant={profile.theme} bars={20} height={28} className="mt-3" />
+                  <SoundWaves active={musicActive} bpm={spotify.state.tempo} energy={spotify.state.energy} variant={profile.theme} bars={20} height={28} className="mt-3" />
                 </DashboardCard>
 
                 {/* Imágenes IA */}
