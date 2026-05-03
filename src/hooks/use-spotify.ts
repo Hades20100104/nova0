@@ -57,6 +57,10 @@ export interface SpotifyState {
   current: SpotifyTrack | null;
   paused: boolean;
   positionMs: number;
+  /** BPM del track actual (de /audio-features). Null si no se conoce todavía. */
+  tempo: number | null;
+  /** Energía 0-1 (de /audio-features). Modula amplitud de las ondas. */
+  energy: number | null;
 }
 
 declare global {
