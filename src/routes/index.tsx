@@ -383,15 +383,16 @@ function HomePage() {
                   </div>
                 </DashboardCard>
 
-                {/* Recordatorios (placeholder, próximamente) */}
+                {/* Automatizaciones */}
                 <DashboardCard
-                  title="Recordatorios"
-                  icon={Bell}
-                  badge="Próximo"
-                  badgeTone="muted"
+                  title="Automatizaciones"
+                  icon={Zap}
+                  badge="Nuevo"
+                  badgeTone="primary"
+                  onClick={() => navigate({ to: "/automations" })}
                 >
                   <p className="text-xs text-muted-foreground">
-                    Pronto podrás programar acciones automáticas a una hora específica.
+                    Geocercas, horarios y disparadores con WhatsApp y Spotify.
                   </p>
                 </DashboardCard>
 
