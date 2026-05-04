@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      automations: {
+        Row: {
+          action_config: Json
+          action_type: string
+          created_at: string
+          enabled: boolean
+          id: string
+          last_state: string | null
+          last_triggered_at: string | null
+          name: string
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_state?: string | null
+          last_triggered_at?: string | null
+          name: string
+          trigger_config?: Json
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_state?: string | null
+          last_triggered_at?: string | null
+          name?: string
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_documents: {
         Row: {
           created_at: string
