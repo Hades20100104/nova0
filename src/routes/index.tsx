@@ -14,7 +14,7 @@ import { MenuDrawer } from "@/components/MenuDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { DashboardCard } from "@/components/DashboardCard";
 import { HomeHero } from "@/components/HomeHero";
-import { Music, Image as ImageIcon, FileText, Brain, Bell, Sparkles, MessageCircleMore, Send, Wallet, Activity, Menu, Search } from "lucide-react";
+import { Music, Image as ImageIcon, FileText, Brain, Bell, Sparkles, MessageCircleMore, Send, Wallet, Activity, Menu, Search, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -383,15 +383,16 @@ function HomePage() {
                   </div>
                 </DashboardCard>
 
-                {/* Recordatorios (placeholder, próximamente) */}
+                {/* Automatizaciones */}
                 <DashboardCard
-                  title="Recordatorios"
-                  icon={Bell}
-                  badge="Próximo"
-                  badgeTone="muted"
+                  title="Automatizaciones"
+                  icon={Zap}
+                  badge="Nuevo"
+                  badgeTone="primary"
+                  onClick={() => navigate({ to: "/automations" })}
                 >
                   <p className="text-xs text-muted-foreground">
-                    Pronto podrás programar acciones automáticas a una hora específica.
+                    Geocercas, horarios y disparadores con WhatsApp y Spotify.
                   </p>
                 </DashboardCard>
 
