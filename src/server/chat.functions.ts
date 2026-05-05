@@ -57,10 +57,13 @@ export const chatWithAssistant = createServerFn({ method: "POST" })
       return { text: "", error: "LOVABLE_API_KEY no configurada en el servidor." };
     }
 
-    const callName = data.userName ? `el usuario se llama ${data.userName} y prefiere que lo llames así` : "aún no sabes el nombre del usuario";
-    const memoryBlock = data.notes.length > 0
-      ? `\nMEMORIA del usuario (cosas que has aprendido sobre él/ella, úsalas con naturalidad sin sonar invasiva):\n- ${data.notes.join("\n- ")}`
-      : "";
+    const callName = data.userName
+      ? `el usuario se llama ${data.userName} y prefiere que lo llames así`
+      : "aún no sabes el nombre del usuario";
+    const memoryBlock =
+      data.notes.length > 0
+        ? `\nMEMORIA del usuario (cosas que has aprendido sobre él/ella, úsalas con naturalidad sin sonar invasiva):\n- ${data.notes.join("\n- ")}`
+        : "";
 
     const systemPrompt = `Eres ${data.themeName}, un asistente personal inteligente, cálido, ingenioso y profundamente atento.
 Hablas español por defecto. Adaptas tu tono a la persona: ${callName}.
@@ -91,10 +94,16 @@ REGLAS:
     });
 
     if (response.status === 429) {
-      return { text: "", error: "Estoy recibiendo demasiadas peticiones. Espera un momento e inténtalo de nuevo." };
+      return {
+        text: "",
+        error: "Estoy recibiendo demasiadas peticiones. Espera un momento e inténtalo de nuevo.",
+      };
     }
     if (response.status === 402) {
-      return { text: "", error: "Se agotaron los créditos de IA. Añade fondos en Settings → Workspace → Usage." };
+      return {
+        text: "",
+        error: "Se agotaron los créditos de IA. Añade fondos en Settings → Workspace → Usage.",
+      };
     }
     if (!response.ok) {
       const t = await response.text();

@@ -1,20 +1,59 @@
 import { useEffect, useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music, Phone, Plus, Trash2, Play, ChevronLeft, ListMusic, UserPlus, WandSparkles, FileText, Download } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Music,
+  Phone,
+  Plus,
+  Trash2,
+  Play,
+  ChevronLeft,
+  ListMusic,
+  UserPlus,
+  WandSparkles,
+  FileText,
+  Download,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { generateDocument, listDocuments, downloadDocument, deleteDocument } from "@/server/docs.functions";
 import {
-  fetchContacts, addContact, deleteContact, normalizePhone, type WhatsAppContact,
+  generateDocument,
+  listDocuments,
+  downloadDocument,
+  deleteDocument,
+} from "@/server/docs.functions";
+import {
+  fetchContacts,
+  addContact,
+  deleteContact,
+  normalizePhone,
+  type WhatsAppContact,
 } from "@/lib/contacts";
 import {
-  fetchPlaylists, createPlaylist, deletePlaylist,
-  fetchTracks, addTrack, deleteTrack,
-  type Playlist, type PlaylistTrack, type PlaylistTrackInput,
+  fetchPlaylists,
+  createPlaylist,
+  deletePlaylist,
+  fetchTracks,
+  addTrack,
+  deleteTrack,
+  type Playlist,
+  type PlaylistTrack,
+  type PlaylistTrackInput,
 } from "@/lib/playlists";
 
 export interface ArtistSuggestion {
@@ -37,7 +76,9 @@ interface SettingsDrawerProps {
   userId: string;
   spotifyConnected: boolean;
   onPlayPlaylist: (queries: string[], name: string) => void;
-  onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>;
+  onGeneratePlaylistFromArtists: (
+    artists: string[],
+  ) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>;
   onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
   themeName: "NEVIRA" | "NOVA";
   initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
@@ -45,14 +86,27 @@ interface SettingsDrawerProps {
 
 type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
 
-export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, onPlayPlaylist, onGeneratePlaylistFromArtists, onSearchArtists, themeName, initialView = "menu" }: SettingsDrawerProps) {
+export function SettingsDrawer({
+  open,
+  onOpenChange,
+  userId,
+  spotifyConnected,
+  onPlayPlaylist,
+  onGeneratePlaylistFromArtists,
+  onSearchArtists,
+  themeName,
+  initialView = "menu",
+}: SettingsDrawerProps) {
   const [view, setView] = useState<View>(initialView);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
 
   // Reset al cerrar
   useEffect(() => {
     if (!open) {
-      setTimeout(() => { setView("menu"); setActivePlaylist(null); }, 250);
+      setTimeout(() => {
+        setView("menu");
+        setActivePlaylist(null);
+      }, 250);
     } else {
       setView(initialView);
     }
@@ -60,7 +114,10 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card/95 backdrop-blur-xl">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto bg-card/95 backdrop-blur-xl"
+      >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-xl">
             {view !== "menu" && (
@@ -75,9 +132,7 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
             )}
             Ajustes
           </SheetTitle>
-          <SheetDescription>
-            Personaliza tus playlists y contactos de WhatsApp.
-          </SheetDescription>
+          <SheetDescription>Personaliza tus playlists y contactos de WhatsApp.</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6">
@@ -107,7 +162,10 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
           {view === "playlists" && (
             <PlaylistsView
               userId={userId}
-              onOpen={(p) => { setActivePlaylist(p); setView("playlist-detail"); }}
+              onOpen={(p) => {
+                setActivePlaylist(p);
+                setView("playlist-detail");
+              }}
             />
           )}
 
@@ -135,8 +193,16 @@ export function SettingsDrawer({ open, onOpenChange, userId, spotifyConnected, o
 }
 
 function SettingsTile({
-  icon: Icon, label, desc, onClick,
-}: { icon: typeof Music; label: string; desc: string; onClick: () => void }) {
+  icon: Icon,
+  label,
+  desc,
+  onClick,
+}: {
+  icon: typeof Music;
+  label: string;
+  desc: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -169,7 +235,10 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
   const handleCreate = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    if (trimmed.length > 60) { toast.error("Nombre demasiado largo"); return; }
+    if (trimmed.length > 60) {
+      toast.error("Nombre demasiado largo");
+      return;
+    }
     try {
       const pl = await createPlaylist(userId, trimmed);
       setItems((xs) => [...xs, pl]);
@@ -201,21 +270,33 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleCreate()}
         />
-        <Button onClick={handleCreate}><Plus className="h-4 w-4" /></Button>
+        <Button onClick={handleCreate}>
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aún no tienes playlists. Crea la primera arriba.</p>
+        <p className="text-sm text-muted-foreground">
+          Aún no tienes playlists. Crea la primera arriba.
+        </p>
       ) : (
         <ul className="space-y-2">
           {items.map((pl) => (
-            <li key={pl.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/50 p-3">
+            <li
+              key={pl.id}
+              className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/50 p-3"
+            >
               <button type="button" onClick={() => onOpen(pl)} className="flex-1 text-left">
                 <div className="text-sm font-medium">{pl.name}</div>
                 <div className="text-xs text-muted-foreground">Toca para ver canciones</div>
               </button>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(pl.id)} aria-label="Borrar">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(pl.id)}
+                aria-label="Borrar"
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </li>
@@ -227,8 +308,22 @@ function PlaylistsView({ userId, onOpen }: { userId: string; onOpen: (p: Playlis
 }
 
 function PlaylistDetailView({
-  userId, playlist, spotifyConnected, onPlay, onGeneratePlaylistFromArtists, onSearchArtists,
-}: { userId: string; playlist: Playlist; spotifyConnected: boolean; onPlay: (queries: string[]) => void; onGeneratePlaylistFromArtists: (artists: string[]) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>; onSearchArtists: (query: string) => Promise<ArtistSuggestion[]> }) {
+  userId,
+  playlist,
+  spotifyConnected,
+  onPlay,
+  onGeneratePlaylistFromArtists,
+  onSearchArtists,
+}: {
+  userId: string;
+  playlist: Playlist;
+  spotifyConnected: boolean;
+  onPlay: (queries: string[]) => void;
+  onGeneratePlaylistFromArtists: (
+    artists: string[],
+  ) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>;
+  onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
+}) {
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [query, setQuery] = useState("");
   const [artistsSeed, setArtistsSeed] = useState("");
@@ -247,9 +342,15 @@ function PlaylistDetailView({
 
   // Autocompletado: extrae el último fragmento (después de la última coma) y lo busca
   useEffect(() => {
-    if (!spotifyConnected) { setSuggestions([]); return; }
+    if (!spotifyConnected) {
+      setSuggestions([]);
+      return;
+    }
     const lastFragment = artistsSeed.split(",").pop()?.trim() ?? "";
-    if (lastFragment.length < 2) { setSuggestions([]); return; }
+    if (lastFragment.length < 2) {
+      setSuggestions([]);
+      return;
+    }
     const handle = setTimeout(async () => {
       setSearchingArtists(true);
       try {
@@ -272,7 +373,10 @@ function PlaylistDetailView({
   const handleAdd = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
-    if (trimmed.length > 200) { toast.error("Texto demasiado largo"); return; }
+    if (trimmed.length > 200) {
+      toast.error("Texto demasiado largo");
+      return;
+    }
     try {
       const tr = await addTrack(userId, playlist.id, trimmed, tracks.length);
       setTracks((xs) => [...xs, tr]);
@@ -292,7 +396,10 @@ function PlaylistDetailView({
   };
 
   const handleGenerateFromArtists = async () => {
-    const artists = artistsSeed.split(",").map((artist) => artist.trim()).filter(Boolean);
+    const artists = artistsSeed
+      .split(",")
+      .map((artist) => artist.trim())
+      .filter(Boolean);
     if (artists.length === 0) {
       toast.error("Escribe al menos un artista");
       return;
@@ -300,16 +407,33 @@ function PlaylistDetailView({
     setGenerating(true);
     setLastLog([]);
     try {
-      const { queries: generated, tracks: generatedTracks, log } = await onGeneratePlaylistFromArtists(artists);
+      const {
+        queries: generated,
+        tracks: generatedTracks,
+        log,
+      } = await onGeneratePlaylistFromArtists(artists);
       setLastLog(log);
       if (generated.length === 0) {
-        const failedNames = log.filter((l) => l.tracks === 0).map((l) => l.artist).join(", ");
-        toast.error(failedNames ? `No encontré canciones de: ${failedNames}` : "No pude generar canciones con esos artistas");
+        const failedNames = log
+          .filter((l) => l.tracks === 0)
+          .map((l) => l.artist)
+          .join(", ");
+        toast.error(
+          failedNames
+            ? `No encontré canciones de: ${failedNames}`
+            : "No pude generar canciones con esos artistas",
+        );
         return;
       }
-      const existing = new Set(tracks.map((track) => (track.spotify_track_id ?? track.query).toLowerCase()));
-      const candidates: PlaylistTrackInput[] = generatedTracks?.length ? generatedTracks : generated.map((query) => ({ query }));
-      const toInsert = candidates.filter((item) => !existing.has((item.spotify_track_id ?? item.query).toLowerCase()));
+      const existing = new Set(
+        tracks.map((track) => (track.spotify_track_id ?? track.query).toLowerCase()),
+      );
+      const candidates: PlaylistTrackInput[] = generatedTracks?.length
+        ? generatedTracks
+        : generated.map((query) => ({ query }));
+      const toInsert = candidates.filter(
+        (item) => !existing.has((item.spotify_track_id ?? item.query).toLowerCase()),
+      );
       if (toInsert.length === 0) {
         toast.error("Esas canciones ya estaban en la playlist");
         return;
@@ -337,7 +461,8 @@ function PlaylistDetailView({
       <div>
         <h3 className="text-base font-semibold">{playlist.name}</h3>
         <p className="text-xs text-muted-foreground">
-          Las canciones se reproducirán en orden y la siguiente empezará automáticamente al terminar la anterior.
+          Las canciones se reproducirán en orden y la siguiente empezará automáticamente al terminar
+          la anterior.
         </p>
       </div>
 
@@ -349,7 +474,9 @@ function PlaylistDetailView({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
-        <Button onClick={handleAdd}><Plus className="h-4 w-4" /></Button>
+        <Button onClick={handleAdd}>
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="rounded-xl border border-border bg-card/50 p-3 space-y-2">
@@ -381,7 +508,9 @@ function PlaylistDetailView({
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{a.name}</div>
-                      <div className="text-xs text-muted-foreground">{a.followers.toLocaleString()} seguidores</div>
+                      <div className="text-xs text-muted-foreground">
+                        {a.followers.toLocaleString()} seguidores
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -392,7 +521,12 @@ function PlaylistDetailView({
             <p className="absolute right-2 top-2 text-xs text-muted-foreground">Buscando…</p>
           )}
         </div>
-        <Button variant="outline" className="w-full" onClick={handleGenerateFromArtists} disabled={generating}>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleGenerateFromArtists}
+          disabled={generating}
+        >
           {generating ? "Generando…" : "Generar playlist"}
         </Button>
         {lastLog.length > 0 && (
@@ -401,9 +535,10 @@ function PlaylistDetailView({
             {lastLog.map((entry, i) => (
               <div key={i} className="text-xs">
                 <span className="font-medium">{entry.artist}</span>{" "}
-                {entry.resolvedAs && entry.resolvedAs.toLowerCase() !== entry.artist.toLowerCase() && (
-                  <span className="text-muted-foreground">→ {entry.resolvedAs}</span>
-                )}{" "}
+                {entry.resolvedAs &&
+                  entry.resolvedAs.toLowerCase() !== entry.artist.toLowerCase() && (
+                    <span className="text-muted-foreground">→ {entry.resolvedAs}</span>
+                  )}{" "}
                 {entry.tracks > 0 ? (
                   <span className="text-primary">✓ {entry.tracks} canciones</span>
                 ) : (
@@ -427,14 +562,24 @@ function PlaylistDetailView({
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : tracks.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aún no hay canciones. Añade la primera arriba.</p>
+        <p className="text-sm text-muted-foreground">
+          Aún no hay canciones. Añade la primera arriba.
+        </p>
       ) : (
         <ol className="space-y-2">
           {tracks.map((t, i) => (
-            <li key={t.id} className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3">
+            <li
+              key={t.id}
+              className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3"
+            >
               <span className="text-xs font-mono text-muted-foreground w-5">{i + 1}.</span>
               <span className="flex-1 truncate text-sm">{t.query}</span>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} aria-label="Borrar">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(t.id)}
+                aria-label="Borrar"
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </li>
@@ -463,14 +608,24 @@ function ContactsView({ userId }: { userId: string }) {
   const handleAdd = async () => {
     const n = name.trim();
     const p = phone.trim();
-    if (!n || !p) { toast.error("Nombre y teléfono son obligatorios"); return; }
-    if (n.length > 60) { toast.error("Nombre demasiado largo"); return; }
+    if (!n || !p) {
+      toast.error("Nombre y teléfono son obligatorios");
+      return;
+    }
+    if (n.length > 60) {
+      toast.error("Nombre demasiado largo");
+      return;
+    }
     const clean = normalizePhone(p);
-    if (clean.replace("+", "").length < 7) { toast.error("Número inválido"); return; }
+    if (clean.replace("+", "").length < 7) {
+      toast.error("Número inválido");
+      return;
+    }
     try {
       const c = await addContact(userId, n, p);
       setItems((xs) => [...xs, c].sort((a, b) => a.name.localeCompare(b.name)));
-      setName(""); setPhone("");
+      setName("");
+      setPhone("");
       toast.success(`${c.name} añadido`);
     } catch {
       toast.error("No pude guardar el contacto");
@@ -503,13 +658,15 @@ function ContactsView({ userId }: { userId: string }) {
             onChange={(e) => setPhone(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
-          <Button onClick={handleAdd}><UserPlus className="h-4 w-4" /></Button>
+          <Button onClick={handleAdd}>
+            <UserPlus className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Tip: incluye el código de país (ej. <span className="font-mono">+52</span>). Después podrás decir
-        “WhatsApp a <span className="font-medium">Mamá</span> diciendo hola”.
+        Tip: incluye el código de país (ej. <span className="font-mono">+52</span>). Después podrás
+        decir “WhatsApp a <span className="font-medium">Mamá</span> diciendo hola”.
       </p>
 
       {loading ? (
@@ -519,12 +676,20 @@ function ContactsView({ userId }: { userId: string }) {
       ) : (
         <ul className="space-y-2">
           {items.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/50 p-3">
+            <li
+              key={c.id}
+              className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/50 p-3"
+            >
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium">{c.name}</div>
                 <div className="truncate font-mono text-xs text-muted-foreground">{c.phone}</div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} aria-label="Borrar">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(c.id)}
+                aria-label="Borrar"
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </li>
@@ -580,7 +745,9 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
     }
   };
 
-  useEffect(() => { void reloadHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => {
+    void reloadHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
 
   const handleGenerate = async () => {
     if (prompt.trim().length < 6) {
@@ -629,7 +796,9 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
     <div className="space-y-3">
       <div>
         <h3 className="text-base font-semibold">Generador de Docs</h3>
-        <p className="text-xs text-muted-foreground">Crea archivos descargables para reportes, tablas, presentaciones y resúmenes.</p>
+        <p className="text-xs text-muted-foreground">
+          Crea archivos descargables para reportes, tablas, presentaciones y resúmenes.
+        </p>
       </div>
 
       <Select value={format} onValueChange={(value: "docx" | "xlsx" | "pptx") => setFormat(value)}>
@@ -651,7 +820,8 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
       />
 
       <div className="rounded-xl border border-border bg-card/50 p-3 text-xs text-muted-foreground">
-        Útil para: propuestas, reportes, tablas comparativas, resúmenes ejecutivos, presupuestos y presentaciones rápidas.
+        Útil para: propuestas, reportes, tablas comparativas, resúmenes ejecutivos, presupuestos y
+        presentaciones rápidas.
       </div>
 
       <Button className="w-full" onClick={handleGenerate} disabled={loading}>
@@ -664,22 +834,43 @@ function DocsView({ themeName }: { themeName: "NEVIRA" | "NOVA" }) {
         {historyLoading ? (
           <p className="text-sm text-muted-foreground">Cargando…</p>
         ) : history.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aquí aparecerán los documentos que generes para volver a descargarlos.</p>
+          <p className="text-sm text-muted-foreground">
+            Aquí aparecerán los documentos que generes para volver a descargarlos.
+          </p>
         ) : (
           <ul className="space-y-2">
             {history.map((item) => (
-              <li key={item.id} className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3">
+              <li
+                key={item.id}
+                className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-3"
+              >
                 <FileText className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{item.title}</div>
                   <div className="text-xs text-muted-foreground">
-                    {formatLabel[item.format]} · {new Date(item.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {formatLabel[item.format]} ·{" "}
+                    {new Date(item.createdAt).toLocaleDateString("es-ES", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleRedownload(item)} aria-label="Descargar">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRedownload(item)}
+                  aria-label="Descargar"
+                >
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleHistoryDelete(item.id)} aria-label="Borrar">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleHistoryDelete(item.id)}
+                  aria-label="Borrar"
+                >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </li>

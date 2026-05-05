@@ -73,7 +73,12 @@ export function HomeHero({ themeName, theme, musicActive, bpm, energy, onSearch 
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submit();
+              }
+            }}
             placeholder={voice.listening ? "Escuchando…" : `¿Qué deseas que haga ${themeName}?`}
             className="flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground sm:text-base"
           />

@@ -1,6 +1,24 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Music, Image as ImageIcon, MessageCircle, Brain, LogOut, Sparkles, Bell, Calendar, Settings, FileText, Palette } from "lucide-react";
+import {
+  Music,
+  Image as ImageIcon,
+  MessageCircle,
+  Brain,
+  LogOut,
+  Sparkles,
+  Bell,
+  Calendar,
+  Settings,
+  FileText,
+  Palette,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import type { NeviraColor, NovaColor } from "@/lib/cloud-memory";
@@ -24,25 +42,35 @@ interface MenuDrawerProps {
 }
 
 const NEVIRA_SWATCHES: { id: NeviraColor; label: string; from: string; to: string }[] = [
-  { id: "aqua",    label: "Cobalto",  from: "oklch(0.7 0.18 245)",  to: "oklch(0.78 0.16 230)" },
+  { id: "aqua", label: "Cobalto", from: "oklch(0.7 0.18 245)", to: "oklch(0.78 0.16 230)" },
   { id: "emerald", label: "Esmeralda", from: "oklch(0.72 0.18 165)", to: "oklch(0.82 0.16 155)" },
-  { id: "coral",   label: "Coral",    from: "oklch(0.72 0.18 30)",  to: "oklch(0.82 0.16 50)" },
-  { id: "rose",    label: "Rosa",     from: "oklch(0.72 0.2 350)",  to: "oklch(0.82 0.16 0)" },
+  { id: "coral", label: "Coral", from: "oklch(0.72 0.18 30)", to: "oklch(0.82 0.16 50)" },
+  { id: "rose", label: "Rosa", from: "oklch(0.72 0.2 350)", to: "oklch(0.82 0.16 0)" },
 ];
 
 const NOVA_SWATCHES: { id: NovaColor; label: string; from: string; to: string }[] = [
-  { id: "violet",  label: "Violeta",  from: "oklch(0.65 0.22 295)", to: "oklch(0.75 0.2 305)" },
-  { id: "magenta", label: "Magenta",  from: "oklch(0.65 0.25 340)", to: "oklch(0.78 0.22 350)" },
-  { id: "cyan",    label: "Cian",     from: "oklch(0.7 0.2 210)",   to: "oklch(0.78 0.18 195)" },
-  { id: "emerald", label: "Esmeralda", from: "oklch(0.7 0.2 155)",  to: "oklch(0.8 0.18 145)" },
-  { id: "gold",    label: "Oro",      from: "oklch(0.78 0.16 75)",  to: "oklch(0.85 0.15 90)" },
+  { id: "violet", label: "Violeta", from: "oklch(0.65 0.22 295)", to: "oklch(0.75 0.2 305)" },
+  { id: "magenta", label: "Magenta", from: "oklch(0.65 0.25 340)", to: "oklch(0.78 0.22 350)" },
+  { id: "cyan", label: "Cian", from: "oklch(0.7 0.2 210)", to: "oklch(0.78 0.18 195)" },
+  { id: "emerald", label: "Esmeralda", from: "oklch(0.7 0.2 155)", to: "oklch(0.8 0.18 145)" },
+  { id: "gold", label: "Oro", from: "oklch(0.78 0.16 75)", to: "oklch(0.85 0.15 90)" },
 ];
 
 export function MenuDrawer({
-  open, onOpenChange, themeName, theme, userName, notesCount,
-  neviraColor, novaColor,
-  onThemeChange, onNeviraColorChange, onNovaColorChange,
-  onSection, onClearMemory, onLogout,
+  open,
+  onOpenChange,
+  themeName,
+  theme,
+  userName,
+  notesCount,
+  neviraColor,
+  novaColor,
+  onThemeChange,
+  onNeviraColorChange,
+  onNovaColorChange,
+  onSection,
+  onClearMemory,
+  onLogout,
 }: MenuDrawerProps) {
   const swatches = theme === "nova" ? NOVA_SWATCHES : NEVIRA_SWATCHES;
   const activeSwatch = theme === "nova" ? novaColor : neviraColor;
@@ -53,7 +81,10 @@ export function MenuDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card/95 backdrop-blur-xl">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto bg-card/95 backdrop-blur-xl"
+      >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-xl">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -67,11 +98,15 @@ export function MenuDrawer({
         <div className="mt-6 space-y-6">
           {/* Tema */}
           <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Apariencia</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Apariencia
+            </h3>
             <div className="rounded-xl border border-border bg-card/50 p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium">Modo {theme === "nova" ? "Noche" : "Día"}</div>
+                  <div className="text-sm font-medium">
+                    Modo {theme === "nova" ? "Noche" : "Día"}
+                  </div>
                   <div className="text-xs text-muted-foreground">Cambia entre NEVIRA y NOVA</div>
                 </div>
                 <ThemeSwitch theme={theme} onChange={onThemeChange} />
@@ -92,7 +127,7 @@ export function MenuDrawer({
                         "group relative flex flex-col items-center gap-1 rounded-lg border-2 p-1.5 transition-all",
                         activeSwatch === s.id
                           ? "border-foreground/80 scale-105"
-                          : "border-transparent hover:border-border"
+                          : "border-transparent hover:border-border",
                       )}
                       aria-label={`Color ${s.label}`}
                     >
@@ -110,16 +145,43 @@ export function MenuDrawer({
 
           {/* Funciones */}
           <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Funciones</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Funciones
+            </h3>
             <div className="grid grid-cols-2 gap-2">
-              <MenuTile icon={Music} label="Música" desc="Spotify Premium" onClick={() => onSection("music")} />
-              <MenuTile icon={ImageIcon} label="Imágenes" desc="Generar con IA" onClick={() => onSection("images")} />
-              <MenuTile icon={MessageCircle} label="WhatsApp" desc="Enviar por voz" onClick={() => onSection("whatsapp")} />
+              <MenuTile
+                icon={Music}
+                label="Música"
+                desc="Spotify Premium"
+                onClick={() => onSection("music")}
+              />
+              <MenuTile
+                icon={ImageIcon}
+                label="Imágenes"
+                desc="Generar con IA"
+                onClick={() => onSection("images")}
+              />
+              <MenuTile
+                icon={MessageCircle}
+                label="WhatsApp"
+                desc="Enviar por voz"
+                onClick={() => onSection("whatsapp")}
+              />
               <Link to="/gallery" onClick={() => onOpenChange(false)} className="block">
                 <MenuTile icon={ImageIcon} label="Mi galería" desc="Imágenes guardadas" />
               </Link>
-              <MenuTile icon={Settings} label="Ajustes" desc="Playlists y contactos" onClick={() => onSection("settings")} />
-              <MenuTile icon={FileText} label="Docs" desc="Word, Excel y PowerPoint" onClick={() => onSection("docs")} />
+              <MenuTile
+                icon={Settings}
+                label="Ajustes"
+                desc="Playlists y contactos"
+                onClick={() => onSection("settings")}
+              />
+              <MenuTile
+                icon={FileText}
+                label="Docs"
+                desc="Word, Excel y PowerPoint"
+                onClick={() => onSection("docs")}
+              />
               <MenuTile icon={Bell} label="Recordatorios" desc="Próximamente" disabled />
               <MenuTile icon={Calendar} label="Calendario" desc="Próximamente" disabled />
             </div>
@@ -127,7 +189,9 @@ export function MenuDrawer({
 
           {/* Memoria */}
           <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Memoria</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Memoria
+            </h3>
             <div className="rounded-xl border border-border bg-card/50 p-3">
               <div className="flex items-center gap-3">
                 <Brain className="h-5 w-5 text-primary" />
@@ -155,9 +219,17 @@ export function MenuDrawer({
 }
 
 function MenuTile({
-  icon: Icon, label, desc, onClick, disabled,
+  icon: Icon,
+  label,
+  desc,
+  onClick,
+  disabled,
 }: {
-  icon: typeof Music; label: string; desc: string; onClick?: () => void; disabled?: boolean;
+  icon: typeof Music;
+  label: string;
+  desc: string;
+  onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button

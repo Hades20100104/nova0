@@ -32,7 +32,9 @@ interface StoredSpotifyConnection {
 
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-async function readSpotifyTokenResponse(res: Response): Promise<SpotifyTokenResponse & { rawText?: string }> {
+async function readSpotifyTokenResponse(
+  res: Response,
+): Promise<SpotifyTokenResponse & { rawText?: string }> {
   const rawText = await res.text();
   try {
     return { ...(JSON.parse(rawText) as SpotifyTokenResponse), rawText };
@@ -41,7 +43,9 @@ async function readSpotifyTokenResponse(res: Response): Promise<SpotifyTokenResp
   }
 }
 
-async function fetchSpotifyProfile(accessToken: string): Promise<{ id: string | null; displayName: string | null }> {
+async function fetchSpotifyProfile(
+  accessToken: string,
+): Promise<{ id: string | null; displayName: string | null }> {
   try {
     const meRes = await fetch("https://api.spotify.com/v1/me", {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -96,7 +100,12 @@ export const exchangeSpotifyCode = createServerFn({ method: "POST" })
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
-      return { error: "Spotify no está configurado en el servidor.", access_token: null, refresh_token: null, expires_in: 0 };
+      return {
+        error: "Spotify no está configurado en el servidor.",
+        access_token: null,
+        refresh_token: null,
+        expires_in: 0,
+      };
     }
 
     const body = new URLSearchParams({
@@ -178,26 +187,38 @@ export const exchangeAndStoreSpotifyCode = createServerFn({ method: "POST" })
     const json = await readSpotifyTokenResponse(res);
     if (!res.ok || !json.access_token) {
       console.error("Spotify exchange/store error:", res.status, json.rawText ?? json.error);
-      return { error: json.error_description || json.error || "No se pudo conectar Spotify.", connected: false };
+      return {
+        error: json.error_description || json.error || "No se pudo conectar Spotify.",
+        connected: false,
+      };
     }
 
     const spotifyProfile = await fetchSpotifyProfile(json.access_token);
     const expiresAt = new Date(Date.now() + (json.expires_in ?? 3600) * 1000).toISOString();
-    const scopes = (json.scope ?? "").split(" ").map((scope) => scope.trim()).filter(Boolean);
+    const scopes = (json.scope ?? "")
+      .split(" ")
+      .map((scope) => scope.trim())
+      .filter(Boolean);
 
-    const { error } = await (context.supabase as any).from("spotify_connections").upsert({
-      user_id: context.userId,
-      spotify_user_id: spotifyProfile.id,
-      spotify_display_name: spotifyProfile.displayName,
-      access_token: json.access_token,
-      refresh_token: json.refresh_token ?? null,
-      expires_at: expiresAt,
-      scopes,
-    }, { onConflict: "user_id" });
+    const { error } = await (context.supabase as any).from("spotify_connections").upsert(
+      {
+        user_id: context.userId,
+        spotify_user_id: spotifyProfile.id,
+        spotify_display_name: spotifyProfile.displayName,
+        access_token: json.access_token,
+        refresh_token: json.refresh_token ?? null,
+        expires_at: expiresAt,
+        scopes,
+      },
+      { onConflict: "user_id" },
+    );
 
     if (error) {
       console.error("spotify connection upsert error:", error);
-      return { error: "Spotify conectó, pero no pude guardar la sesión del usuario.", connected: false };
+      return {
+        error: "Spotify conectó, pero no pude guardar la sesión del usuario.",
+        connected: false,
+      };
     }
 
     return {
@@ -223,7 +244,12 @@ export const refreshSpotifyToken = createServerFn({ method: "POST" })
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
-      return { error: "Spotify no está configurado en el servidor.", access_token: null, refresh_token: null, expires_in: 0 };
+      return {
+        error: "Spotify no está configurado en el servidor.",
+        access_token: null,
+        refresh_token: null,
+        expires_in: 0,
+      };
     }
 
     const body = new URLSearchParams({
@@ -266,7 +292,9 @@ export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: row, error } = await (context.supabase as any)
       .from("spotify_connections")
-      .select("access_token, refresh_token, expires_at, spotify_user_id, spotify_display_name, scopes")
+      .select(
+        "access_token, refresh_token, expires_at, spotify_user_id, spotify_display_name, scopes",
+      )
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error || !row) return { connected: false, tokens: null, error: null as string | null };
@@ -277,17 +305,30 @@ export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
     let expiresAt = new Date(connection.expires_at).getTime();
 
     if (Date.now() >= expiresAt - 60_000) {
-      if (!refreshToken) return { connected: false, tokens: null, error: "La sesión de Spotify expiró. Conéctala otra vez." };
+      if (!refreshToken)
+        return {
+          connected: false,
+          tokens: null,
+          error: "La sesión de Spotify expiró. Conéctala otra vez.",
+        };
       const refreshed = await refreshWithSpotify(refreshToken);
       if (refreshed.error || !refreshed.access_token) {
-        return { connected: false, tokens: null, error: refreshed.error_description || refreshed.error || "No pude refrescar Spotify." };
+        return {
+          connected: false,
+          tokens: null,
+          error: refreshed.error_description || refreshed.error || "No pude refrescar Spotify.",
+        };
       }
       accessToken = refreshed.access_token;
       refreshToken = refreshed.refresh_token ?? refreshToken;
       expiresAt = Date.now() + (refreshed.expires_in ?? 3600) * 1000;
       await (context.supabase as any)
         .from("spotify_connections")
-        .update({ access_token: accessToken, refresh_token: refreshToken, expires_at: new Date(expiresAt).toISOString() })
+        .update({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: new Date(expiresAt).toISOString(),
+        })
         .eq("user_id", context.userId);
     }
 
@@ -307,7 +348,10 @@ export const getStoredSpotifyConnection = createServerFn({ method: "POST" })
 export const clearStoredSpotifyConnection = createServerFn({ method: "POST" })
   .middleware([withSupabaseAuth])
   .handler(async ({ context }) => {
-    await (context.supabase as any).from("spotify_connections").delete().eq("user_id", context.userId);
+    await (context.supabase as any)
+      .from("spotify_connections")
+      .delete()
+      .eq("user_id", context.userId);
     return { ok: true };
   });
 

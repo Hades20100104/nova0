@@ -18,20 +18,20 @@ export function ThemeSwitch({ theme, onChange, className }: ThemeSwitchProps) {
       onClick={() => onChange(isNova ? "nevira" : "nova")}
       className={cn(
         "group relative flex h-10 w-32 items-center rounded-full border border-border bg-card/50 backdrop-blur transition-all hover:border-primary/60",
-        className
+        className,
       )}
       aria-label={`Cambiar a modo ${isNova ? "NEVIRA (día)" : "NOVA (noche)"}`}
     >
       <div
         className={cn(
           "absolute top-1 h-8 w-[60px] rounded-full bg-gradient-to-r from-primary to-primary-glow shadow-glow transition-all duration-500",
-          isNova ? "left-[66px]" : "left-1"
+          isNova ? "left-[66px]" : "left-1",
         )}
       />
       <span
         className={cn(
           "relative z-10 flex h-full w-1/2 items-center justify-center gap-1 text-xs font-semibold tracking-wider transition-colors",
-          !isNova ? "text-primary-foreground" : "text-muted-foreground"
+          !isNova ? "text-primary-foreground" : "text-muted-foreground",
         )}
       >
         <Sun className="h-3.5 w-3.5" />
@@ -40,7 +40,7 @@ export function ThemeSwitch({ theme, onChange, className }: ThemeSwitchProps) {
       <span
         className={cn(
           "relative z-10 flex h-full w-1/2 items-center justify-center gap-1 text-xs font-semibold tracking-wider transition-colors",
-          isNova ? "text-primary-foreground" : "text-muted-foreground"
+          isNova ? "text-primary-foreground" : "text-muted-foreground",
         )}
       >
         <Moon className="h-3.5 w-3.5" />

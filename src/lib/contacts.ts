@@ -43,7 +43,10 @@ export async function deleteContact(id: string) {
 }
 
 /** Busca un contacto por nombre (case-insensitive, primer match parcial). */
-export function findContactByName(contacts: WhatsAppContact[], name: string): WhatsAppContact | null {
+export function findContactByName(
+  contacts: WhatsAppContact[],
+  name: string,
+): WhatsAppContact | null {
   const n = name.toLowerCase().trim();
   if (!n) return null;
   // Match exacto primero

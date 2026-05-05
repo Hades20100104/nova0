@@ -7,7 +7,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/gallery")({
   beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
@@ -47,13 +49,15 @@ function GalleryPage() {
           .from("generated-images")
           .createSignedUrl(row.storage_path, 60 * 60);
         return { ...row, signedUrl: signed?.signedUrl ?? row.public_url };
-      })
+      }),
     );
     setImages(withSigned);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleDelete = async (img: ImageRow) => {
     if (!confirm("¿Borrar esta imagen para siempre?")) return;
@@ -98,7 +102,10 @@ function GalleryPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {images.map((img) => (
-              <div key={img.id} className="group relative rounded-2xl border border-border bg-card/60 overflow-hidden">
+              <div
+                key={img.id}
+                className="group relative rounded-2xl border border-border bg-card/60 overflow-hidden"
+              >
                 <div className="aspect-square w-full overflow-hidden bg-muted">
                   <img
                     src={img.signedUrl}
@@ -108,7 +115,9 @@ function GalleryPage() {
                   />
                 </div>
                 <div className="p-3 space-y-2">
-                  <p className="line-clamp-2 text-xs text-muted-foreground italic">"{img.prompt}"</p>
+                  <p className="line-clamp-2 text-xs text-muted-foreground italic">
+                    "{img.prompt}"
+                  </p>
                   <div className="flex gap-2">
                     <a
                       href={img.signedUrl}

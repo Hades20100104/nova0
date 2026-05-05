@@ -16,7 +16,10 @@ export function WhatsAppConfirm({ phone, message, onConfirm, onCancel }: WhatsAp
         Enviar WhatsApp
       </div>
       <div className="space-y-1 text-sm">
-        <div><span className="text-muted-foreground">Para: </span><span className="font-mono">{phone}</span></div>
+        <div>
+          <span className="text-muted-foreground">Para: </span>
+          <span className="font-mono">{phone}</span>
+        </div>
         <div className="rounded-lg border border-border bg-background/60 p-2.5 text-sm">
           “{message}”
         </div>
@@ -25,7 +28,11 @@ export function WhatsAppConfirm({ phone, message, onConfirm, onCancel }: WhatsAp
         <Button variant="outline" size="sm" className="flex-1" onClick={onCancel}>
           <X className="mr-1 h-3.5 w-3.5" /> Cancelar
         </Button>
-        <Button size="sm" className="flex-1 bg-[#25D366] text-white hover:bg-[#1ebe57]" onClick={onConfirm}>
+        <Button
+          size="sm"
+          className="flex-1 bg-[#25D366] text-white hover:bg-[#1ebe57]"
+          onClick={onConfirm}
+        >
           <MessageCircle className="mr-1 h-3.5 w-3.5" /> Abrir WhatsApp
         </Button>
       </div>

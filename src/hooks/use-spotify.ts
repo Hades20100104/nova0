@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getSpotifyTokensForUser, setSpotifyTokensForUser, clearSpotifyTokensForUser, generateCodeChallenge, generateCodeVerifier, setSpotifyPkce, setSpotifyUserHint, getSpotifyUserHint } from "@/lib/spotify-storage";
-import { clearStoredSpotifyConnection, getStoredSpotifyConnection, refreshSpotifyToken, SPOTIFY_CLIENT_ID_PUBLIC } from "@/server/spotify.functions";
+import {
+  getSpotifyTokensForUser,
+  setSpotifyTokensForUser,
+  clearSpotifyTokensForUser,
+  generateCodeChallenge,
+  generateCodeVerifier,
+  setSpotifyPkce,
+  setSpotifyUserHint,
+  getSpotifyUserHint,
+} from "@/lib/spotify-storage";
+import {
+  clearStoredSpotifyConnection,
+  getStoredSpotifyConnection,
+  refreshSpotifyToken,
+  SPOTIFY_CLIENT_ID_PUBLIC,
+} from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 const SCOPES = [
@@ -16,7 +30,11 @@ function toResolvedTrack(track: any): SpotifyResolvedTrack | null {
   const title = track?.name;
   const uri = track?.uri;
   const id = track?.id;
-  const artist = track?.artists?.map((a: any) => a.name).filter(Boolean).join(", ") ?? "";
+  const artist =
+    track?.artists
+      ?.map((a: any) => a.name)
+      .filter(Boolean)
+      .join(", ") ?? "";
   if (!title || !uri || !id) return null;
   return {
     query: artist ? `${artist} - ${title}` : title,
@@ -107,7 +125,9 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         console.warn("getStoredSpotifyConnection", e);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [appUserId, enabled, getStoredConnectionFn]);
 
   /** Devuelve un access token vigente (refresca si expira). */
@@ -146,7 +166,16 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     if (appUserId && tokenOwner && tokenOwner !== appUserId) {
       clearSpotifyTokensForUser(appUserId);
       setSpotifyUserHint(appUserId);
-      setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
+      setState({
+        ready: false,
+        connected: false,
+        deviceId: null,
+        current: null,
+        paused: true,
+        positionMs: 0,
+        tempo: null,
+        energy: null,
+      });
       return;
     }
     if (appUserId && !tokenOwner && getSpotifyTokensForUser(appUserId)) {
@@ -201,15 +230,17 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
           ...prev,
           paused: st.paused,
           positionMs: st.position,
-          current: t ? {
-            id: t.id,
-            name: t.name,
-            artist: t.artists?.map((a: any) => a.name).join(", ") ?? "",
-            album: t.album?.name ?? "",
-            cover: t.album?.images?.[0]?.url ?? null,
-            uri: t.uri,
-            durationMs: t.duration_ms,
-          } : prev.current,
+          current: t
+            ? {
+                id: t.id,
+                name: t.name,
+                artist: t.artists?.map((a: any) => a.name).join(", ") ?? "",
+                album: t.album?.name ?? "",
+                cover: t.album?.images?.[0]?.url ?? null,
+                uri: t.uri,
+                durationMs: t.duration_ms,
+              }
+            : prev.current,
         }));
       });
       player.addListener("authentication_error", () => {
@@ -231,7 +262,11 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
     return () => {
       mounted = false;
-      try { playerRef.current?.disconnect(); } catch { /* noop */ }
+      try {
+        playerRef.current?.disconnect();
+      } catch {
+        /* noop */
+      }
       playerRef.current = null;
     };
   }, [appUserId, enabled, getAccessToken, tokenVersion]);
@@ -287,38 +322,54 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     clearSpotifyTokensForUser(appUserId);
     setSpotifyUserHint(null);
     if (appUserId) void clearStoredConnectionFn({});
-    try { playerRef.current?.disconnect(); } catch { /* noop */ }
+    try {
+      playerRef.current?.disconnect();
+    } catch {
+      /* noop */
+    }
     playerRef.current = null;
-    setState({ ready: false, connected: false, deviceId: null, current: null, paused: true, positionMs: 0, tempo: null, energy: null });
+    setState({
+      ready: false,
+      connected: false,
+      deviceId: null,
+      current: null,
+      paused: true,
+      positionMs: 0,
+      tempo: null,
+      energy: null,
+    });
     setTokenVersion((version) => version + 1);
   }, [appUserId, clearStoredConnectionFn]);
 
   /** Llama API de Spotify con token vigente. */
-  const api = useCallback(async (path: string, init?: RequestInit) => {
-    const token = await getAccessToken();
-    if (!token) throw new Error("No hay token de Spotify.");
-    const res = await fetch(`https://api.spotify.com/v1${path}`, {
-      ...init,
-      headers: {
-        ...(init?.headers || {}),
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!res.ok && res.status !== 204) {
-      const raw = await res.text().catch(() => "");
-      let message = `Spotify devolvió ${res.status}.`;
-      try {
-        const parsed = raw ? JSON.parse(raw) : null;
-        message = parsed?.error?.message ?? parsed?.error_description ?? parsed?.error ?? message;
-      } catch {
-        if (raw) message = raw;
+  const api = useCallback(
+    async (path: string, init?: RequestInit) => {
+      const token = await getAccessToken();
+      if (!token) throw new Error("No hay token de Spotify.");
+      const res = await fetch(`https://api.spotify.com/v1${path}`, {
+        ...init,
+        headers: {
+          ...(init?.headers || {}),
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok && res.status !== 204) {
+        const raw = await res.text().catch(() => "");
+        let message = `Spotify devolvió ${res.status}.`;
+        try {
+          const parsed = raw ? JSON.parse(raw) : null;
+          message = parsed?.error?.message ?? parsed?.error_description ?? parsed?.error ?? message;
+        } catch {
+          if (raw) message = raw;
+        }
+        if (res.status === 401) clearSpotifyTokensForUser(appUserId);
+        throw new Error(message);
       }
-      if (res.status === 401) clearSpotifyTokensForUser(appUserId);
-      throw new Error(message);
-    }
-    return res;
-  }, [getAccessToken]);
+      return res;
+    },
+    [getAccessToken],
+  );
 
   // Cuando cambia el track, obtenemos tempo + energía para sincronizar las ondas.
   const currentTrackId = state.current?.id ?? null;
@@ -342,7 +393,9 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
         console.warn("audio-features", e);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [currentTrackId, api]);
 
   /**
@@ -359,7 +412,9 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    * conectar Spotify y el SDK aún no terminó de inicializar.
    */
   const stateRef = useRef(state);
-  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
   const waitForDevice = useCallback(async (timeout = 8000): Promise<string | null> => {
     if (stateRef.current.deviceId) return stateRef.current.deviceId;
     const start = Date.now();
@@ -372,7 +427,10 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
 
   const ensureActiveDevice = useCallback(async () => {
     const deviceId = await waitForDevice();
-    if (!deviceId) throw new Error("Reproductor aún no listo. Espera unos segundos a que Spotify cargue o recarga la página.");
+    if (!deviceId)
+      throw new Error(
+        "Reproductor aún no listo. Espera unos segundos a que Spotify cargue o recarga la página.",
+      );
     try {
       const res = await api(`/me/player/devices`);
       const json = await res.json();
@@ -391,34 +449,39 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     return deviceId;
   }, [api, waitForDevice]);
 
-  const playOnDevice = useCallback(async (body: any) => {
-    const deviceId = await ensureActiveDevice();
-    try {
-      await api(`/me/player/play?device_id=${deviceId}`, {
-        method: "PUT",
-        body: JSON.stringify(body),
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (/premium/i.test(msg)) {
-        throw new Error("La reproducción dentro de la app requiere Spotify Premium.");
-      }
+  const playOnDevice = useCallback(
+    async (body: any) => {
+      const deviceId = await ensureActiveDevice();
       try {
-        await api(`/me/player`, {
-          method: "PUT",
-          body: JSON.stringify({ device_ids: [deviceId], play: false }),
-        });
-        await new Promise((r) => setTimeout(r, 500));
         await api(`/me/player/play?device_id=${deviceId}`, {
           method: "PUT",
           body: JSON.stringify(body),
         });
-      } catch (e2) {
-        const m = e2 instanceof Error ? e2.message : String(e2);
-        throw new Error(`Spotify no aceptó la reproducción: ${m}. Asegúrate de tener Spotify Premium y de no estar en modo privado en otra app.`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (/premium/i.test(msg)) {
+          throw new Error("La reproducción dentro de la app requiere Spotify Premium.");
+        }
+        try {
+          await api(`/me/player`, {
+            method: "PUT",
+            body: JSON.stringify({ device_ids: [deviceId], play: false }),
+          });
+          await new Promise((r) => setTimeout(r, 500));
+          await api(`/me/player/play?device_id=${deviceId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+        } catch (e2) {
+          const m = e2 instanceof Error ? e2.message : String(e2);
+          throw new Error(
+            `Spotify no aceptó la reproducción: ${m}. Asegúrate de tener Spotify Premium y de no estar en modo privado en otra app.`,
+          );
+        }
       }
-    }
-  }, [api, ensureActiveDevice]);
+    },
+    [api, ensureActiveDevice],
+  );
 
   /**
    * Busca y reproduce. Soporta:
@@ -426,80 +489,91 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
    *  - "album <nombre>"     → reproduce álbum completo
    *  - "<canción>"          → reproduce la canción + cola con tracks del mismo artista
    */
-  const playSearch = useCallback(async (query: string) => {
-    // ensureActiveDevice (dentro de playOnDevice) espera al SDK; no fallamos aquí.
-    queueRef.current = null;
+  const playSearch = useCallback(
+    async (query: string) => {
+      // ensureActiveDevice (dentro de playOnDevice) espera al SDK; no fallamos aquí.
+      queueRef.current = null;
 
-    const lower = query.toLowerCase().trim();
-    const isPlaylist = /^(playlist|lista)\s+/.test(lower);
-    const isAlbum = /^(album|álbum|disco)\s+/.test(lower);
-    const isArtist = /^(artista|artist)\s+/.test(lower);
-    const cleanQuery = query.replace(/^(playlist|lista|album|álbum|disco|artista|artist)\s+/i, "").trim();
+      const lower = query.toLowerCase().trim();
+      const isPlaylist = /^(playlist|lista)\s+/.test(lower);
+      const isAlbum = /^(album|álbum|disco)\s+/.test(lower);
+      const isArtist = /^(artista|artist)\s+/.test(lower);
+      const cleanQuery = query
+        .replace(/^(playlist|lista|album|álbum|disco|artista|artist)\s+/i, "")
+        .trim();
 
-    // PLAYLIST
-    if (isPlaylist) {
-      const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=playlist&limit=1`);
-      const json = await res.json();
-      const pl = json.playlists?.items?.[0];
-      if (!pl) throw new Error("No encontré esa playlist.");
-      await playOnDevice({ context_uri: pl.uri });
-      return `playlist ${pl.name}`;
-    }
-
-    // ÁLBUM
-    if (isAlbum) {
-      const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=album&limit=1`);
-      const json = await res.json();
-      const al = json.albums?.items?.[0];
-      if (!al) throw new Error("No encontré ese álbum.");
-      await playOnDevice({ context_uri: al.uri });
-      return `álbum ${al.name}`;
-    }
-
-    if (isArtist) {
-      const artistRes = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=artist&limit=1`);
-      const artistJson = await artistRes.json();
-      const artist = artistJson.artists?.items?.[0];
-      if (!artist) throw new Error("No encontré ese artista.");
-
-      let uris: string[] = [];
-      for (const market of ["from_token", "US", "ES", "MX"] as const) {
-        const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
-        const topJson = await topRes.json();
-        uris = (topJson.tracks ?? []).map((t: any) => t.uri).filter(Boolean).slice(0, 10);
-        if (uris.length > 0) break;
+      // PLAYLIST
+      if (isPlaylist) {
+        const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=playlist&limit=1`);
+        const json = await res.json();
+        const pl = json.playlists?.items?.[0];
+        if (!pl) throw new Error("No encontré esa playlist.");
+        await playOnDevice({ context_uri: pl.uri });
+        return `playlist ${pl.name}`;
       }
-      if (uris.length === 0) throw new Error("No encontré canciones reproducibles de ese artista.");
+
+      // ÁLBUM
+      if (isAlbum) {
+        const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=album&limit=1`);
+        const json = await res.json();
+        const al = json.albums?.items?.[0];
+        if (!al) throw new Error("No encontré ese álbum.");
+        await playOnDevice({ context_uri: al.uri });
+        return `álbum ${al.name}`;
+      }
+
+      if (isArtist) {
+        const artistRes = await api(
+          `/search?q=${encodeURIComponent(cleanQuery)}&type=artist&limit=1`,
+        );
+        const artistJson = await artistRes.json();
+        const artist = artistJson.artists?.items?.[0];
+        if (!artist) throw new Error("No encontré ese artista.");
+
+        let uris: string[] = [];
+        for (const market of ["from_token", "US", "ES", "MX"] as const) {
+          const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+          const topJson = await topRes.json();
+          uris = (topJson.tracks ?? [])
+            .map((t: any) => t.uri)
+            .filter(Boolean)
+            .slice(0, 10);
+          if (uris.length > 0) break;
+        }
+        if (uris.length === 0)
+          throw new Error("No encontré canciones reproducibles de ese artista.");
+
+        await playOnDevice({ uris });
+        return `artista ${artist.name}`;
+      }
+
+      // CANCIÓN + cola del artista (para que siga sonando música después)
+      const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=1`);
+      const json = await res.json();
+      const track = json.tracks?.items?.[0];
+      if (!track) throw new Error("No encontré esa canción.");
+
+      const artistId: string | undefined = track.artists?.[0]?.id;
+      let uris: string[] = [track.uri];
+
+      if (artistId) {
+        try {
+          const topRes = await api(`/artists/${artistId}/top-tracks?market=from_token`);
+          const topJson = await topRes.json();
+          const topUris: string[] = (topJson.tracks ?? [])
+            .map((t: any) => t.uri)
+            .filter((u: string) => u && u !== track.uri);
+          uris = [track.uri, ...topUris.slice(0, 9)];
+        } catch {
+          /* si falla, reproducimos solo la canción */
+        }
+      }
 
       await playOnDevice({ uris });
-      return `artista ${artist.name}`;
-    }
-
-    // CANCIÓN + cola del artista (para que siga sonando música después)
-    const res = await api(`/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=1`);
-    const json = await res.json();
-    const track = json.tracks?.items?.[0];
-    if (!track) throw new Error("No encontré esa canción.");
-
-    const artistId: string | undefined = track.artists?.[0]?.id;
-    let uris: string[] = [track.uri];
-
-    if (artistId) {
-      try {
-        const topRes = await api(`/artists/${artistId}/top-tracks?market=from_token`);
-        const topJson = await topRes.json();
-        const topUris: string[] = (topJson.tracks ?? [])
-          .map((t: any) => t.uri)
-          .filter((u: string) => u && u !== track.uri);
-        uris = [track.uri, ...topUris.slice(0, 9)];
-      } catch {
-        /* si falla, reproducimos solo la canción */
-      }
-    }
-
-    await playOnDevice({ uris });
-    return track.name as string;
-  }, [api, playOnDevice]);
+      return track.name as string;
+    },
+    [api, playOnDevice],
+  );
 
   /**
    * Reproduce la cola personal (queueRef) desde el índice actual.
@@ -531,110 +605,156 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
   /**
    * Reproduce una playlist personal (lista de queries o URIs `spotify:track:...`).
    */
-  const playLocalPlaylist = useCallback(async (queries: string[]) => {
-    if (queries.length === 0) throw new Error("Esta playlist está vacía.");
-    queueRef.current = { items: queries, index: 0 };
-    await playNextFromQueue();
-  }, [playNextFromQueue]);
+  const playLocalPlaylist = useCallback(
+    async (queries: string[]) => {
+      if (queries.length === 0) throw new Error("Esta playlist está vacía.");
+      queueRef.current = { items: queries, index: 0 };
+      await playNextFromQueue();
+    },
+    [playNextFromQueue],
+  );
 
-
-  const generateArtistPlaylistQueries = useCallback(async (artists: string[]) => {
-    const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
-    if (cleanArtists.length === 0) return { queries: [] as string[], tracks: [] as SpotifyResolvedTrack[], log: [] as Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> };
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error("Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.");
-    }
-
-    const out: SpotifyResolvedTrack[] = [];
-    const log: Array<{ artist: string; resolvedAs: string | null; tracks: number; reason?: string }> = [];
-
-    for (const artistName of cleanArtists) {
-      const entry: { artist: string; resolvedAs: string | null; tracks: number; reason?: string } = { artist: artistName, resolvedAs: null, tracks: 0 };
-      try {
-        const artistRes = await api(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`);
-        const artistJson = await artistRes.json();
-        const artist = artistJson.artists?.items?.[0];
-        if (!artist?.id) {
-          entry.reason = "Spotify no devolvió ningún artista con ese nombre";
-          log.push(entry);
-          continue;
-        }
-        entry.resolvedAs = artist.name;
-
-        let tracks: SpotifyResolvedTrack[] = [];
-        for (const market of ["from_token", "US", "ES", "MX"] as const) {
-          const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
-          const topJson = await topRes.json();
-          tracks = (topJson.tracks ?? [])
-            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
-            .map(toResolvedTrack)
-            .filter(Boolean)
-            .slice(0, 6);
-          if (tracks.length > 0) break;
-        }
-
-        if (tracks.length === 0) {
-          const fallbackRes = await api(`/search?q=${encodeURIComponent(`artist:"${artist.name}"`)}&type=track&limit=10`);
-          const fallbackJson = await fallbackRes.json();
-          tracks = (fallbackJson.tracks?.items ?? [])
-            .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
-            .map(toResolvedTrack)
-            .filter(Boolean)
-            .slice(0, 6);
-        }
-
-        if (tracks.length === 0) {
-          entry.reason = "El artista existe pero no tiene tracks reproducibles en tu mercado";
-        }
-
-        entry.tracks = tracks.length;
-        out.push(...tracks);
-      } catch (e) {
-        entry.reason = e instanceof Error ? e.message : "Error desconocido";
+  const generateArtistPlaylistQueries = useCallback(
+    async (artists: string[]) => {
+      const cleanArtists = artists.map((artist) => artist.trim()).filter(Boolean);
+      if (cleanArtists.length === 0)
+        return {
+          queries: [] as string[],
+          tracks: [] as SpotifyResolvedTrack[],
+          log: [] as Array<{
+            artist: string;
+            resolvedAs: string | null;
+            tracks: number;
+            reason?: string;
+          }>,
+        };
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error(
+          "Conecta Spotify primero (Menú → Conectar Spotify) para generar playlists desde artistas.",
+        );
       }
-      log.push(entry);
-    }
 
-    const unique = Array.from(new Map(out.map((track) => [track.spotify_track_id, track])).values());
-    return { queries: unique.map((track) => track.query), tracks: unique, log };
-  }, [api, getAccessToken]);
+      const out: SpotifyResolvedTrack[] = [];
+      const log: Array<{
+        artist: string;
+        resolvedAs: string | null;
+        tracks: number;
+        reason?: string;
+      }> = [];
+
+      for (const artistName of cleanArtists) {
+        const entry: {
+          artist: string;
+          resolvedAs: string | null;
+          tracks: number;
+          reason?: string;
+        } = { artist: artistName, resolvedAs: null, tracks: 0 };
+        try {
+          const artistRes = await api(
+            `/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`,
+          );
+          const artistJson = await artistRes.json();
+          const artist = artistJson.artists?.items?.[0];
+          if (!artist?.id) {
+            entry.reason = "Spotify no devolvió ningún artista con ese nombre";
+            log.push(entry);
+            continue;
+          }
+          entry.resolvedAs = artist.name;
+
+          let tracks: SpotifyResolvedTrack[] = [];
+          for (const market of ["from_token", "US", "ES", "MX"] as const) {
+            const topRes = await api(`/artists/${artist.id}/top-tracks?market=${market}`);
+            const topJson = await topRes.json();
+            tracks = (topJson.tracks ?? [])
+              .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+              .map(toResolvedTrack)
+              .filter(Boolean)
+              .slice(0, 6);
+            if (tracks.length > 0) break;
+          }
+
+          if (tracks.length === 0) {
+            const fallbackRes = await api(
+              `/search?q=${encodeURIComponent(`artist:"${artist.name}"`)}&type=track&limit=10`,
+            );
+            const fallbackJson = await fallbackRes.json();
+            tracks = (fallbackJson.tracks?.items ?? [])
+              .filter((track: any) => track?.artists?.some((a: any) => a.id === artist.id))
+              .map(toResolvedTrack)
+              .filter(Boolean)
+              .slice(0, 6);
+          }
+
+          if (tracks.length === 0) {
+            entry.reason = "El artista existe pero no tiene tracks reproducibles en tu mercado";
+          }
+
+          entry.tracks = tracks.length;
+          out.push(...tracks);
+        } catch (e) {
+          entry.reason = e instanceof Error ? e.message : "Error desconocido";
+        }
+        log.push(entry);
+      }
+
+      const unique = Array.from(
+        new Map(out.map((track) => [track.spotify_track_id, track])).values(),
+      );
+      return { queries: unique.map((track) => track.query), tracks: unique, log };
+    },
+    [api, getAccessToken],
+  );
 
   /** Busca artistas para autocompletado (top 5). */
-  const searchArtists = useCallback(async (query: string) => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) return [] as Array<{ id: string; name: string; image: string | null; followers: number }>;
-    const token = await getAccessToken();
-    if (!token) return [];
-    try {
-      const res = await api(`/search?q=${encodeURIComponent(trimmed)}&type=artist&limit=5`);
-      const json = await res.json();
-      return (json.artists?.items ?? []).map((a: any) => ({
-        id: a.id as string,
-        name: a.name as string,
-        image: a.images?.[0]?.url ?? null,
-        followers: a.followers?.total ?? 0,
-      }));
-    } catch (e) {
-      console.warn("searchArtists", e);
-      return [];
-    }
-  }, [api, getAccessToken]);
+  const searchArtists = useCallback(
+    async (query: string) => {
+      const trimmed = query.trim();
+      if (trimmed.length < 2)
+        return [] as Array<{ id: string; name: string; image: string | null; followers: number }>;
+      const token = await getAccessToken();
+      if (!token) return [];
+      try {
+        const res = await api(`/search?q=${encodeURIComponent(trimmed)}&type=artist&limit=5`);
+        const json = await res.json();
+        return (json.artists?.items ?? []).map((a: any) => ({
+          id: a.id as string,
+          name: a.name as string,
+          image: a.images?.[0]?.url ?? null,
+          followers: a.followers?.total ?? 0,
+        }));
+      } catch (e) {
+        console.warn("searchArtists", e);
+        return [];
+      }
+    },
+    [api, getAccessToken],
+  );
 
   /** Lista los dispositivos Spotify Connect disponibles del usuario. */
   const listDevices = useCallback(async () => {
     const res = await api(`/me/player/devices`);
     const json = await res.json();
-    return (json.devices ?? []) as Array<{ id: string; name: string; type: string; is_active: boolean; volume_percent: number }>;
+    return (json.devices ?? []) as Array<{
+      id: string;
+      name: string;
+      type: string;
+      is_active: boolean;
+      volume_percent: number;
+    }>;
   }, [api]);
 
   /** Transfiere la reproducción al dispositivo indicado (Spotify Connect). */
-  const transferPlayback = useCallback(async (deviceId: string, play = true) => {
-    await api(`/me/player`, {
-      method: "PUT",
-      body: JSON.stringify({ device_ids: [deviceId], play }),
-    });
-  }, [api]);
+  const transferPlayback = useCallback(
+    async (deviceId: string, play = true) => {
+      await api(`/me/player`, {
+        method: "PUT",
+        body: JSON.stringify({ device_ids: [deviceId], play }),
+      });
+    },
+    [api],
+  );
 
   const togglePlay = useCallback(async () => {
     await playerRef.current?.togglePlay();
@@ -656,10 +776,13 @@ export function useSpotify(enabled: boolean, appUserId?: string | null) {
     }
     await playerRef.current?.previousTrack();
   }, [playNextFromQueue]);
-  const setVolume = useCallback(async (v: number) => { await playerRef.current?.setVolume(v); }, []);
+  const setVolume = useCallback(async (v: number) => {
+    await playerRef.current?.setVolume(v);
+  }, []);
 
   const rawTokens = getSpotifyTokensForUser(appUserId);
-  const isAuthenticated = !!rawTokens && (!appUserId || !getSpotifyUserHint() || getSpotifyUserHint() === appUserId);
+  const isAuthenticated =
+    !!rawTokens && (!appUserId || !getSpotifyUserHint() || getSpotifyUserHint() === appUserId);
 
   return {
     state,

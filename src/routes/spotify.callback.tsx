@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { exchangeAndStoreSpotifyCode } from "@/server/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { clearSpotifyPkce, getSpotifyPkce, setSpotifyTokensForUser, setSpotifyUserHint } from "@/lib/spotify-storage";
+import {
+  clearSpotifyPkce,
+  getSpotifyPkce,
+  setSpotifyTokensForUser,
+  setSpotifyUserHint,
+} from "@/lib/spotify-storage";
 import { Orb } from "@/components/Orb";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,7 +50,9 @@ function SpotifyCallbackPage() {
           setMessage(res.error ?? "No se pudo conectar con Spotify.");
           return;
         }
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setSpotifyTokensForUser(user?.id ?? null, {
           access_token: res.access_token,
           refresh_token: res.refresh_token ?? null,
@@ -69,7 +76,11 @@ function SpotifyCallbackPage() {
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-bg px-4 text-center">
       <Orb size={140} active variant="nova" />
       <h1 className="text-2xl font-bold">
-        {status === "loading" ? "Conectando con Spotify…" : status === "ok" ? "¡Listo!" : "Algo salió mal"}
+        {status === "loading"
+          ? "Conectando con Spotify…"
+          : status === "ok"
+            ? "¡Listo!"
+            : "Algo salió mal"}
       </h1>
       <p className="max-w-md text-sm text-muted-foreground">{message}</p>
       {status === "error" && (

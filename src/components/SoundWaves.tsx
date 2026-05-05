@@ -41,18 +41,14 @@ export function SoundWaves({
       // Velocidad: si hay BPM, lo usamos (beats por segundo = bpm/60).
       // Multiplicamos por 2π para que un ciclo de seno = 1 beat.
       const beatsPerSec = active && bpm ? bpm / 60 : 0;
-      const speed = active
-        ? (beatsPerSec > 0 ? beatsPerSec * 2 * Math.PI : 4.5)
-        : 1.6;
+      const speed = active ? (beatsPerSec > 0 ? beatsPerSec * 2 * Math.PI : 4.5) : 1.6;
       // Amplitud: energía del track 0-1, fallback 0.7 si no hay info.
       const e = active ? Math.max(0.4, energy ?? 0.7) : 0.35;
       const baseAmp = e;
       const minScale = active ? 0.18 : 0.22;
       // Pulso al ritmo del beat (solo cuando hay BPM real)
       const beatPulse =
-        active && beatsPerSec > 0
-          ? 0.15 * Math.max(0, Math.sin(t * beatsPerSec * 2 * Math.PI))
-          : 0;
+        active && beatsPerSec > 0 ? 0.15 * Math.max(0, Math.sin(t * beatsPerSec * 2 * Math.PI)) : 0;
 
       for (let i = 0; i < bars; i++) {
         const el = refs.current[i];
@@ -62,12 +58,9 @@ export function SoundWaves({
           Math.sin(t * speed + phase) * 0.5 +
           Math.sin(t * speed * 1.7 + phase * 1.3) * 0.3 +
           Math.sin(t * speed * 0.6 + phase * 0.7) * 0.2;
-        const center = 1 - Math.abs((i / (bars - 1)) - 0.5) * 1.2;
+        const center = 1 - Math.abs(i / (bars - 1) - 0.5) * 1.2;
         const amp = baseAmp * Math.max(0.25, center);
-        const value = Math.max(
-          minScale,
-          Math.min(1, 0.5 + wave * amp + beatPulse)
-        );
+        const value = Math.max(minScale, Math.min(1, 0.5 + wave * amp + beatPulse));
         el.style.transform = `scaleY(${value.toFixed(3)})`;
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -87,12 +80,14 @@ export function SoundWaves({
       {Array.from({ length: bars }).map((_, i) => (
         <div
           key={i}
-          ref={(el) => { refs.current[i] = el; }}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
           className={cn(
             "w-[3px] rounded-full origin-center will-change-transform",
             variant === "nova"
               ? "bg-gradient-to-t from-primary/60 via-primary to-accent"
-              : "bg-gradient-to-t from-primary/50 via-primary to-primary-glow"
+              : "bg-gradient-to-t from-primary/50 via-primary to-primary-glow",
           )}
           style={{
             height: "100%",

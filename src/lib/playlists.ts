@@ -57,7 +57,9 @@ export async function deletePlaylist(id: string) {
 export async function fetchTracks(playlistId: string): Promise<PlaylistTrack[]> {
   const { data, error } = await supabase
     .from("playlist_tracks")
-    .select("id, playlist_id, query, position, spotify_uri, spotify_track_id, spotify_artist, spotify_album, cover_url")
+    .select(
+      "id, playlist_id, query, position, spotify_uri, spotify_track_id, spotify_artist, spotify_album, cover_url",
+    )
     .eq("playlist_id", playlistId)
     .order("position", { ascending: true });
   if (error) {
@@ -67,7 +69,12 @@ export async function fetchTracks(playlistId: string): Promise<PlaylistTrack[]> 
   return data ?? [];
 }
 
-export async function addTrack(userId: string, playlistId: string, input: string | PlaylistTrackInput, position: number) {
+export async function addTrack(
+  userId: string,
+  playlistId: string,
+  input: string | PlaylistTrackInput,
+  position: number,
+) {
   const track = typeof input === "string" ? { query: input } : input;
   const { data, error } = await supabase
     .from("playlist_tracks")
@@ -82,7 +89,9 @@ export async function addTrack(userId: string, playlistId: string, input: string
       spotify_album: track.spotify_album ?? null,
       cover_url: track.cover_url ?? null,
     } as any)
-    .select("id, playlist_id, query, position, spotify_uri, spotify_track_id, spotify_artist, spotify_album, cover_url")
+    .select(
+      "id, playlist_id, query, position, spotify_uri, spotify_track_id, spotify_artist, spotify_album, cover_url",
+    )
     .single();
   if (error) throw error;
   return data;
