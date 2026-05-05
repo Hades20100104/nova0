@@ -12,6 +12,7 @@ import {
 } from "@/lib/automations";
 import { sendWhatsAppMessage } from "@/server/whatsapp.functions";
 import { toast } from "sonner";
+import { getCurrentPosition, isNative, notifyLocal } from "@/lib/native";
 
 interface RunnerOptions {
   automations: Automation[];
@@ -58,7 +59,11 @@ export function useAutomationsRunner({ automations, onSpotifyPlay }: RunnerOptio
           }
         } else if (a.action_type === "notification") {
           const cfg = a.action_config as NotificationActionConfig;
-          toast.message(cfg.text);
+          if (isNative()) {
+            await notifyLocal(a.name, cfg.text);
+          } else {
+            toast.message(cfg.text);
+          }
         }
         await markTriggered(a.id, "fired").catch(() => {});
       } catch (e) {
@@ -97,20 +102,19 @@ export function useAutomationsRunner({ automations, onSpotifyPlay }: RunnerOptio
       }
     };
 
-    const tick = () => {
+    const tick = async () => {
       if (cancelled) return;
       evalTime();
-      if (navigator.geolocation && automations.some((a) => a.trigger_type !== "time")) {
-        navigator.geolocation.getCurrentPosition(
-          evalGeo,
-          (err) => console.warn("geo", err.message),
-          { enableHighAccuracy: false, maximumAge: 30_000, timeout: 10_000 },
-        );
+      if (automations.some((a) => a.trigger_type !== "time")) {
+        const pos = await getCurrentPosition();
+        if (pos && !cancelled) {
+          evalGeo({ coords: { latitude: pos.lat, longitude: pos.lng } } as GeolocationPosition);
+        }
       }
     };
 
-    tick();
-    const interval = setInterval(tick, 15_000);
+    void tick();
+    const interval = setInterval(() => void tick(), 15_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
