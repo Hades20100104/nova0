@@ -67,12 +67,18 @@ export async function createAutomation(
 }
 
 export async function updateAutomation(id: string, patch: Partial<Automation>) {
-  const { error } = await supabase.from("automations" as any).update(patch as any).eq("id", id);
+  const { error } = await supabase
+    .from("automations" as any)
+    .update(patch as any)
+    .eq("id", id);
   if (error) throw error;
 }
 
 export async function deleteAutomation(id: string) {
-  const { error } = await supabase.from("automations" as any).delete().eq("id", id);
+  const { error } = await supabase
+    .from("automations" as any)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -91,8 +97,6 @@ export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number
   const dLng = toRad(b.lng - a.lng);
   const lat1 = toRad(a.lat);
   const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }

@@ -71,12 +71,16 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
             voice.listening
               ? "bg-destructive text-destructive-foreground animate-pulse shadow-glow"
-              : "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-glow hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+              : "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-glow hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed",
           )}
           aria-label={voice.listening ? "Detener" : "Hablar"}
           title={voice.supported ? "Habla por voz" : "Tu navegador no soporta voz"}
         >
-          {voice.listening ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
+          {voice.listening ? (
+            <Square className="h-4 w-4" fill="currentColor" />
+          ) : (
+            <Mic className="h-5 w-5" />
+          )}
         </button>
 
         {/* Botón enviar (solo si hay texto) */}

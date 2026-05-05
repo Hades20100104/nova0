@@ -18,7 +18,11 @@ export const extractMemoryNote = createServerFn({ method: "POST" })
   .middleware([withSupabaseAuth])
   .inputValidator((input: ExtractInput) => {
     if (!input || typeof input !== "object") throw new Error("Payload inválido");
-    if (typeof input.userText !== "string" || input.userText.length === 0 || input.userText.length > 2000) {
+    if (
+      typeof input.userText !== "string" ||
+      input.userText.length === 0 ||
+      input.userText.length > 2000
+    ) {
       throw new Error("userText inválido");
     }
     if (typeof input.assistantText !== "string" || input.assistantText.length > 4000) {

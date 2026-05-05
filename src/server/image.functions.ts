@@ -27,7 +27,10 @@ export const generateImage = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no configurada.", dataUrl: null as string | null };
     }
 
-    const models = ["google/gemini-2.5-flash-image", "google/gemini-3.1-flash-image-preview"] as const;
+    const models = [
+      "google/gemini-2.5-flash-image",
+      "google/gemini-3.1-flash-image-preview",
+    ] as const;
     let lastStatus = 0;
     let lastText = "";
 
@@ -56,7 +59,10 @@ export const generateImage = createServerFn({ method: "POST" })
         return { error: "Demasiadas peticiones. Espera un momento.", dataUrl: null };
       }
       if (res.status === 402) {
-        return { error: "Sin créditos de IA. Añade fondos en Settings → Workspace → Usage.", dataUrl: null };
+        return {
+          error: "Sin créditos de IA. Añade fondos en Settings → Workspace → Usage.",
+          dataUrl: null,
+        };
       }
       if (!res.ok) {
         lastText = await res.text().catch(() => "");

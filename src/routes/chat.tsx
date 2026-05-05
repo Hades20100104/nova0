@@ -34,13 +34,18 @@ const chatSearchSchema = z.object({ q: z.string().optional() });
 export const Route = createFileRoute("/chat")({
   validateSearch: chatSearchSchema,
   beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
     meta: [
       { title: "Chat — NEVIRA & NOVA" },
-      { name: "description", content: "Conversa con NEVIRA o NOVA: música, imágenes, WhatsApp y más por voz o texto." },
+      {
+        name: "description",
+        content: "Conversa con NEVIRA o NOVA: música, imágenes, WhatsApp y más por voz o texto.",
+      },
     ],
   }),
   component: AssistantApp,
@@ -68,7 +73,12 @@ function AssistantApp() {
   const imageFn = useServerFn(generateImage);
   const memoryFn = useServerFn(extractMemoryNote);
 
-  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova"; neviraColor: NeviraColor; novaColor: NovaColor } | null>(null);
+  const [profile, setProfile] = useState<{
+    assistantName: string | null;
+    theme: "nevira" | "nova";
+    neviraColor: NeviraColor;
+    novaColor: NovaColor;
+  } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -76,7 +86,9 @@ function AssistantApp() {
   const [autoSent, setAutoSent] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsView, setSettingsView] = useState<"menu" | "playlists" | "playlist-detail" | "contacts" | "docs">("menu");
+  const [settingsView, setSettingsView] = useState<
+    "menu" | "playlists" | "playlist-detail" | "contacts" | "docs"
+  >("menu");
   const [showPlayer, setShowPlayer] = useState(false);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -146,59 +158,68 @@ function AssistantApp() {
   const handleOnboarding = async (name: string) => {
     if (!auth.user) return;
     await updateProfile(auth.user.id, { assistant_name: name });
-    setProfile((p) => p ? { ...p, assistantName: name } : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" });
+    setProfile((p) =>
+      p
+        ? { ...p, assistantName: name }
+        : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" },
+    );
     setShowOnboarding(false);
-    setMessages([{
-      role: "assistant",
-      content: `Encantada, **${name}**. Soy ${themeName}, tu asistente personal. Puedo conversar, poner música en Spotify, generar imágenes, mandar WhatsApp y mucho más. ¿Por dónde empezamos?`,
-      time: timeNow(),
-    }]);
+    setMessages([
+      {
+        role: "assistant",
+        content: `Encantada, **${name}**. Soy ${themeName}, tu asistente personal. Puedo conversar, poner música en Spotify, generar imágenes, mandar WhatsApp y mucho más. ¿Por dónde empezamos?`,
+        time: timeNow(),
+      },
+    ]);
   };
 
   const handleThemeChange = async (theme: "nevira" | "nova") => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, theme } : p);
+    setProfile((p) => (p ? { ...p, theme } : p));
     await updateProfile(auth.user.id, { theme });
   };
 
   const handleNeviraColorChange = async (neviraColor: NeviraColor) => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, neviraColor } : p);
+    setProfile((p) => (p ? { ...p, neviraColor } : p));
     await updateProfile(auth.user.id, { nevira_color: neviraColor });
   };
 
   const handleNovaColorChange = async (novaColor: NovaColor) => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, novaColor } : p);
+    setProfile((p) => (p ? { ...p, novaColor } : p));
     await updateProfile(auth.user.id, { nova_color: novaColor });
   };
 
   /** Sube imagen base64 al bucket y guarda en tabla. Devuelve signed URL. */
-  const saveImage = useCallback(async (prompt: string, dataUrl: string): Promise<string | null> => {
-    if (!auth.user) return null;
-    try {
-      const blob = await (await fetch(dataUrl)).blob();
-      const path = `${auth.user.id}/${Date.now()}.png`;
-      const { error: upErr } = await supabase.storage
-        .from("generated-images")
-        .upload(path, blob, { contentType: "image/png" });
-      if (upErr) throw upErr;
-      const { data: signed } = await supabase.storage
-        .from("generated-images")
-        .createSignedUrl(path, 60 * 60);
-      const url = signed?.signedUrl ?? "";
-      await supabase.from("generated_images").insert({
-        user_id: auth.user.id,
-        prompt,
-        storage_path: path,
-        public_url: url,
-      });
-      return url;
-    } catch (e) {
-      console.error("saveImage error", e);
-      return null;
-    }
-  }, [auth.user]);
+  const saveImage = useCallback(
+    async (prompt: string, dataUrl: string): Promise<string | null> => {
+      if (!auth.user) return null;
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const path = `${auth.user.id}/${Date.now()}.png`;
+        const { error: upErr } = await supabase.storage
+          .from("generated-images")
+          .upload(path, blob, { contentType: "image/png" });
+        if (upErr) throw upErr;
+        const { data: signed } = await supabase.storage
+          .from("generated-images")
+          .createSignedUrl(path, 60 * 60);
+        const url = signed?.signedUrl ?? "";
+        await supabase.from("generated_images").insert({
+          user_id: auth.user.id,
+          prompt,
+          storage_path: path,
+          public_url: url,
+        });
+        return url;
+      } catch (e) {
+        console.error("saveImage error", e);
+        return null;
+      }
+    },
+    [auth.user],
+  );
 
   /** Detección local de comandos: WhatsApp, imagen, música, búsquedas, rename. */
   async function handleLocalIntent(text: string): Promise<boolean> {
@@ -209,7 +230,15 @@ function AssistantApp() {
     if (intent === "rename") {
       const m = t.match(/(?:llamame|cambia mi nombre a|mi nombre es)\s+([\p{L}\s]{2,30})/u);
       if (m) {
-        setMessages((m2) => [...m2, { role: "assistant", content: "Puedes cambiar tu nombre solo desde **Ajustes** para evitar cambios accidentales.", time: timeNow() }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content:
+              "Puedes cambiar tu nombre solo desde **Ajustes** para evitar cambios accidentales.",
+            time: timeNow(),
+          },
+        ]);
         return true;
       }
     }
@@ -217,61 +246,111 @@ function AssistantApp() {
     // WHATSAPP — tarjeta de confirmación (acepta número o nombre de contacto)
     if (intent === "whatsapp") {
       // Caso 1: número directo
-      const byNumber = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/);
+      const byNumber = t.match(
+        /(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?(\+?\d[\d\s-]{6,})\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/,
+      );
       if (byNumber) {
         const phone = byNumber[1].replace(/[\s-]/g, "");
         const body = byNumber[2].trim();
-        setMessages((m2) => [...m2, {
-          role: "assistant",
-          content: "",
-          time: timeNow(),
-          whatsapp: { phone, message: body, sent: false },
-        }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content: "",
+            time: timeNow(),
+            whatsapp: { phone, message: body, sent: false },
+          },
+        ]);
         return true;
       }
       // Caso 2: nombre de contacto guardado
-      const byName = t.match(/(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?([\p{L}\s]{2,40}?)\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/u);
+      const byName = t.match(
+        /(?:whatsapp|wasap|wsp|manda mensaje|envia mensaje)\s+(?:a\s+)?([\p{L}\s]{2,40}?)\s+(?:diciendo|que diga|mensaje|:)\s+(.+)/u,
+      );
       if (byName) {
         const rawName = byName[1].trim();
         const body = byName[2].trim();
         const contact = findContactByName(contacts, rawName);
         if (contact) {
-          setMessages((m2) => [...m2, {
-            role: "assistant",
-            content: "",
-            time: timeNow(),
-            whatsapp: { phone: contact.phone, message: body, sent: false },
-          }]);
+          setMessages((m2) => [
+            ...m2,
+            {
+              role: "assistant",
+              content: "",
+              time: timeNow(),
+              whatsapp: { phone: contact.phone, message: body, sent: false },
+            },
+          ]);
           return true;
         }
-        setMessages((m2) => [...m2, {
-          role: "assistant",
-          content: `No encontré ningún contacto llamado **${rawName}**. Añádelo en *Menú → Ajustes → Contactos*.`,
-          time: timeNow(),
-        }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content: `No encontré ningún contacto llamado **${rawName}**. Añádelo en *Menú → Ajustes → Contactos*.`,
+            time: timeNow(),
+          },
+        ]);
         return true;
       }
-      setMessages((m2) => [...m2, { role: "assistant", content: "Dime: *WhatsApp a +52XXXXXXXXXX diciendo hola* o *WhatsApp a Mamá diciendo hola*.", time: timeNow() }]);
+      setMessages((m2) => [
+        ...m2,
+        {
+          role: "assistant",
+          content:
+            "Dime: *WhatsApp a +52XXXXXXXXXX diciendo hola* o *WhatsApp a Mamá diciendo hola*.",
+          time: timeNow(),
+        },
+      ]);
       return true;
     }
 
     // IMAGEN
     if (intent === "image") {
-      const prompt = text.replace(/.*(?:genera imagen( de)?|crea imagen( de)?|dibuja|imagina|busca imagen( de)?|imagen de)\s*/i, "").trim() || text;
+      const prompt =
+        text
+          .replace(
+            /.*(?:genera imagen( de)?|crea imagen( de)?|dibuja|imagina|busca imagen( de)?|imagen de)\s*/i,
+            "",
+          )
+          .trim() || text;
       const placeholderIdx = messages.length + 1; // +1 por el user msg
-      setMessages((m2) => [...m2, { role: "assistant", content: "", time: timeNow(), image: { prompt, url: null } }]);
+      setMessages((m2) => [
+        ...m2,
+        { role: "assistant", content: "", time: timeNow(), image: { prompt, url: null } },
+      ]);
       try {
         const res = await imageFn({ data: { prompt } });
         if (res.error || !res.dataUrl) {
-          setMessages((m2) => m2.map((mm, i) => i === placeholderIdx ? { ...mm, content: `⚠️ ${res.error ?? "No pude generar la imagen."}`, image: undefined } : mm));
+          setMessages((m2) =>
+            m2.map((mm, i) =>
+              i === placeholderIdx
+                ? {
+                    ...mm,
+                    content: `⚠️ ${res.error ?? "No pude generar la imagen."}`,
+                    image: undefined,
+                  }
+                : mm,
+            ),
+          );
           return true;
         }
         const url = await saveImage(prompt, res.dataUrl);
-        setMessages((m2) => m2.map((mm, i) => i === placeholderIdx ? { ...mm, image: { prompt, url: url ?? res.dataUrl } } : mm));
+        setMessages((m2) =>
+          m2.map((mm, i) =>
+            i === placeholderIdx ? { ...mm, image: { prompt, url: url ?? res.dataUrl } } : mm,
+          ),
+        );
         toast.success("Imagen guardada en tu galería");
       } catch (e) {
         console.error(e);
-        setMessages((m2) => m2.map((mm, i) => i === placeholderIdx ? { ...mm, content: "⚠️ Error generando imagen.", image: undefined } : mm));
+        setMessages((m2) =>
+          m2.map((mm, i) =>
+            i === placeholderIdx
+              ? { ...mm, content: "⚠️ Error generando imagen.", image: undefined }
+              : mm,
+          ),
+        );
       }
       return true;
     }
@@ -279,19 +358,43 @@ function AssistantApp() {
     // MÚSICA SPOTIFY
     if (intent === "music") {
       if (!spotify.isAuthenticated) {
-        setMessages((m2) => [...m2, { role: "assistant", content: "Para reproducir música necesito que conectes Spotify. Ábre el menú (☰) y pulsa **Conectar Spotify**.", time: timeNow() }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content:
+              "Para reproducir música necesito que conectes Spotify. Ábre el menú (☰) y pulsa **Conectar Spotify**.",
+            time: timeNow(),
+          },
+        ]);
         setShowPlayer(true);
         return true;
       }
-      const query = text.replace(/.*(?:pon musica|reproduce|spotify|playlist|cancion)\s*(de\s+)?/i, "").trim();
+      const query = text
+        .replace(/.*(?:pon musica|reproduce|spotify|playlist|cancion)\s*(de\s+)?/i, "")
+        .trim();
       if (!query) {
-        setMessages((m2) => [...m2, { role: "assistant", content: "¿Qué quieres escuchar? Dime: *pon [canción] de [artista]*.", time: timeNow() }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content: "¿Qué quieres escuchar? Dime: *pon [canción] de [artista]*.",
+            time: timeNow(),
+          },
+        ]);
         setShowPlayer(true);
         return true;
       }
       try {
         const name = await spotify.playSearch(query);
-        setMessages((m2) => [...m2, { role: "assistant", content: `🎵 Reproduciendo **${name}** en Spotify.`, time: timeNow() }]);
+        setMessages((m2) => [
+          ...m2,
+          {
+            role: "assistant",
+            content: `🎵 Reproduciendo **${name}** en Spotify.`,
+            time: timeNow(),
+          },
+        ]);
         setShowPlayer(true);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "No pude reproducir esa canción.";
@@ -303,16 +406,30 @@ function AssistantApp() {
     // YouTube
     if (intent === "youtube") {
       const q = text.replace(/.*(?:youtube|busca en youtube)/i, "").trim() || text;
-      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
-      setMessages((m2) => [...m2, { role: "assistant", content: `Abrí YouTube buscando **${q}** 🎬`, time: timeNow() }]);
+      window.open(
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+      setMessages((m2) => [
+        ...m2,
+        { role: "assistant", content: `Abrí YouTube buscando **${q}** 🎬`, time: timeNow() },
+      ]);
       return true;
     }
 
     // Google
     if (intent === "google") {
       const q = text.replace(/.*(?:busca en google|google|buscar)/i, "").trim() || text;
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
-      setMessages((m2) => [...m2, { role: "assistant", content: `Listo, te abrí Google con **${q}** 🔎`, time: timeNow() }]);
+      window.open(
+        `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+      setMessages((m2) => [
+        ...m2,
+        { role: "assistant", content: `Listo, te abrí Google con **${q}** 🔎`, time: timeNow() },
+      ]);
       return true;
     }
 
@@ -331,14 +448,19 @@ function AssistantApp() {
     try {
       const result = await chatFn({
         data: {
-          messages: [...messages, userMsg].filter((m) => m.content).map(({ role, content }) => ({ role, content })),
+          messages: [...messages, userMsg]
+            .filter((m) => m.content)
+            .map(({ role, content }) => ({ role, content })),
           userName: profile.assistantName,
           notes,
           themeName,
         },
       });
       if (result.error) {
-        setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${result.error}`, time: timeNow() }]);
+        setMessages((m) => [
+          ...m,
+          { role: "assistant", content: `⚠️ ${result.error}`, time: timeNow() },
+        ]);
       } else {
         setMessages((m) => [...m, { role: "assistant", content: result.text, time: timeNow() }]);
         // Memoria contextual con IA: extrae datos relevantes del último turno.
@@ -354,7 +476,10 @@ function AssistantApp() {
       }
     } catch (e) {
       console.error(e);
-      setMessages((m) => [...m, { role: "assistant", content: "⚠️ Hubo un error. Intenta de nuevo.", time: timeNow() }]);
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "⚠️ Hubo un error. Intenta de nuevo.", time: timeNow() },
+      ]);
       router.invalidate();
     } finally {
       setSending(false);
@@ -403,8 +528,14 @@ function AssistantApp() {
           if (s === "music") setShowPlayer(true);
           if (s === "images") sendMessage("Genera una imagen de ");
           if (s === "whatsapp") sendMessage("WhatsApp a +52 diciendo ");
-           if (s === "settings") { setSettingsView("menu"); setSettingsOpen(true); }
-           if (s === "docs") { setSettingsView("docs"); setSettingsOpen(true); }
+          if (s === "settings") {
+            setSettingsView("menu");
+            setSettingsOpen(true);
+          }
+          if (s === "docs") {
+            setSettingsView("docs");
+            setSettingsOpen(true);
+          }
         }}
         onClearMemory={handleClearMemory}
         onLogout={handleLogout}
@@ -417,7 +548,11 @@ function AssistantApp() {
             setSettingsOpen(open);
             // Recargar contactos al cerrar para reflejar cambios
             if (!open && auth.user) {
-              fetchContacts(auth.user.id).then(setContacts).catch(() => { /* noop */ });
+              fetchContacts(auth.user.id)
+                .then(setContacts)
+                .catch(() => {
+                  /* noop */
+                });
             }
           }}
           userId={auth.user.id}
@@ -430,11 +565,14 @@ function AssistantApp() {
             try {
               setShowPlayer(true);
               await spotify.playLocalPlaylist(queries);
-              setMessages((m) => [...m, {
-                role: "assistant",
-                content: `🎵 Reproduciendo tu playlist **${name}** (${queries.length} canciones).`,
-                time: timeNow(),
-              }]);
+              setMessages((m) => [
+                ...m,
+                {
+                  role: "assistant",
+                  content: `🎵 Reproduciendo tu playlist **${name}** (${queries.length} canciones).`,
+                  time: timeNow(),
+                },
+              ]);
             } catch (e) {
               const msg = e instanceof Error ? e.message : "No pude reproducir la playlist.";
               toast.error(msg);
@@ -443,10 +581,7 @@ function AssistantApp() {
         />
       )}
       <div className="flex min-h-screen w-full bg-gradient-bg">
-        <AppSidebar
-          themeName={themeName}
-          userName={profile.assistantName}
-        />
+        <AppSidebar themeName={themeName} userName={profile.assistantName} />
 
         <main className="flex min-h-screen flex-1 flex-col pb-16 lg:pb-0">
           <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur lg:px-8">
@@ -474,88 +609,132 @@ function AssistantApp() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
             <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4 sm:py-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6 lg:px-8 lg:py-8">
               <section className="min-w-0">
-              {showPlayer && (
-                <div className="mb-4 w-full lg:hidden">
-                  <SpotifyPlayer
-                    state={spotify.state}
-                    isAuthenticated={spotify.isAuthenticated}
-                    onLogin={() => spotify.startLogin().catch((e) => toast.error(e.message))}
-                    onLogout={spotify.logout}
-                    onToggle={spotify.togglePlay}
-                    onNext={spotify.next}
-                    onPrev={spotify.prev}
-                    onVolume={spotify.setVolume}
-                    onListDevices={spotify.listDevices}
-                    onTransfer={spotify.transferPlayback}
-                  />
-                </div>
-              )}
+                {showPlayer && (
+                  <div className="mb-4 w-full lg:hidden">
+                    <SpotifyPlayer
+                      state={spotify.state}
+                      isAuthenticated={spotify.isAuthenticated}
+                      onLogin={() => spotify.startLogin().catch((e) => toast.error(e.message))}
+                      onLogout={spotify.logout}
+                      onToggle={spotify.togglePlay}
+                      onNext={spotify.next}
+                      onPrev={spotify.prev}
+                      onVolume={spotify.setVolume}
+                      onListDevices={spotify.listDevices}
+                      onTransfer={spotify.transferPlayback}
+                    />
+                  </div>
+                )}
 
-              {messages.length === 0 ? (
-                <div className="flex min-h-[56svh] flex-col items-center justify-center gap-6 py-8 text-center lg:min-h-[70svh]">
-                  <Orb size={220} active variant={profile.theme} className="sm:[transform:scale(1.05)]" />
-                  <SoundWaves active={!spotify.state.paused && !!spotify.state.current} bpm={spotify.state.tempo} energy={spotify.state.energy} variant={profile.theme} bars={32} height={56} className="w-full max-w-md" />
-                  <div>
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                      Modo <span className="text-gradient">{themeName}</span> activo
-                    </h2>
-                    <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                      {themeName === "NOVA" ? "Listo para ayudarte a lograr cualquier cosa." : "¿En qué puedo ayudarte hoy?"}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full space-y-4 pb-4">
-                  {/* Orbe + ondas siempre visibles aunque haya mensajes */}
-                  <div className="sticky top-0 z-10 -mx-4 mb-2 flex items-center gap-3 bg-background/80 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8">
-                    <Orb size={56} active variant={profile.theme} />
-                    <SoundWaves active={!spotify.state.paused && !!spotify.state.current} bpm={spotify.state.tempo} energy={spotify.state.energy} variant={profile.theme} bars={22} height={32} className="flex-1" />
-                  </div>
-                  {messages.map((m, i) => {
-                    if (m.image) {
-                      return (
-                        <div key={i} className="flex w-full justify-start animate-float-up">
-                          <div className="max-w-[85%] w-full sm:w-80">
-                            <ImageMessage
-                              prompt={m.image.prompt}
-                              url={m.image.url}
-                              onDownload={m.image.url ? () => window.open(m.image!.url!, "_blank") : undefined}
-                            />
-                          </div>
-                        </div>
-                      );
-                    }
-                    if (m.whatsapp) {
-                      return (
-                        <div key={i} className="flex w-full justify-start animate-float-up">
-                          <div className="max-w-[85%] w-full sm:w-96">
-                            {m.whatsapp.sent ? (
-                              <ChatBubble themeName={themeName} message={{ role: "assistant", content: `📲 Abrí WhatsApp con tu mensaje a **${m.whatsapp.phone}**.`, time: m.time }} />
-                            ) : (
-                              <WhatsAppConfirm
-                                phone={m.whatsapp.phone}
-                                message={m.whatsapp.message}
-                                onConfirm={() => {
-                                  window.open(`https://wa.me/${m.whatsapp!.phone.replace(/\D/g, "")}?text=${encodeURIComponent(m.whatsapp!.message)}`, "_blank", "noopener,noreferrer");
-                                  setMessages((mm) => mm.map((x, j) => j === i && x.whatsapp ? { ...x, whatsapp: { ...x.whatsapp, sent: true } } : x));
-                                }}
-                                onCancel={() => setMessages((mm) => mm.filter((_, j) => j !== i))}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      );
-                    }
-                    return <ChatBubble key={i} message={m} themeName={themeName} />;
-                  })}
-                  {sending && (
-                    <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
-                      <Activity className="h-3 w-3 animate-pulse text-primary" />
-                      {themeName} está escribiendo…
+                {messages.length === 0 ? (
+                  <div className="flex min-h-[56svh] flex-col items-center justify-center gap-6 py-8 text-center lg:min-h-[70svh]">
+                    <Orb
+                      size={220}
+                      active
+                      variant={profile.theme}
+                      className="sm:[transform:scale(1.05)]"
+                    />
+                    <SoundWaves
+                      active={!spotify.state.paused && !!spotify.state.current}
+                      bpm={spotify.state.tempo}
+                      energy={spotify.state.energy}
+                      variant={profile.theme}
+                      bars={32}
+                      height={56}
+                      className="w-full max-w-md"
+                    />
+                    <div>
+                      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                        Modo <span className="text-gradient">{themeName}</span> activo
+                      </h2>
+                      <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+                        {themeName === "NOVA"
+                          ? "Listo para ayudarte a lograr cualquier cosa."
+                          : "¿En qué puedo ayudarte hoy?"}
+                      </p>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div className="w-full space-y-4 pb-4">
+                    {/* Orbe + ondas siempre visibles aunque haya mensajes */}
+                    <div className="sticky top-0 z-10 -mx-4 mb-2 flex items-center gap-3 bg-background/80 px-4 py-2 backdrop-blur lg:-mx-8 lg:px-8">
+                      <Orb size={56} active variant={profile.theme} />
+                      <SoundWaves
+                        active={!spotify.state.paused && !!spotify.state.current}
+                        bpm={spotify.state.tempo}
+                        energy={spotify.state.energy}
+                        variant={profile.theme}
+                        bars={22}
+                        height={32}
+                        className="flex-1"
+                      />
+                    </div>
+                    {messages.map((m, i) => {
+                      if (m.image) {
+                        return (
+                          <div key={i} className="flex w-full justify-start animate-float-up">
+                            <div className="max-w-[85%] w-full sm:w-80">
+                              <ImageMessage
+                                prompt={m.image.prompt}
+                                url={m.image.url}
+                                onDownload={
+                                  m.image.url
+                                    ? () => window.open(m.image!.url!, "_blank")
+                                    : undefined
+                                }
+                              />
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (m.whatsapp) {
+                        return (
+                          <div key={i} className="flex w-full justify-start animate-float-up">
+                            <div className="max-w-[85%] w-full sm:w-96">
+                              {m.whatsapp.sent ? (
+                                <ChatBubble
+                                  themeName={themeName}
+                                  message={{
+                                    role: "assistant",
+                                    content: `📲 Abrí WhatsApp con tu mensaje a **${m.whatsapp.phone}**.`,
+                                    time: m.time,
+                                  }}
+                                />
+                              ) : (
+                                <WhatsAppConfirm
+                                  phone={m.whatsapp.phone}
+                                  message={m.whatsapp.message}
+                                  onConfirm={() => {
+                                    window.open(
+                                      `https://wa.me/${m.whatsapp!.phone.replace(/\D/g, "")}?text=${encodeURIComponent(m.whatsapp!.message)}`,
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    );
+                                    setMessages((mm) =>
+                                      mm.map((x, j) =>
+                                        j === i && x.whatsapp
+                                          ? { ...x, whatsapp: { ...x.whatsapp, sent: true } }
+                                          : x,
+                                      ),
+                                    );
+                                  }}
+                                  onCancel={() => setMessages((mm) => mm.filter((_, j) => j !== i))}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return <ChatBubble key={i} message={m} themeName={themeName} />;
+                    })}
+                    {sending && (
+                      <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
+                        <Activity className="h-3 w-3 animate-pulse text-primary" />
+                        {themeName} está escribiendo…
+                      </div>
+                    )}
+                  </div>
+                )}
               </section>
 
               <aside className="hidden lg:sticky lg:top-24 lg:block">

@@ -1,4 +1,13 @@
-import { DollarSign, Calendar, Users, Search, Music, Image as ImageIcon, FileText, Bell } from "lucide-react";
+import {
+  DollarSign,
+  Calendar,
+  Users,
+  Search,
+  Music,
+  Image as ImageIcon,
+  FileText,
+  Bell,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuickAction {
@@ -8,7 +17,11 @@ interface QuickAction {
 }
 
 const ACTIONS: QuickAction[] = [
-  { icon: Music, label: "Reproducir música", prompt: "Recomiéndame música según mi estado de ánimo" },
+  {
+    icon: Music,
+    label: "Reproducir música",
+    prompt: "Recomiéndame música según mi estado de ánimo",
+  },
   { icon: ImageIcon, label: "Generar imagen", prompt: "Genera una imagen de " },
   { icon: Bell, label: "Crear recordatorio", prompt: "Recuérdame " },
   { icon: Search, label: "Buscar en Google", prompt: "Busca en Google: " },
@@ -34,7 +47,7 @@ export function QuickActions({ onPick }: QuickActionsProps) {
             onClick={() => onPick(a.prompt)}
             className={cn(
               "glass flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-medium",
-              "hover:border-primary/60 hover:bg-card/80 transition-all"
+              "hover:border-primary/60 hover:bg-card/80 transition-all",
             )}
           >
             <Icon className="h-4 w-4 shrink-0 text-primary" />

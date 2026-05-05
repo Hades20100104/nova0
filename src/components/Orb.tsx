@@ -18,7 +18,15 @@ export function Orb({ size = 280, active = false, variant, className }: OrbProps
 }
 
 /* ============== NEVIRA — Esfera limpia (sin estrella) ============== */
-function NeviraOrb({ size, active, className }: { size: number; active: boolean; className?: string }) {
+function NeviraOrb({
+  size,
+  active,
+  className,
+}: {
+  size: number;
+  active: boolean;
+  className?: string;
+}) {
   return (
     <div
       className={cn("relative flex items-center justify-center", className)}
@@ -35,7 +43,7 @@ function NeviraOrb({ size, active, className }: { size: number; active: boolean;
       <div
         className={cn(
           "absolute inset-0 rounded-full blur-3xl opacity-70",
-          active && "animate-orb-pulse"
+          active && "animate-orb-pulse",
         )}
         style={{ background: "var(--gradient-orb)" }}
       />
@@ -44,7 +52,7 @@ function NeviraOrb({ size, active, className }: { size: number; active: boolean;
       <div
         className={cn(
           "relative rounded-full shadow-glow animate-orb-pulse",
-          "flex items-center justify-center overflow-hidden"
+          "flex items-center justify-center overflow-hidden",
         )}
         style={{
           width: size * 0.45,
@@ -141,7 +149,15 @@ const NOVA_RINGS: NovaRing[] = [
   },
 ];
 
-function NovaStar3D({ size, active, className }: { size: number; active: boolean; className?: string }) {
+function NovaStar3D({
+  size,
+  active,
+  className,
+}: {
+  size: number;
+  active: boolean;
+  className?: string;
+}) {
   const total = size * 1.1;
   const starSize = size * 0.35;
 
@@ -248,7 +264,7 @@ function Ring3D({ ring, containerSize }: { ring: NovaRing; containerSize: number
                 />
               </div>
             );
-          })
+          }),
         )}
       </div>
     </div>

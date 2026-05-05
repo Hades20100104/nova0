@@ -35,7 +35,10 @@ export function PickerMap({ lat, lng, radiusM, onPick, height = 280 }: PickerMap
       maxZoom: 19,
     }).addTo(map);
     const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-    const circle = L.circle([lat, lng], { radius: radiusM, color: "var(--primary, #6366f1)" }).addTo(map);
+    const circle = L.circle([lat, lng], {
+      radius: radiusM,
+      color: "var(--primary, #6366f1)",
+    }).addTo(map);
     marker.on("dragend", () => {
       const p = marker.getLatLng();
       circle.setLatLng(p);

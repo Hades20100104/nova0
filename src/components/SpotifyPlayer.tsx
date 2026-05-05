@@ -1,4 +1,17 @@
-import { Play, Pause, SkipBack, SkipForward, Music2, LogOut, LogIn, Speaker, Smartphone, Monitor, Tv, RefreshCw } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Music2,
+  LogOut,
+  LogIn,
+  Speaker,
+  Smartphone,
+  Monitor,
+  Tv,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
@@ -34,7 +47,18 @@ function deviceIcon(type: string) {
   return Monitor;
 }
 
-export function SpotifyPlayer({ state, isAuthenticated, onLogin, onLogout, onToggle, onNext, onPrev, onVolume, onListDevices, onTransfer }: SpotifyPlayerProps) {
+export function SpotifyPlayer({
+  state,
+  isAuthenticated,
+  onLogin,
+  onLogout,
+  onToggle,
+  onNext,
+  onPrev,
+  onVolume,
+  onListDevices,
+  onTransfer,
+}: SpotifyPlayerProps) {
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [devices, setDevices] = useState<SpotifyDevice[]>([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
@@ -79,7 +103,10 @@ export function SpotifyPlayer({ state, isAuthenticated, onLogin, onLogout, onTog
         <p className="mt-1 text-xs text-muted-foreground">
           Reproduce música directamente dentro del asistente.
         </p>
-        <Button onClick={onLogin} className="mt-4 w-full bg-gradient-to-r from-primary to-primary-glow text-primary-foreground">
+        <Button
+          onClick={onLogin}
+          className="mt-4 w-full bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
+        >
           <LogIn className="mr-2 h-4 w-4" /> Conectar Spotify
         </Button>
       </div>
@@ -102,7 +129,9 @@ export function SpotifyPlayer({ state, isAuthenticated, onLogin, onLogout, onTog
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">{t?.name ?? "Sin reproducción"}</div>
-          <div className="truncate text-xs text-muted-foreground">{t?.artist ?? (state.ready ? "Pídeme una canción" : "Conectando reproductor…")}</div>
+          <div className="truncate text-xs text-muted-foreground">
+            {t?.artist ?? (state.ready ? "Pídeme una canción" : "Conectando reproductor…")}
+          </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onLogout} title="Desconectar Spotify">
           <LogOut className="h-4 w-4" />
@@ -150,7 +179,10 @@ export function SpotifyPlayer({ state, isAuthenticated, onLogin, onLogout, onTog
             </span>
             <RefreshCw
               className={`h-3 w-3 ${loadingDevices ? "animate-spin" : ""}`}
-              onClick={(e) => { e.stopPropagation(); void refreshDevices(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                void refreshDevices();
+              }}
             />
           </button>
           {devicesOpen && (

@@ -25,7 +25,8 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
     if (!phoneId || !token) {
       return {
         ok: false as const,
-        error: "WhatsApp no está configurado (faltan secrets WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN).",
+        error:
+          "WhatsApp no está configurado (faltan secrets WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_ACCESS_TOKEN).",
       };
     }
     // Normaliza: solo dígitos

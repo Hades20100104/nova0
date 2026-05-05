@@ -2,7 +2,13 @@ import { createFileRoute, redirect, Link, useNavigate } from "@tanstack/react-ro
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
-import { fetchProfile, fetchNotes, updateProfile, type NeviraColor, type NovaColor } from "@/lib/cloud-memory";
+import {
+  fetchProfile,
+  fetchNotes,
+  updateProfile,
+  type NeviraColor,
+  type NovaColor,
+} from "@/lib/cloud-memory";
 import { useSpotify } from "@/hooks/use-spotify";
 import { Orb } from "@/components/Orb";
 import { SoundWaves } from "@/components/SoundWaves";
@@ -14,18 +20,38 @@ import { MenuDrawer } from "@/components/MenuDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { DashboardCard } from "@/components/DashboardCard";
 import { HomeHero } from "@/components/HomeHero";
-import { Music, Image as ImageIcon, FileText, Brain, Bell, Sparkles, MessageCircleMore, Send, Wallet, Activity, Menu, Search, Zap } from "lucide-react";
+import {
+  Music,
+  Image as ImageIcon,
+  FileText,
+  Brain,
+  Bell,
+  Sparkles,
+  MessageCircleMore,
+  Send,
+  Wallet,
+  Activity,
+  Menu,
+  Search,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
     meta: [
       { title: "NEVIRA & NOVA — Tu asistente inteligente" },
-      { name: "description", content: "Dashboard personal con música, imágenes IA, documentos, recordatorios y más. Dos modos: NEVIRA (día) y NOVA (noche)." },
+      {
+        name: "description",
+        content:
+          "Dashboard personal con música, imágenes IA, documentos, recordatorios y más. Dos modos: NEVIRA (día) y NOVA (noche).",
+      },
     ],
   }),
   component: HomePage,
@@ -34,14 +60,21 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ assistantName: string | null; theme: "nevira" | "nova"; neviraColor: NeviraColor; novaColor: NovaColor } | null>(null);
+  const [profile, setProfile] = useState<{
+    assistantName: string | null;
+    theme: "nevira" | "nova";
+    neviraColor: NeviraColor;
+    novaColor: NovaColor;
+  } | null>(null);
   const [notesCount, setNotesCount] = useState(0);
   const [imageCount, setImageCount] = useState<number | null>(null);
   const [docCount, setDocCount] = useState<number | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsView, setSettingsView] = useState<"menu" | "playlists" | "playlist-detail" | "contacts" | "docs">("menu");
+  const [settingsView, setSettingsView] = useState<
+    "menu" | "playlists" | "playlist-detail" | "contacts" | "docs"
+  >("menu");
 
   const spotify = useSpotify(!!auth.user, auth.user?.id ?? null);
 
@@ -60,13 +93,23 @@ function HomePage() {
       if (!p?.assistant_name) setShowOnboarding(true);
       // Conteos para tarjetas (silencioso si tablas vacías)
       try {
-        const { count: ic } = await supabase.from("generated_images").select("*", { count: "exact", head: true }).eq("user_id", auth.user!.id);
+        const { count: ic } = await supabase
+          .from("generated_images")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", auth.user!.id);
         setImageCount(ic ?? 0);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       try {
-        const { count: dc } = await supabase.from("generated_documents").select("*", { count: "exact", head: true }).eq("user_id", auth.user!.id);
+        const { count: dc } = await supabase
+          .from("generated_documents")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", auth.user!.id);
         setDocCount(dc ?? 0);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     })();
   }, [auth.user]);
 
@@ -93,23 +136,27 @@ function HomePage() {
   const handleOnboarding = async (name: string) => {
     if (!auth.user) return;
     await updateProfile(auth.user.id, { assistant_name: name });
-    setProfile((p) => p ? { ...p, assistantName: name } : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" });
+    setProfile((p) =>
+      p
+        ? { ...p, assistantName: name }
+        : { assistantName: name, theme: "nevira", neviraColor: "aqua", novaColor: "violet" },
+    );
     setShowOnboarding(false);
   };
 
   const handleThemeChange = async (theme: "nevira" | "nova") => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, theme } : p);
+    setProfile((p) => (p ? { ...p, theme } : p));
     await updateProfile(auth.user.id, { theme });
   };
   const handleNeviraColorChange = async (c: NeviraColor) => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, neviraColor: c } : p);
+    setProfile((p) => (p ? { ...p, neviraColor: c } : p));
     await updateProfile(auth.user.id, { nevira_color: c });
   };
   const handleNovaColorChange = async (c: NovaColor) => {
     if (!auth.user) return;
-    setProfile((p) => p ? { ...p, novaColor: c } : p);
+    setProfile((p) => (p ? { ...p, novaColor: c } : p));
     await updateProfile(auth.user.id, { nova_color: c });
   };
 
@@ -154,9 +201,16 @@ function HomePage() {
           setDrawerOpen(false);
           if (s === "music") navigate({ to: "/chat", search: { q: "Pon música" } });
           if (s === "images") navigate({ to: "/chat", search: { q: "Genera una imagen de " } });
-          if (s === "whatsapp") navigate({ to: "/chat", search: { q: "WhatsApp a +52 diciendo " } });
-          if (s === "settings") { setSettingsView("menu"); setSettingsOpen(true); }
-          if (s === "docs") { setSettingsView("docs"); setSettingsOpen(true); }
+          if (s === "whatsapp")
+            navigate({ to: "/chat", search: { q: "WhatsApp a +52 diciendo " } });
+          if (s === "settings") {
+            setSettingsView("menu");
+            setSettingsOpen(true);
+          }
+          if (s === "docs") {
+            setSettingsView("docs");
+            setSettingsOpen(true);
+          }
         }}
         onClearMemory={() => toast.message("Abre Ajustes → Memoria desde el chat")}
         onLogout={handleLogout}
@@ -250,7 +304,9 @@ function HomePage() {
                 <DashboardCard
                   title="Música"
                   icon={Music}
-                  badge={spotify.isAuthenticated ? (musicActive ? "Sonando" : "Spotify") : "Conectar"}
+                  badge={
+                    spotify.isAuthenticated ? (musicActive ? "Sonando" : "Spotify") : "Conectar"
+                  }
                   badgeTone={musicActive ? "primary" : "muted"}
                   onClick={() => navigate({ to: "/chat", search: { q: "Pon música" } })}
                 >
@@ -260,20 +316,34 @@ function HomePage() {
                         {track.cover ? (
                           <img src={track.cover} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center"><Music className="h-5 w-5 text-muted-foreground" /></div>
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Music className="h-5 w-5 text-muted-foreground" />
+                          </div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-semibold">{track.name}</div>
-                        <div className="truncate text-[11px] text-muted-foreground">{track.artist}</div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {track.artist}
+                        </div>
                       </div>
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      {spotify.isAuthenticated ? "Pídeme una canción y la reproduzco aquí." : "Conecta tu Spotify para reproducir música directamente."}
+                      {spotify.isAuthenticated
+                        ? "Pídeme una canción y la reproduzco aquí."
+                        : "Conecta tu Spotify para reproducir música directamente."}
                     </p>
                   )}
-                  <SoundWaves active={musicActive} bpm={spotify.state.tempo} energy={spotify.state.energy} variant={profile.theme} bars={20} height={28} className="mt-3" />
+                  <SoundWaves
+                    active={musicActive}
+                    bpm={spotify.state.tempo}
+                    energy={spotify.state.energy}
+                    variant={profile.theme}
+                    bars={20}
+                    height={28}
+                    className="mt-3"
+                  />
                 </DashboardCard>
 
                 {/* Imágenes IA */}
@@ -288,7 +358,10 @@ function HomePage() {
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); sendToChat("Genera una imagen de "); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        sendToChat("Genera una imagen de ");
+                      }}
                       className="flex-1 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition"
                     >
                       Generar
@@ -308,20 +381,30 @@ function HomePage() {
                   title="Documentos"
                   icon={FileText}
                   badge={docCount !== null ? `${docCount}` : "—"}
-                  onClick={() => { setSettingsView("docs"); setSettingsOpen(true); }}
+                  onClick={() => {
+                    setSettingsView("docs");
+                    setSettingsOpen(true);
+                  }}
                 >
                   <p className="text-xs text-muted-foreground">
                     Crea Word, Excel y PowerPoint con un mensaje. Descarga directa.
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); sendToChat("Crea un documento de Word sobre "); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        sendToChat("Crea un documento de Word sobre ");
+                      }}
                       className="flex-1 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition"
                     >
                       Crear
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setSettingsView("docs"); setSettingsOpen(true); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSettingsView("docs");
+                        setSettingsOpen(true);
+                      }}
                       className="flex-1 rounded-lg border border-border bg-card/50 px-3 py-1.5 text-xs font-medium hover:border-primary/60 transition"
                     >
                       Historial
@@ -340,7 +423,11 @@ function HomePage() {
                     Dicta o escribe: "WhatsApp a Mamá diciendo …" y confirma con un toque.
                   </p>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setSettingsView("contacts"); setSettingsOpen(true); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSettingsView("contacts");
+                      setSettingsOpen(true);
+                    }}
                     className="mt-3 w-full rounded-lg border border-border bg-card/50 px-3 py-1.5 text-xs font-medium hover:border-primary/60 transition"
                   >
                     Mis contactos
@@ -397,12 +484,7 @@ function HomePage() {
                 </DashboardCard>
 
                 {/* Finanzas (placeholder) */}
-                <DashboardCard
-                  title="Finanzas"
-                  icon={Wallet}
-                  badge="Próximo"
-                  badgeTone="muted"
-                >
+                <DashboardCard title="Finanzas" icon={Wallet} badge="Próximo" badgeTone="muted">
                   <p className="text-xs text-muted-foreground">
                     Resumen mensual y categorías. Disponible muy pronto.
                   </p>

@@ -19,8 +19,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Trash2, Plus, MapPin, Clock, MessageCircle, Music, Bell, ArrowLeft } from "lucide-react";
 import { PickerMap } from "@/components/PickerMap";
 import { toast } from "sonner";
@@ -56,7 +69,11 @@ function AutomationsPage() {
   useAutomationsRunner({
     automations: items.filter((a) => a.enabled),
     onSpotifyPlay: async (q) => {
-      try { await spotify.playSearch(q); } catch (e) { console.warn(e); }
+      try {
+        await spotify.playSearch(q);
+      } catch (e) {
+        console.warn(e);
+      }
     },
   });
 
@@ -79,13 +96,18 @@ function AutomationsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Volver
         </Link>
         <h1 className="text-2xl font-bold">Automatizaciones</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nueva</Button>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Nueva
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <NewAutomationForm
@@ -101,7 +123,8 @@ function AutomationsPage() {
       </div>
 
       <p className="mb-4 text-xs text-muted-foreground">
-        Las automatizaciones se ejecutan mientras la app esté abierta. Geolocalización y reloj se evalúan cada 15s.
+        Las automatizaciones se ejecutan mientras la app esté abierta. Geolocalización y reloj se
+        evalúan cada 15s.
       </p>
 
       {loading ? (
@@ -111,7 +134,8 @@ function AutomationsPage() {
           <CardContent className="p-8 text-center">
             <p className="text-sm text-muted-foreground">Aún no tienes automatizaciones.</p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Ej: "Cuando llegue a casa, mandar WhatsApp a mamá" o "Cada lunes 7:00, poner playlist de gym".
+              Ej: "Cuando llegue a casa, mandar WhatsApp a mamá" o "Cada lunes 7:00, poner playlist
+              de gym".
             </p>
           </CardContent>
         </Card>
@@ -148,7 +172,9 @@ function TriggerIcon({ type }: { type: TriggerType }) {
 function describeTrigger(a: Automation): string {
   if (a.trigger_type === "time") {
     const c = a.trigger_config as any;
-    const days = (c.days as number[])?.length ? (c.days as number[]).map((d) => DAYS[d]).join("") : "todos los días";
+    const days = (c.days as number[])?.length
+      ? (c.days as number[]).map((d) => DAYS[d]).join("")
+      : "todos los días";
     return `${c.time} (${days})`;
   }
   const c = a.trigger_config as any;
@@ -200,7 +226,10 @@ function NewAutomationForm({
 
   const submit = async () => {
     if (!userId) return;
-    if (!name.trim()) { toast.error("Pon un nombre"); return; }
+    if (!name.trim()) {
+      toast.error("Pon un nombre");
+      return;
+    }
 
     let trigger_config: any;
     if (triggerType === "time") {
@@ -212,7 +241,10 @@ function NewAutomationForm({
     let action_config: any;
     if (actionType === "whatsapp") {
       const c = contacts.find((x) => x.id === contactId);
-      if (!c) { toast.error("Selecciona un contacto"); return; }
+      if (!c) {
+        toast.error("Selecciona un contacto");
+        return;
+      }
       action_config = { to: c.phone, contactName: c.name, message: whatsMessage };
     } else if (actionType === "spotify") {
       action_config = { query: spotifyQuery };
@@ -248,13 +280,19 @@ function NewAutomationForm({
       <div className="space-y-4">
         <div>
           <Label>Nombre</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Llegar a casa" />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ej. Llegar a casa"
+          />
         </div>
 
         <div>
           <Label>Cuándo</Label>
           <Select value={triggerType} onValueChange={(v) => setTriggerType(v as TriggerType)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="geofence_enter">Cuando llegue a un lugar</SelectItem>
               <SelectItem value="geofence_exit">Cuando salga de un lugar</SelectItem>
@@ -273,7 +311,11 @@ function NewAutomationForm({
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setDays((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i])}
+                  onClick={() =>
+                    setDays((prev) =>
+                      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i],
+                    )
+                  }
                   className={`h-8 w-8 rounded-full text-xs font-semibold ${days.includes(i) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
                 >
                   {d}
@@ -284,7 +326,11 @@ function NewAutomationForm({
         ) : (
           <div className="space-y-2">
             <Label>Etiqueta del lugar</Label>
-            <Input value={placeLabel} onChange={(e) => setPlaceLabel(e.target.value)} placeholder="Casa, Escuela, Trabajo…" />
+            <Input
+              value={placeLabel}
+              onChange={(e) => setPlaceLabel(e.target.value)}
+              placeholder="Casa, Escuela, Trabajo…"
+            />
             <PickerMap
               lat={coords.lat}
               lng={coords.lng}
@@ -292,15 +338,27 @@ function NewAutomationForm({
               onPick={(lat, lng) => setCoords({ lat, lng })}
             />
             <Label>Radio: {radiusM} m</Label>
-            <input type="range" min={50} max={1000} step={10} value={radiusM} onChange={(e) => setRadiusM(Number(e.target.value))} className="w-full" />
-            <p className="text-[11px] text-muted-foreground">Toca el mapa o arrastra el pin para mover el punto.</p>
+            <input
+              type="range"
+              min={50}
+              max={1000}
+              step={10}
+              value={radiusM}
+              onChange={(e) => setRadiusM(Number(e.target.value))}
+              className="w-full"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Toca el mapa o arrastra el pin para mover el punto.
+            </p>
           </div>
         )}
 
         <div>
           <Label>Acción</Label>
           <Select value={actionType} onValueChange={(v) => setActionType(v as ActionType)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="whatsapp">Enviar WhatsApp</SelectItem>
               <SelectItem value="spotify">Reproducir música</SelectItem>
@@ -313,13 +371,19 @@ function NewAutomationForm({
           <div className="space-y-2">
             <Label>Contacto</Label>
             {contacts.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Agrega contactos en Ajustes → WhatsApp.</p>
+              <p className="text-xs text-muted-foreground">
+                Agrega contactos en Ajustes → WhatsApp.
+              </p>
             ) : (
               <Select value={contactId} onValueChange={setContactId}>
-                <SelectTrigger><SelectValue placeholder="Elige un contacto" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Elige un contacto" />
+                </SelectTrigger>
                 <SelectContent>
                   {contacts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name} · {c.phone}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} · {c.phone}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -331,7 +395,11 @@ function NewAutomationForm({
         {actionType === "spotify" && (
           <div>
             <Label>Qué reproducir</Label>
-            <Input value={spotifyQuery} onChange={(e) => setSpotifyQuery(e.target.value)} placeholder='playlist gym, artista Bad Bunny, canción Tití…' />
+            <Input
+              value={spotifyQuery}
+              onChange={(e) => setSpotifyQuery(e.target.value)}
+              placeholder="playlist gym, artista Bad Bunny, canción Tití…"
+            />
           </div>
         )}
         {actionType === "notification" && (
@@ -343,7 +411,9 @@ function NewAutomationForm({
       </div>
 
       <DialogFooter>
-        <Button onClick={submit} disabled={saving}>{saving ? "Guardando…" : "Guardar"}</Button>
+        <Button onClick={submit} disabled={saving}>
+          {saving ? "Guardando…" : "Guardar"}
+        </Button>
       </DialogFooter>
     </>
   );

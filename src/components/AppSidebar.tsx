@@ -85,7 +85,9 @@ export function AppSidebar({ themeName, userName }: AppSidebarProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="truncate text-sm font-medium">{userName ?? "Usuario"}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Cuenta activa</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Cuenta activa
+          </div>
         </div>
         <Headphones className="h-4 w-4 text-muted-foreground" />
       </div>

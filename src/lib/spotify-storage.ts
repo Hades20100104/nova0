@@ -88,9 +88,11 @@ export function setSpotifyPkce(verifier: string, redirectUri: string) {
 
 export function getSpotifyPkce(): { verifier: string; redirectUri: string | null } | null {
   if (typeof window === "undefined") return null;
-  const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY) ?? localStorage.getItem(PKCE_VERIFIER_KEY);
+  const verifier =
+    sessionStorage.getItem(PKCE_VERIFIER_KEY) ?? localStorage.getItem(PKCE_VERIFIER_KEY);
   if (!verifier) return null;
-  const redirectUri = sessionStorage.getItem(PKCE_REDIRECT_KEY) ?? localStorage.getItem(PKCE_REDIRECT_KEY);
+  const redirectUri =
+    sessionStorage.getItem(PKCE_REDIRECT_KEY) ?? localStorage.getItem(PKCE_REDIRECT_KEY);
   return { verifier, redirectUri };
 }
 

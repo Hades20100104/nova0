@@ -20,7 +20,11 @@ function renderInline(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="text-primary">{part.slice(2, -2)}</strong>;
+      return (
+        <strong key={i} className="text-primary">
+          {part.slice(2, -2)}
+        </strong>
+      );
     }
     return <span key={i}>{part}</span>;
   });
@@ -35,7 +39,7 @@ export function ChatBubble({ message, themeName }: ChatBubbleProps) {
           "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-card",
           isUser
             ? "bg-gradient-to-br from-primary/30 to-primary-glow/20 border border-primary/40 text-foreground"
-            : "glass"
+            : "glass",
         )}
       >
         {!isUser && (

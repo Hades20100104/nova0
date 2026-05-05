@@ -10,7 +10,11 @@ type SpeechRecognitionLike = {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> & { length: number } }) => void) | null;
+  onresult:
+    | ((event: {
+        results: ArrayLike<ArrayLike<{ transcript: string }>> & { length: number };
+      }) => void)
+    | null;
   onend: (() => void) | null;
   onerror: ((event: { error: string }) => void) | null;
 };
@@ -36,8 +40,7 @@ export function useVoice(onFinal?: (text: string) => void): UseVoiceResult {
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const supported =
-    typeof window !== "undefined" &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   useEffect(() => {
     if (!supported) return;
@@ -68,7 +71,11 @@ export function useVoice(onFinal?: (text: string) => void): UseVoiceResult {
       recognition.onresult = null;
       recognition.onend = null;
       recognition.onerror = null;
-      try { recognition.stop(); } catch { /* noop */ }
+      try {
+        recognition.stop();
+      } catch {
+        /* noop */
+      }
     };
   }, [supported, onFinal]);
 

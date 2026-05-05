@@ -15,7 +15,15 @@ interface DashboardCardProps {
  * Tarjeta de widget para el dashboard. Estilo glass con borde sutil y un ícono
  * a la izquierda del título. Si recibe `onClick` se comporta como un botón.
  */
-export function DashboardCard({ title, icon: Icon, badge, badgeTone = "muted", onClick, children, className }: DashboardCardProps) {
+export function DashboardCard({
+  title,
+  icon: Icon,
+  badge,
+  badgeTone = "muted",
+  onClick,
+  children,
+  className,
+}: DashboardCardProps) {
   const Comp: any = onClick ? "button" : "div";
   return (
     <Comp
