@@ -363,6 +363,7 @@ function NewAutomationForm({
             <Label>Radio: {radiusM} m</Label>
             <input
               type="range"
+              aria-label="Radio de geocerca en metros"
               min={50}
               max={1000}
               step={10}
