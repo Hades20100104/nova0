@@ -101,7 +101,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-bg">
+    <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-bg">
       <div className="w-full max-w-md space-y-6">
         {/* Brand */}
         <div className="flex flex-col items-center gap-4 text-center">
