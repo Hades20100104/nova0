@@ -46,7 +46,14 @@ export const Route = createFileRoute("/chat")({
         name: "description",
         content: "Conversa con NEVIRA o NOVA: música, imágenes, WhatsApp y más por voz o texto.",
       },
+      { property: "og:title", content: "Chat — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Conversa con tu asistente: música, imágenes IA, WhatsApp y más, por voz o texto.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/chat" },
     ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/chat" }],
   }),
   component: AssistantApp,
 });
