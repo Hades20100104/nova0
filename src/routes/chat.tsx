@@ -591,11 +591,12 @@ function AssistantApp() {
         <AppSidebar themeName={themeName} userName={profile.assistantName} />
 
         <main className="flex min-h-screen flex-1 flex-col pb-16 lg:pb-0">
+          <h1 className="sr-only">Chat con asistente NEVIRA &amp; NOVA</h1>
           <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur lg:px-8">
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold sm:text-xl">
+              <p className="truncate text-lg font-semibold sm:text-xl">
                 {greeting}, <span className="text-gradient">{profile.assistantName ?? "tú"}</span>
-              </h1>
+              </p>
               <p className="truncate text-xs text-muted-foreground sm:text-sm">
                 Modo <span className="font-bold text-foreground">{themeName}</span> activo
               </p>
