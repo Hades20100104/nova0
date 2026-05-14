@@ -40,9 +40,9 @@ export function HomeHero({ themeName, theme, musicActive, bpm, energy, onSearch 
         {themeName === "NOVA" ? "NOVA · Creatividad" : "NEVIRA · Ejecución"}
       </div>
 
-      <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+      <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
         Modo <span className="text-gradient">{themeName}</span>
-      </h1>
+      </h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground sm:text-base">
         {themeName === "NOVA"
           ? "Creativa. Inspiradora. Sin límites."
