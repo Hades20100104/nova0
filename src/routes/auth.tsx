@@ -20,8 +20,19 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Iniciar sesión — NEVIRA & NOVA" },
-      { name: "description", content: "Accede a tu asistente personal NEVIRA / NOVA." },
+      {
+        name: "description",
+        content:
+          "Accede a tu asistente personal NEVIRA / NOVA con email o Google y empieza a hablar con tu IA.",
+      },
+      { property: "og:title", content: "Iniciar sesión — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Entra a tu asistente personal con IA en segundos.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/auth" }],
   }),
   component: AuthPage,
 });
@@ -90,7 +101,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-bg">
+    <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-bg">
       <div className="w-full max-w-md space-y-6">
         {/* Brand */}
         <div className="flex flex-col items-center gap-4 text-center">
@@ -215,7 +226,7 @@ function AuthPage() {
           <Sparkles className="h-3 w-3" /> Cuenta gratis · Sin tarjeta · Cancelas cuando quieras
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 

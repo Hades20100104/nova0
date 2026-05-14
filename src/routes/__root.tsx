@@ -32,16 +32,29 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Nevira/nova" },
-      { name: "description", content: "Asistente virtual" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Nevira/nova" },
-      { property: "og:description", content: "Asistente virtual" },
+      { title: "NEVIRA & NOVA — Asistente personal con IA" },
+      {
+        name: "description",
+        content:
+          "Asistente personal con IA: música por voz, imágenes IA, documentos Word/Excel/PowerPoint, WhatsApp y automatizaciones por hora o ubicación.",
+      },
+      { name: "author", content: "NEVIRA & NOVA" },
+      { property: "og:site_name", content: "NEVIRA & NOVA" },
+      { property: "og:title", content: "NEVIRA & NOVA — Asistente personal con IA" },
+      {
+        property: "og:description",
+        content:
+          "Música, imágenes IA, documentos y automatizaciones por voz. Dos modos: NEVIRA (día) y NOVA (noche).",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Nevira/nova" },
-      { name: "twitter:description", content: "Asistente virtual" },
+      { name: "twitter:title", content: "NEVIRA & NOVA — Asistente personal con IA" },
+      {
+        name: "twitter:description",
+        content:
+          "Música, imágenes IA, documentos y automatizaciones por voz. Dos modos: NEVIRA (día) y NOVA (noche).",
+      },
       {
         property: "og:image",
         content:

@@ -49,6 +49,7 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
         <input
           ref={inputRef}
           type="text"
+          aria-label="Mensaje para el asistente"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {

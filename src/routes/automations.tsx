@@ -43,6 +43,23 @@ export const Route = createFileRoute("/automations")({
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
   },
+  head: () => ({
+    meta: [
+      { title: "Automatizaciones — NEVIRA & NOVA" },
+      {
+        name: "description",
+        content:
+          "Crea automatizaciones por hora o ubicación: enviar WhatsApp al llegar a casa, poner playlist al amanecer, recordatorios al salir del trabajo.",
+      },
+      { property: "og:title", content: "Automatizaciones — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Reglas inteligentes por hora y geocercas para tu asistente personal.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/automations" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/automations" }],
+  }),
   component: AutomationsPage,
 });
 
@@ -94,10 +111,11 @@ function AutomationsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <main className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
         <Link
           to="/"
+          aria-label="Volver al inicio"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Volver
@@ -152,7 +170,12 @@ function AutomationsPage() {
                   </div>
                 </div>
                 <Switch checked={a.enabled} onCheckedChange={(v) => onToggle(a, v)} />
-                <Button variant="ghost" size="icon" onClick={() => onDelete(a.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Eliminar automatización"
+                  onClick={() => onDelete(a.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardContent>
@@ -160,7 +183,7 @@ function AutomationsPage() {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -340,6 +363,7 @@ function NewAutomationForm({
             <Label>Radio: {radiusM} m</Label>
             <input
               type="range"
+              aria-label="Radio de geocerca en metros"
               min={50}
               max={1000}
               step={10}

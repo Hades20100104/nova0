@@ -13,7 +13,21 @@ export const Route = createFileRoute("/gallery")({
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
-    meta: [{ title: "Mi galería — NEVIRA & NOVA" }],
+    meta: [
+      { title: "Mi galería — NEVIRA & NOVA" },
+      {
+        name: "description",
+        content:
+          "Tu galería privada de imágenes generadas con IA: descarga, organiza y vuelve a usar tus creaciones.",
+      },
+      { property: "og:title", content: "Mi galería — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Imágenes generadas con IA por tu asistente personal.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/gallery" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/gallery" }],
   }),
   component: GalleryPage,
 });
@@ -74,7 +88,7 @@ function GalleryPage() {
   return (
     <div className="min-h-screen bg-gradient-bg">
       <header className="flex items-center gap-3 border-b border-border bg-background/40 px-4 py-3 backdrop-blur lg:px-8">
-        <Link to="/" className="rounded-full p-2 hover:bg-card">
+        <Link to="/" aria-label="Volver al inicio" className="rounded-full p-2 hover:bg-card">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
@@ -130,6 +144,7 @@ function GalleryPage() {
                     </a>
                     <button
                       type="button"
+                      aria-label="Eliminar imagen"
                       onClick={() => handleDelete(img)}
                       className="flex items-center justify-center gap-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/20"
                     >

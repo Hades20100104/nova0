@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /spotify/callback
+
+Sitemap: https://nova0.lovable.app/sitemap.xml

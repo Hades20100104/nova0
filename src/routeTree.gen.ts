@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AutomationsRouteImport } from './routes/automations'
@@ -16,6 +17,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SpotifyCallbackRouteImport } from './routes/spotify.callback'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AutomationsRoute
   '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/automations': typeof AutomationsRoute
   '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/automations': typeof AutomationsRoute
   '/chat': typeof ChatRoute
   '/gallery': typeof GalleryRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spotify/callback': typeof SpotifyCallbackRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/chat'
     | '/gallery'
+    | '/sitemap.xml'
     | '/spotify/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/chat'
     | '/gallery'
+    | '/sitemap.xml'
     | '/spotify/callback'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/automations'
     | '/chat'
     | '/gallery'
+    | '/sitemap.xml'
     | '/spotify/callback'
   fileRoutesById: FileRoutesById
 }
@@ -105,11 +117,19 @@ export interface RootRouteChildren {
   AutomationsRoute: typeof AutomationsRoute
   ChatRoute: typeof ChatRoute
   GalleryRoute: typeof GalleryRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SpotifyCallbackRoute: typeof SpotifyCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gallery': {
       id: '/gallery'
       path: '/gallery'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   AutomationsRoute: AutomationsRoute,
   ChatRoute: ChatRoute,
   GalleryRoute: GalleryRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SpotifyCallbackRoute: SpotifyCallbackRoute,
 }
 export const routeTree = rootRouteImport

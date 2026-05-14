@@ -52,7 +52,18 @@ export const Route = createFileRoute("/")({
         content:
           "Dashboard personal con música, imágenes IA, documentos, recordatorios y más. Dos modos: NEVIRA (día) y NOVA (noche).",
       },
+      {
+        property: "og:title",
+        content: "NEVIRA & NOVA — Tu asistente inteligente",
+      },
+      {
+        property: "og:description",
+        content:
+          "Dashboard personal con música, imágenes IA, documentos y memoria contextual.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/" }],
   }),
   component: HomePage,
 });
@@ -241,12 +252,13 @@ function HomePage() {
         <AppSidebar themeName={themeName} userName={profile.assistantName} />
 
         <main className="flex min-h-screen flex-1 flex-col pb-20 lg:pb-0">
+          <h1 className="sr-only">Dashboard personal de NEVIRA &amp; NOVA</h1>
           {/* Header */}
           <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur lg:px-8">
             <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold sm:text-lg">
+              <p className="truncate text-base font-semibold sm:text-lg">
                 {greeting}, <span className="text-gradient">{profile.assistantName ?? "tú"}</span>
-              </h1>
+              </p>
               <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
                 Modo <span className="font-bold text-foreground">{themeName}</span> activo
               </p>
