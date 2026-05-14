@@ -170,7 +170,12 @@ function AutomationsPage() {
                   </div>
                 </div>
                 <Switch checked={a.enabled} onCheckedChange={(v) => onToggle(a, v)} />
-                <Button variant="ghost" size="icon" onClick={() => onDelete(a.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Eliminar automatización"
+                  onClick={() => onDelete(a.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardContent>
