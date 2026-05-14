@@ -13,7 +13,21 @@ export const Route = createFileRoute("/gallery")({
     if (!session) throw redirect({ to: "/auth" });
   },
   head: () => ({
-    meta: [{ title: "Mi galería — NEVIRA & NOVA" }],
+    meta: [
+      { title: "Mi galería — NEVIRA & NOVA" },
+      {
+        name: "description",
+        content:
+          "Tu galería privada de imágenes generadas con IA: descarga, organiza y vuelve a usar tus creaciones.",
+      },
+      { property: "og:title", content: "Mi galería — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Imágenes generadas con IA por tu asistente personal.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/gallery" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/gallery" }],
   }),
   component: GalleryPage,
 });
