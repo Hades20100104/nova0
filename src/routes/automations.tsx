@@ -43,6 +43,23 @@ export const Route = createFileRoute("/automations")({
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
   },
+  head: () => ({
+    meta: [
+      { title: "Automatizaciones — NEVIRA & NOVA" },
+      {
+        name: "description",
+        content:
+          "Crea automatizaciones por hora o ubicación: enviar WhatsApp al llegar a casa, poner playlist al amanecer, recordatorios al salir del trabajo.",
+      },
+      { property: "og:title", content: "Automatizaciones — NEVIRA & NOVA" },
+      {
+        property: "og:description",
+        content: "Reglas inteligentes por hora y geocercas para tu asistente personal.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/automations" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/automations" }],
+  }),
   component: AutomationsPage,
 });
 
