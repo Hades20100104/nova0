@@ -226,7 +226,7 @@ function AuthPage() {
           <Sparkles className="h-3 w-3" /> Cuenta gratis · Sin tarjeta · Cancelas cuando quieras
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 
