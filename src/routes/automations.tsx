@@ -178,7 +178,7 @@ function AutomationsPage() {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
