@@ -47,7 +47,7 @@ export function DashboardCard({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary">
             <Icon className="h-4 w-4" />
           </div>
-          <h3 className="text-sm font-semibold tracking-wide">{title}</h3>
+          <h2 className="text-sm font-semibold tracking-wide">{title}</h2>
         </div>
         {badge && (
           <span
