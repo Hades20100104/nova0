@@ -52,7 +52,18 @@ export const Route = createFileRoute("/")({
         content:
           "Dashboard personal con música, imágenes IA, documentos, recordatorios y más. Dos modos: NEVIRA (día) y NOVA (noche).",
       },
+      {
+        property: "og:title",
+        content: "NEVIRA & NOVA — Tu asistente inteligente",
+      },
+      {
+        property: "og:description",
+        content:
+          "Dashboard personal con música, imágenes IA, documentos y memoria contextual.",
+      },
+      { property: "og:url", content: "https://nova0.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/" }],
   }),
   component: HomePage,
 });
