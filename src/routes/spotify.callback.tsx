@@ -13,7 +13,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/spotify/callback")({
   head: () => ({
-    meta: [{ title: "Conectando Spotify…" }],
+    meta: [
+      { title: "Conectando Spotify… — NEVIRA & NOVA" },
+      {
+        name: "description",
+        content:
+          "Procesando la conexión con tu cuenta de Spotify para reproducir música desde tu asistente.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
   }),
   component: SpotifyCallbackPage,
 });
