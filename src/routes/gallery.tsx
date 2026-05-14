@@ -144,6 +144,7 @@ function GalleryPage() {
                     </a>
                     <button
                       type="button"
+                      aria-label="Eliminar imagen"
                       onClick={() => handleDelete(img)}
                       className="flex items-center justify-center gap-1 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/20"
                     >
