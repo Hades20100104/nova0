@@ -71,6 +71,7 @@ export function HomeHero({ themeName, theme, musicActive, bpm, energy, onSearch 
           </span>
           <input
             type="text"
+            aria-label="Buscar o preguntar al asistente"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
