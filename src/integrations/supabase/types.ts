@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_skills: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          enabled: boolean
+          id: string
+          last_used_at: string | null
+          name: string
+          params_schema: Json
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          enabled?: boolean
+          id?: string
+          last_used_at?: string | null
+          name: string
+          params_schema?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          params_schema?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       automations: {
         Row: {
           action_config: Json
