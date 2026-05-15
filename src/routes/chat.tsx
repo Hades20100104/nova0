@@ -453,7 +453,7 @@ function AssistantApp() {
 
     setSending(true);
     try {
-      const result = await chatFn({
+      const raw = await chatFn({
         data: {
           messages: [...messages, userMsg]
             .filter((m) => m.content)
@@ -463,14 +463,20 @@ function AssistantApp() {
           themeName,
         },
       });
+      const result = raw as { text: string; trace: Array<{ summary: string; ok: boolean }>; error: string | null };
       if (result.error) {
         setMessages((m) => [
           ...m,
           { role: "assistant", content: `⚠️ ${result.error}`, time: timeNow() },
         ]);
       } else {
-        setMessages((m) => [...m, { role: "assistant", content: result.text, time: timeNow() }]);
-        // Memoria contextual con IA: extrae datos relevantes del último turno.
+        const traceLines = (result.trace ?? [])
+          .map((t) => `\n> ${t.summary}`)
+          .join("");
+        setMessages((m) => [
+          ...m,
+          { role: "assistant", content: (traceLines ? traceLines + "\n\n" : "") + result.text, time: timeNow() },
+        ]);
         try {
           const ext = await memoryFn({ data: { userText: text, assistantText: result.text } });
           if (ext.note) {
