@@ -22,9 +22,12 @@ interface ChatInput {
   themeName: "NEVIRA" | "NOVA";
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyJson = any;
+
 export interface AgentTrace {
   tool: string;
-  args: Record<string, unknown>;
+  args: AnyJson;
   ok: boolean;
   summary: string;
 }
