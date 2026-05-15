@@ -55,19 +55,17 @@ export const saveSkill = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const payload = {
+      user_id: userId,
+      name: data.name,
+      description: data.description,
+      code: data.code,
+      params_schema: (data.paramsSchema ?? {}) as never,
+      enabled: true,
+    };
     const { data: row, error } = await supabase
       .from("agent_skills")
-      .upsert(
-        {
-          user_id: userId,
-          name: data.name,
-          description: data.description,
-          code: data.code,
-          params_schema: data.paramsSchema ?? {},
-          enabled: true,
-        },
-        { onConflict: "user_id,name" },
-      )
+      .upsert(payload, { onConflict: "user_id,name" })
       .select()
       .single();
     if (error) throw error;
