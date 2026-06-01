@@ -66,6 +66,8 @@ interface UIMessage {
   whatsapp?: { phone: string; message: string; sent: boolean };
   /** Mensaje especial: imagen generada */
   image?: { prompt: string; url: string | null };
+  /** Acciones del agente (búsqueda web, código, skills) */
+  trace?: Array<{ summary: string; ok: boolean }>;
 }
 
 function timeNow() {
@@ -470,12 +472,14 @@ function AssistantApp() {
           { role: "assistant", content: `⚠️ ${result.error}`, time: timeNow() },
         ]);
       } else {
-        const traceLines = (result.trace ?? [])
-          .map((t) => `\n> ${t.summary}`)
-          .join("");
         setMessages((m) => [
           ...m,
-          { role: "assistant", content: (traceLines ? traceLines + "\n\n" : "") + result.text, time: timeNow() },
+          {
+            role: "assistant",
+            content: result.text,
+            time: timeNow(),
+            trace: result.trace ?? [],
+          },
         ]);
         try {
           const ext = await memoryFn({ data: { userText: text, assistantText: result.text } });

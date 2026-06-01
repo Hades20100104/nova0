@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
+import { AgentActionTrace } from "@/components/AgentActionChip";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   time?: string;
+  trace?: Array<{ summary: string; ok: boolean }>;
 }
 
 interface ChatBubbleProps {
@@ -49,6 +51,9 @@ export function ChatBubble({ message, themeName }: ChatBubbleProps) {
               <span className="text-[10px] text-muted-foreground">{message.time}</span>
             )}
           </div>
+        )}
+        {!isUser && message.trace && message.trace.length > 0 && (
+          <AgentActionTrace trace={message.trace} />
         )}
         <div className="whitespace-pre-wrap leading-relaxed">
           {message.content.split("\n").map((line, i) => (
