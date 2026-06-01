@@ -28,7 +28,9 @@ import {
   WandSparkles,
   FileText,
   Download,
+  Sparkles,
 } from "lucide-react";
+import { SkillsManager } from "@/components/SkillsManager";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -81,10 +83,10 @@ interface SettingsDrawerProps {
   ) => Promise<{ queries: string[]; tracks?: PlaylistTrackInput[]; log: ArtistResolutionLog[] }>;
   onSearchArtists: (query: string) => Promise<ArtistSuggestion[]>;
   themeName: "NEVIRA" | "NOVA";
-  initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
+  initialView?: "menu" | "playlists" | "playlist-detail" | "contacts" | "docs" | "skills";
 }
 
-type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs";
+type View = "menu" | "playlists" | "playlist-detail" | "contacts" | "docs" | "skills";
 
 export function SettingsDrawer({
   open,
@@ -156,6 +158,12 @@ export function SettingsDrawer({
                 desc="Genera Word, Excel o PowerPoint"
                 onClick={() => setView("docs")}
               />
+              <SettingsTile
+                icon={Sparkles}
+                label="Skills aprendidos"
+                desc="Lo que tu asistente aprendió a hacer"
+                onClick={() => setView("skills")}
+              />
             </div>
           )}
 
@@ -186,6 +194,8 @@ export function SettingsDrawer({
           {view === "contacts" && <ContactsView userId={userId} />}
 
           {view === "docs" && <DocsView themeName={themeName} />}
+
+          {view === "skills" && <SkillsManager />}
         </div>
       </SheetContent>
     </Sheet>
