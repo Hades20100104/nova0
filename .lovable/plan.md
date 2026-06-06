@@ -1,87 +1,84 @@
-# Modo agente auto-extensible para Nova
 
-Convertir el chat de Nova en un agente que, cuando le pides algo para lo que no tiene una herramienta hecha, **razone, busque en la web y/o genere y ejecute código JavaScript en una sandbox aislada**, y guarde las soluciones útiles como "skills" reutilizables.
+# Rediseño completo NEVIRA / NOVA
 
-## Cómo funciona, en una frase
+Adopto el sistema visual del ZIP `nova-nevira-companion-main`: dos modos completos con switch, sidebar modular, tipografía y tokens de color del nuevo `styles.css`, layout estilo HUD para NEVIRA y atmósfera holográfica para NOVA. Mantengo todo el backend actual (chat agente, música/Spotify, imágenes IA, documentos, automatizaciones, WhatsApp, memoria, skills, auth con Supabase).
 
-El modelo recibe la conversación + un catálogo de herramientas. Si ninguna herramienta encaja, llama a la herramienta especial `run_code` que ejecuta JS efímero en un sandbox sin acceso a tus datos. Si la solución funciona y es reutilizable, llama a `save_skill` para guardarla y tenerla disponible la próxima vez.
+## Arquitectura de rutas
 
-## Componentes
+Reemplazo el árbol actual por dos layouts pathless con sus propios sidebars:
 
-### 1. Sandbox de ejecución (cómputo aislado, server-side)
-- Server function `runSandbox.functions.ts` que ejecuta JS en `quickjs-emscripten` (intérprete WASM, totalmente aislado, sin `fetch`/`process`/`require`).
-- Permitido: `Math`, `JSON`, `Date`, `String`, `Array`, regex, parseo, cálculos.
-- Permitido bajo allowlist explícita: `fetch` solo a APIs HTTPS públicas (sin cookies, sin headers de auth). Se filtra por dominio y se aplica timeout de 5s y límite de respuesta de 100KB.
-- Bloqueado: filesystem, env vars, BD, secretos, contactos, memoria, automatizaciones del usuario.
-- Timeout duro: 3s de CPU, 10MB RAM.
-- Devuelve `{ ok, result, logs, error }`.
-
-### 2. Router de modelos (Nova elige según la tarea)
-- `src/lib/model-router.ts`: clasificador rápido con `gemini-3-flash-preview` que decide:
-  - **Flash** → conversación normal, respuestas cortas, traducciones.
-  - **GPT-5** → tareas con razonamiento, código, multi-paso, matemáticas.
-- Se ejecuta una sola vez por turno antes del modelo principal.
-
-### 3. Catálogo de herramientas para el agente
-El chat pasa al modelo este conjunto de tools (function calling):
-- `web_search(query)` → busca en la web (proxy server-side).
-- `run_code(description, code)` → ejecuta JS en el sandbox.
-- `save_skill(name, description, code, params_schema)` → guarda un skill nuevo.
-- + las herramientas existentes (memoria, automatizaciones, WhatsApp, Spotify…).
-- Los skills guardados aparecen como tools dinámicas en el siguiente turno.
-
-### 4. Skills persistentes
-Tabla `agent_skills` con: `id`, `user_id`, `name`, `description`, `code`, `params_schema` (JSON), `usage_count`, `last_used_at`, `enabled`.
-RLS: cada usuario solo ve los suyos. Cuando se cargan las tools del agente, se inyectan los skills habilitados del usuario.
-
-### 5. UI mínima
-- En el chat, cuando el agente usa `run_code` o `save_skill` se muestra un "chip" colapsable con el nombre de la acción (no el código completo, para no ensuciar el hilo).
-- Nueva sección en `Settings` → "Habilidades aprendidas" para listar, deshabilitar o borrar skills.
-
-## Flujo de un turno
-
-```text
-usuario: "calcula la propina del 18% sobre 47.50 y conviértela a USD"
-   ↓
-router → GPT-5 (tarea de cálculo)
-   ↓
-modelo: no tengo tool para esto → llama run_code({ code: "..." })
-   ↓
-sandbox ejecuta → { ok: true, result: 9.39 EUR ≈ 10.20 USD }
-   ↓
-modelo: llama save_skill({ name: "tip_calculator", ... })
-   ↓
-modelo responde al usuario con el resultado
+```
+src/routes/
+  __root.tsx              (shell html, ThemeProvider NEVIRA↔NOVA)
+  index.tsx               (landing/redirect a /nova o /nevira según último modo)
+  auth.tsx                (sin cambios funcionales, re-skin)
+  _nova.tsx               (layout NOVA: sidebar violeta + LiquidChatBar)
+    _nova/inicio.tsx
+    _nova/conversacion.tsx     -> usa chat agente actual
+    _nova/musica.tsx           -> Spotify + MusicPlayerWidget
+    _nova/imagenes.tsx         -> image.functions actual
+    _nova/documentos.tsx       -> docs.functions actual
+    _nova/memoria.tsx          -> memory.functions actual
+    _nova/automatizaciones.tsx -> automations actual
+    _nova/calendario.tsx       (UI demo)
+    _nova/whatsapp.tsx         -> whatsapp.functions actual
+    _nova/finanzas.tsx         (UI demo)
+    _nova/ajustes.tsx          (tema, tipografía, paleta, asistente)
+  _nevira.tsx             (layout NEVIRA Core: sidebar cian + HUD)
+    _nevira/panel.tsx           (Director del panel — vista general)
+    _nevira/productividad.tsx   (UI demo: tareas/proyectos/notas)
+    _nevira/automatizaciones.tsx (reusa runner real + grafo demo)
+    _nevira/comunicacion.tsx    (UI demo)
+    _nevira/analisis.tsx        (UI demo)
+    _nevira/datos.tsx           (UI demo)
+    _nevira/memoria.tsx         (UI demo del grafo)
+    _nevira/codigo.tsx          (UI demo del laboratorio de código)
+    _nevira/seguridad.tsx       (UI demo)
+    _nevira/sistema.tsx         (UI demo)
+    _nevira/rendimiento.tsx     (UI demo CPU/RAM/GPU)
 ```
 
-## Detalles técnicos
+Las rutas viejas (`/chat`, `/automations`, `/gallery`, `/spotify/callback`) se mantienen como redirects al equivalente NOVA para no romper enlaces.
 
-- **Dependencia nueva**: `quickjs-emscripten` (~300KB, WASM, compatible con Cloudflare Workers).
-- **Server functions nuevas**: `runSandbox`, `webSearch`, `saveSkill`, `listSkills`, `deleteSkill`.
-- **Migración**: tabla `agent_skills` con RLS por `user_id`.
-- **Modificaciones**: `src/server/chat.functions.ts` para el loop de tool-calling (hasta 5 iteraciones por turno, anti-loop).
-- **Modelos**: Flash por defecto, GPT-5 cuando el router lo decide o cuando el modelo pide razonamiento profundo.
-- **Coste/seguridad**: cada `run_code` y `save_skill` se loguea por usuario; tope de 50 ejecuciones/día por usuario para evitar abuso.
+## Sistema de diseño
 
-## Lo que NO incluye este plan
+- `src/styles.css` reescrito con los dos temas (NEVIRA día / NOVA noche) y variantes de paleta (Aurora, Rosa Cósmica, Bosque Cuántico, Solar, Monocromo) y pares tipográficos (Sora, Atuendo, Instrument Serif, JetBrains Mono).
+- `src/lib/theme.ts`: provider con `mode: "nevira" | "nova"`, `palette`, `font`, persistido en localStorage + tabla `user_preferences` (ya existe en backend para sincronizar).
+- Switch ESTRELLA NUEVA ↔ NEVIRA en cada sidebar; navega al layout opuesto.
 
-- No modifica el código fuente de Nova en runtime (imposible en Workers).
-- No instala paquetes npm dinámicamente.
-- El sandbox no accede a tu memoria/contactos/automatizaciones (lo confirmaste: "solo cómputo aislado").
+## Componentes nuevos (portados/adaptados del ZIP)
 
-## Archivos a crear/modificar
+- `ModuleSidebar` (lista de módulos por modo, con categorías CREAR/PENSAR/CONECTAR para NOVA y OPERADOR/ANALIZAR/PROTEGIDO para NEVIRA).
+- `LiquidChatBar` (composer flotante inferior, “Escribe o habla con NOVA…” / “Consulta a NEVIRA…”) que invoca el chat agente real.
+- `ModulePanel` (marco con esquinas HUD, encabezado + descripción).
+- `ClockBadge`, `PerfGauge`, `HudTelemetry`, `Waveform`, `ListeningWidget`, `MusicPlayerWidget`, `RecentActivity`, `QuickAccessBar`, `NovaSphere`, `NeviraCube`, `Icon3D`.
+- Páginas demo: portar el contenido visual de `ModuleSections.tsx` (892 líneas) repartido en cada ruta correspondiente.
 
-**Crear**
-- `src/server/sandbox.functions.ts` (ejecuta JS en QuickJS)
-- `src/server/skills.functions.ts` (CRUD de skills)
-- `src/server/web-search.functions.ts` (proxy de búsqueda)
-- `src/lib/model-router.ts` (decide Flash vs GPT-5)
-- `src/lib/agent-tools.ts` (catálogo de tools + loop)
-- `src/components/AgentActionChip.tsx` (chip colapsable en chat)
-- `src/components/SkillsManager.tsx` (UI en settings)
-- Migración: tabla `agent_skills`
+## Backend (sin cambios estructurales)
 
-**Modificar**
-- `src/server/chat.functions.ts` (loop de tool-calling)
-- `src/components/SettingsDrawer.tsx` (entrada a SkillsManager)
-- `src/components/ChatBubble.tsx` (renderizar AgentActionChip)
+- Reuso de: `chat.functions`, `image.functions`, `docs.functions`, `memory.functions`, `skills.functions`, `sandbox.functions`, `spotify.functions`, `whatsapp.functions`, `web-search.functions`, `automations`.
+- Auth y RLS existentes intactos.
+- Las páginas demo nuevas (Finanzas, Productividad, NEVIRA Core/Análisis/Seguridad/etc.) usan datos mock con `// TODO: conectar a backend` marcado.
+
+## Limpieza
+
+Componentes actuales que dejan de usarse y se eliminan: `HomeHero`, `Orb`, `AppSidebar`, `MobileTabBar`, `MenuDrawer`, `QuickActions`, `DashboardCard`, `OnboardingModal` (reemplazo por nuevo onboarding minimal), `ThemeSwitch` (lo reemplaza el switch dual del sidebar). `ChatBubble`, `ChatComposer`, `ImageMessage`, `SpotifyPlayer`, `PickerMap`, `SoundWaves`, `WhatsAppConfirm`, `SkillsManager`, `SettingsDrawer`, `AgentActionChip` se mantienen y se re-skinnean para encajar con el nuevo tema (sin lógica nueva).
+
+## Detalles técnicos clave
+
+- Tipografía cargada vía `<link>` en `__root.tsx` (Sora, Outfit/Atuendo, Instrument Serif, JetBrains Mono) — nunca `@import` URL.
+- Tokens en `@theme inline` para soportar el patrón shadcn.
+- Sidebar implementado con `@/components/ui/sidebar` (shadcn) + estilos custom para el look HUD/holográfico.
+- LiquidChatBar es global dentro de cada layout (`_nova.tsx` / `_nevira.tsx`) y comparte estado con la ruta activa para enviar prompts contextuales al chat agente.
+- `index.tsx` lee la preferencia y redirige a `/nova/inicio` o `/nevira/panel`.
+
+## Entrega en orden
+
+1. styles.css + theme.ts + provider + fuentes en `__root.tsx`.
+2. ModuleSidebar + LiquidChatBar + ModulePanel + primitivos HUD.
+3. Layouts `_nova.tsx` y `_nevira.tsx` + redirect en `index.tsx` + redirects de rutas viejas.
+4. Páginas NOVA (Inicio, Conversación, Música, Imágenes, Documentos, Memoria, Automatizaciones, Calendario, WhatsApp, Finanzas, Ajustes) conectando las server functions reales donde existen.
+5. Páginas NEVIRA Core (Panel, Productividad, Automatizaciones, Comunicación, Análisis, Datos, Memoria, Código, Seguridad, Sistema, Rendimiento) como UI demo con datos mock.
+6. Eliminación de componentes obsoletos y verificación de tipos/build.
+
+¿Apruebas el plan para implementarlo?
