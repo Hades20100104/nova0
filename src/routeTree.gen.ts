@@ -9,37 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as GalleryRouteImport } from './routes/gallery'
-import { Route as ChatRouteImport } from './routes/chat'
-import { Route as AutomationsRouteImport } from './routes/automations'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SpotifyCallbackRouteImport } from './routes/spotify.callback'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedNovaRouteImport } from './routes/_authenticated/nova'
+import { Route as AuthenticatedNeviraRouteImport } from './routes/_authenticated/nevira'
+import { Route as AuthenticatedNovaThreadIdRouteImport } from './routes/_authenticated/nova.$threadId'
+import { Route as AuthenticatedNeviraThreadIdRouteImport } from './routes/_authenticated/nevira.$threadId'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GalleryRoute = GalleryRouteImport.update({
-  id: '/gallery',
-  path: '/gallery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatRoute = ChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AutomationsRoute = AutomationsRouteImport.update({
-  id: '/automations',
-  path: '/automations',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -47,115 +32,115 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SpotifyCallbackRoute = SpotifyCallbackRouteImport.update({
-  id: '/spotify/callback',
-  path: '/spotify/callback',
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedNovaRoute = AuthenticatedNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNeviraRoute = AuthenticatedNeviraRouteImport.update({
+  id: '/nevira',
+  path: '/nevira',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNovaThreadIdRoute =
+  AuthenticatedNovaThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedNovaRoute,
+  } as any)
+const AuthenticatedNeviraThreadIdRoute =
+  AuthenticatedNeviraThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedNeviraRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/automations': typeof AutomationsRoute
-  '/chat': typeof ChatRoute
-  '/gallery': typeof GalleryRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/automations': typeof AutomationsRoute
-  '/chat': typeof ChatRoute
-  '/gallery': typeof GalleryRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
-  '/automations': typeof AutomationsRoute
-  '/chat': typeof ChatRoute
-  '/gallery': typeof GalleryRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/_authenticated/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/_authenticated/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/_authenticated/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/_authenticated/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
-    | '/automations'
-    | '/chat'
-    | '/gallery'
-    | '/sitemap.xml'
-    | '/spotify/callback'
+    | '/nevira'
+    | '/nova'
+    | '/api/chat'
+    | '/nevira/$threadId'
+    | '/nova/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/automations'
-    | '/chat'
-    | '/gallery'
-    | '/sitemap.xml'
-    | '/spotify/callback'
+    | '/nevira'
+    | '/nova'
+    | '/api/chat'
+    | '/nevira/$threadId'
+    | '/nova/$threadId'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/auth'
-    | '/automations'
-    | '/chat'
-    | '/gallery'
-    | '/sitemap.xml'
-    | '/spotify/callback'
+    | '/_authenticated/nevira'
+    | '/_authenticated/nova'
+    | '/api/chat'
+    | '/_authenticated/nevira/$threadId'
+    | '/_authenticated/nova/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
-  AutomationsRoute: typeof AutomationsRoute
-  ChatRoute: typeof ChatRoute
-  GalleryRoute: typeof GalleryRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  SpotifyCallbackRoute: typeof SpotifyCallbackRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gallery': {
-      id: '/gallery'
-      path: '/gallery'
-      fullPath: '/gallery'
-      preLoaderRoute: typeof GalleryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/automations': {
-      id: '/automations'
-      path: '/automations'
-      fullPath: '/automations'
-      preLoaderRoute: typeof AutomationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -165,25 +150,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/spotify/callback': {
-      id: '/spotify/callback'
-      path: '/spotify/callback'
-      fullPath: '/spotify/callback'
-      preLoaderRoute: typeof SpotifyCallbackRouteImport
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/nova': {
+      id: '/_authenticated/nova'
+      path: '/nova'
+      fullPath: '/nova'
+      preLoaderRoute: typeof AuthenticatedNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/nevira': {
+      id: '/_authenticated/nevira'
+      path: '/nevira'
+      fullPath: '/nevira'
+      preLoaderRoute: typeof AuthenticatedNeviraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/nova/$threadId': {
+      id: '/_authenticated/nova/$threadId'
+      path: '/$threadId'
+      fullPath: '/nova/$threadId'
+      preLoaderRoute: typeof AuthenticatedNovaThreadIdRouteImport
+      parentRoute: typeof AuthenticatedNovaRoute
+    }
+    '/_authenticated/nevira/$threadId': {
+      id: '/_authenticated/nevira/$threadId'
+      path: '/$threadId'
+      fullPath: '/nevira/$threadId'
+      preLoaderRoute: typeof AuthenticatedNeviraThreadIdRouteImport
+      parentRoute: typeof AuthenticatedNeviraRoute
     }
   }
 }
 
+interface AuthenticatedNeviraRouteChildren {
+  AuthenticatedNeviraThreadIdRoute: typeof AuthenticatedNeviraThreadIdRoute
+}
+
+const AuthenticatedNeviraRouteChildren: AuthenticatedNeviraRouteChildren = {
+  AuthenticatedNeviraThreadIdRoute: AuthenticatedNeviraThreadIdRoute,
+}
+
+const AuthenticatedNeviraRouteWithChildren =
+  AuthenticatedNeviraRoute._addFileChildren(AuthenticatedNeviraRouteChildren)
+
+interface AuthenticatedNovaRouteChildren {
+  AuthenticatedNovaThreadIdRoute: typeof AuthenticatedNovaThreadIdRoute
+}
+
+const AuthenticatedNovaRouteChildren: AuthenticatedNovaRouteChildren = {
+  AuthenticatedNovaThreadIdRoute: AuthenticatedNovaThreadIdRoute,
+}
+
+const AuthenticatedNovaRouteWithChildren =
+  AuthenticatedNovaRoute._addFileChildren(AuthenticatedNovaRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedNeviraRoute: typeof AuthenticatedNeviraRouteWithChildren
+  AuthenticatedNovaRoute: typeof AuthenticatedNovaRouteWithChildren
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedNeviraRoute: AuthenticatedNeviraRouteWithChildren,
+  AuthenticatedNovaRoute: AuthenticatedNovaRouteWithChildren,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
-  AutomationsRoute: AutomationsRoute,
-  ChatRoute: ChatRoute,
-  GalleryRoute: GalleryRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
-  SpotifyCallbackRoute: SpotifyCallbackRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
