@@ -10,7 +10,7 @@ import {
   distanceMeters,
   markTriggered,
 } from "@/lib/automations";
-import { sendWhatsAppMessage } from "@/server/whatsapp.functions";
+import { sendWhatsAppMessage } from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
 import { getCurrentPosition, isNative, notifyLocal } from "@/lib/native";
 

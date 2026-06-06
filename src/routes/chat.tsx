@@ -2,9 +2,9 @@ import { createFileRoute, redirect, useRouter, useSearch } from "@tanstack/react
 import { z } from "zod";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { chatWithAssistant } from "@/server/chat.functions";
-import { generateImage } from "@/server/image.functions";
-import { extractMemoryNote } from "@/server/memory.functions";
+import { chatWithAssistant } from "@/lib/chat.functions";
+import { generateImage } from "@/lib/image.functions";
+import { extractMemoryNote } from "@/lib/memory.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { fetchProfile, updateProfile, fetchNotes, addNote, clearNotes } from "@/lib/cloud-memory";

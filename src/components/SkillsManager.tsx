@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { listSkills, toggleSkill, deleteSkill } from "@/server/skills.functions";
+import { listSkills, toggleSkill, deleteSkill } from "@/lib/skills.functions";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Trash2, Code2 } from "lucide-react";
