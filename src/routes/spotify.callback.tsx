@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { exchangeAndStoreSpotifyCode } from "@/server/spotify.functions";
+import { exchangeAndStoreSpotifyCode } from "@/lib/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 import {
   clearSpotifyPkce,

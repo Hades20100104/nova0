@@ -14,7 +14,7 @@ import {
   getStoredSpotifyConnection,
   refreshSpotifyToken,
   SPOTIFY_CLIENT_ID_PUBLIC,
-} from "@/server/spotify.functions";
+} from "@/lib/spotify.functions";
 import { useServerFn } from "@tanstack/react-start";
 
 const SCOPES = [

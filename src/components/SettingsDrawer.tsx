@@ -38,7 +38,7 @@ import {
   listDocuments,
   downloadDocument,
   deleteDocument,
-} from "@/server/docs.functions";
+} from "@/lib/docs.functions";
 import {
   fetchContacts,
   addContact,
