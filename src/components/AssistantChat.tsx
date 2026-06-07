@@ -319,9 +319,24 @@ export function AssistantChat({
             className="min-h-[44px] max-h-40 resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none"
             disabled={isLoading}
           />
-          <Button variant="ghost" size="icon" type="button" disabled className="text-muted-foreground" title="Voz (próximamente)">
-            <Mic className="h-4 w-4" />
+          <Button
+            variant="ghost" size="icon" type="button"
+            onClick={toggleAutoSpeak}
+            className={voice.enabled ? "text-primary" : "text-muted-foreground"}
+            title={voice.enabled ? "Silenciar respuestas" : "Activar voz"}
+          >
+            {voice.enabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
+          <Button
+            variant="ghost" size="icon" type="button"
+            onClick={toggleMic}
+            disabled={!sttOk || isLoading}
+            className={listening ? "text-destructive animate-pulse" : (sttOk ? "text-primary" : "text-muted-foreground")}
+            title={listening ? "Detener micrófono" : (sttOk ? "Hablar" : "Micrófono no soportado")}
+          >
+            {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </Button>
+
           {isLoading ? (
             <Button onClick={() => stop()} size="icon" variant="destructive" title="Detener">
               <Square className="h-4 w-4" />
