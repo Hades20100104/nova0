@@ -26,6 +26,11 @@ export function AssistantChat({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { prefs: voice, update: updateVoice } = useVoicePrefs(assistant);
+  const [listening, setListening] = useState(false);
+  const recognizerRef = useRef<ReturnType<typeof createRecognizer> | null>(null);
+  const lastSpokenIdRef = useRef<string | null>(null);
+  const sttOk = isSttSupported();
 
   const transport = new DefaultChatTransport({
     api: "/api/chat",
