@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
-import { Send, Mic, Sparkles, Cpu, Square, RotateCcw, AlertTriangle, Loader2 } from "lucide-react";
+import { Send, Mic, MicOff, Sparkles, Cpu, Square, RotateCcw, AlertTriangle, Loader2, Volume2, VolumeX } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getModule, SUGGESTIONS } from "@/lib/modules";
 import { toast } from "sonner";
+import { useVoicePrefs, speak, stopSpeaking, createRecognizer, isSttSupported } from "@/lib/voice";
 
 export function AssistantChat({
   assistant,
@@ -25,6 +26,11 @@ export function AssistantChat({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { prefs: voice, update: updateVoice } = useVoicePrefs(assistant);
+  const [listening, setListening] = useState(false);
+  const recognizerRef = useRef<ReturnType<typeof createRecognizer> | null>(null);
+  const lastSpokenIdRef = useRef<string | null>(null);
+  const sttOk = isSttSupported();
 
   const transport = new DefaultChatTransport({
     api: "/api/chat",
@@ -76,6 +82,7 @@ export function AssistantChat({
   const send = async (text: string) => {
     const t = text.trim();
     if (!t || isLoading) return;
+    stopSpeaking();
     setInput("");
     await sendMessage({ text: t });
   };
@@ -87,6 +94,52 @@ export function AssistantChat({
       toast.error(e instanceof Error ? e.message : "No se pudo reintentar");
     }
   };
+
+  // Auto-speak finalized assistant messages
+  useEffect(() => {
+    if (!voice.enabled || isStreaming) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return;
+    if (lastSpokenIdRef.current === last.id) return;
+    const text = last.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+    if (!text.trim()) return;
+    lastSpokenIdRef.current = last.id;
+    speak(text, voice);
+  }, [messages, isStreaming, voice]);
+
+  // Stop speaking on unmount / thread switch
+  useEffect(() => () => stopSpeaking(), [threadId]);
+
+  const toggleMic = () => {
+    if (!sttOk) { toast.error("Tu navegador no soporta reconocimiento de voz."); return; }
+    if (listening) {
+      recognizerRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    stopSpeaking();
+    const rec = createRecognizer(voice.lang, (text, final) => {
+      setInput(text);
+      if (final) {
+        setListening(false);
+        recognizerRef.current = null;
+        if (text.trim()) void send(text);
+      }
+    }, () => {
+      setListening(false);
+      recognizerRef.current = null;
+    });
+    if (!rec) { toast.error("No se pudo iniciar el micrófono."); return; }
+    recognizerRef.current = rec;
+    try { rec.start(); setListening(true); }
+    catch { setListening(false); toast.error("Permiso de micrófono denegado."); }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (voice.enabled) stopSpeaking();
+    updateVoice({ enabled: !voice.enabled });
+  };
+
 
   const StatusBadge = () => {
     if (isErrored) {
@@ -266,9 +319,24 @@ export function AssistantChat({
             className="min-h-[44px] max-h-40 resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none"
             disabled={isLoading}
           />
-          <Button variant="ghost" size="icon" type="button" disabled className="text-muted-foreground" title="Voz (próximamente)">
-            <Mic className="h-4 w-4" />
+          <Button
+            variant="ghost" size="icon" type="button"
+            onClick={toggleAutoSpeak}
+            className={voice.enabled ? "text-primary" : "text-muted-foreground"}
+            title={voice.enabled ? "Silenciar respuestas" : "Activar voz"}
+          >
+            {voice.enabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
+          <Button
+            variant="ghost" size="icon" type="button"
+            onClick={toggleMic}
+            disabled={!sttOk || isLoading}
+            className={listening ? "text-destructive animate-pulse" : (sttOk ? "text-primary" : "text-muted-foreground")}
+            title={listening ? "Detener micrófono" : (sttOk ? "Hablar" : "Micrófono no soportado")}
+          >
+            {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </Button>
+
           {isLoading ? (
             <Button onClick={() => stop()} size="icon" variant="destructive" title="Detener">
               <Square className="h-4 w-4" />
