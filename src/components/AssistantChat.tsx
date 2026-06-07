@@ -82,6 +82,7 @@ export function AssistantChat({
   const send = async (text: string) => {
     const t = text.trim();
     if (!t || isLoading) return;
+    stopSpeaking();
     setInput("");
     await sendMessage({ text: t });
   };
@@ -93,6 +94,52 @@ export function AssistantChat({
       toast.error(e instanceof Error ? e.message : "No se pudo reintentar");
     }
   };
+
+  // Auto-speak finalized assistant messages
+  useEffect(() => {
+    if (!voice.enabled || isStreaming) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return;
+    if (lastSpokenIdRef.current === last.id) return;
+    const text = last.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+    if (!text.trim()) return;
+    lastSpokenIdRef.current = last.id;
+    speak(text, voice);
+  }, [messages, isStreaming, voice]);
+
+  // Stop speaking on unmount / thread switch
+  useEffect(() => () => stopSpeaking(), [threadId]);
+
+  const toggleMic = () => {
+    if (!sttOk) { toast.error("Tu navegador no soporta reconocimiento de voz."); return; }
+    if (listening) {
+      recognizerRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    stopSpeaking();
+    const rec = createRecognizer(voice.lang, (text, final) => {
+      setInput(text);
+      if (final) {
+        setListening(false);
+        recognizerRef.current = null;
+        if (text.trim()) void send(text);
+      }
+    }, () => {
+      setListening(false);
+      recognizerRef.current = null;
+    });
+    if (!rec) { toast.error("No se pudo iniciar el micrófono."); return; }
+    recognizerRef.current = rec;
+    try { rec.start(); setListening(true); }
+    catch { setListening(false); toast.error("Permiso de micrófono denegado."); }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (voice.enabled) stopSpeaking();
+    updateVoice({ enabled: !voice.enabled });
+  };
+
 
   const StatusBadge = () => {
     if (isErrored) {
