@@ -108,16 +108,3 @@ export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
     </div>
   );
 }
-
-        <div className="space-y-3 text-sm">
-          {["Tono", "Idioma", "Voz", "Memoria", "Notificaciones"].map((s) => (
-            <div key={s} className="flex items-center justify-between rounded-lg border border-primary/25 bg-card/40 px-3 py-2">
-              <span>{s}</span>
-              <span className="text-[10px] uppercase tracking-widest text-primary">Personalizar</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
