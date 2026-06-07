@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
-import { Send, Mic, Sparkles, Cpu, Square, RotateCcw, AlertTriangle, Loader2 } from "lucide-react";
+import { Send, Mic, MicOff, Sparkles, Cpu, Square, RotateCcw, AlertTriangle, Loader2, Volume2, VolumeX } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getModule, SUGGESTIONS } from "@/lib/modules";
 import { toast } from "sonner";
+import { useVoicePrefs, speak, stopSpeaking, createRecognizer, isSttSupported } from "@/lib/voice";
 
 export function AssistantChat({
   assistant,
