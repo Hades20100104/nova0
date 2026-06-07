@@ -71,17 +71,18 @@ export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
 
 // Wrapper used in Ajustes section content
 export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
-  const [tab, setTab] = useState<"tema" | "asistente">("tema");
+  const [tab, setTab] = useState<"tema" | "voz" | "asistente">("tema");
   return (
     <div className="space-y-5">
-      <div className="flex gap-2 text-[10px] uppercase tracking-[0.3em] font-mono">
+      <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em] font-mono">
         {[
           { id: "tema",       label: "Tema y Tipografía" },
+          { id: "voz",        label: "Voz" },
           { id: "asistente",  label: "Asistente" },
         ].map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id as any)}
+            onClick={() => setTab(t.id as "tema" | "voz" | "asistente")}
             className={`px-3 py-1.5 rounded-full border transition ${
               tab === t.id
                 ? "border-primary bg-primary/25 glow-text"
@@ -93,7 +94,21 @@ export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
         ))}
       </div>
       {tab === "tema" && <ThemeSettings assistant={assistant} />}
+      {tab === "voz" && <VoiceSettings assistant={assistant} />}
       {tab === "asistente" && (
+        <div className="space-y-3 text-sm">
+          {["Tono", "Idioma", "Voz", "Memoria", "Notificaciones"].map((s) => (
+            <div key={s} className="flex items-center justify-between rounded-lg border border-primary/25 bg-card/40 px-3 py-2">
+              <span>{s}</span>
+              <span className="text-[10px] uppercase tracking-widest text-primary">Personalizar</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
         <div className="space-y-3 text-sm">
           {["Tono", "Idioma", "Voz", "Memoria", "Notificaciones"].map((s) => (
             <div key={s} className="flex items-center justify-between rounded-lg border border-primary/25 bg-card/40 px-3 py-2">
