@@ -3,6 +3,7 @@ import {
   NOVA_THEMES, NEVIRA_THEMES, FONT_PRESETS, useTheme,
 } from "@/lib/theme";
 import { Check, Palette, Type } from "lucide-react";
+import { VoiceSettings } from "./VoiceSettings";
 
 export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
   const { prefs, update } = useTheme();
