@@ -246,7 +246,52 @@ export function AssistantChat({
                       NEVIRA · {mod.label}
                     </div>
                   )}
-                  <div className="assistant-prose"><ReactMarkdown>{text}</ReactMarkdown></div>
+                  {m.parts.map((p, i) => {
+                    if (p.type === "text") {
+                      return <div key={i} className="assistant-prose"><ReactMarkdown>{p.text}</ReactMarkdown></div>;
+                    }
+                    if (typeof p.type === "string" && p.type.startsWith("tool-")) {
+                      const toolName = p.type.replace(/^tool-/, "");
+                      const part = p as unknown as { state?: string; output?: unknown; errorText?: string };
+                      const state = part.state ?? "";
+                      const output = part.output as { ok?: boolean; url?: string; error?: string; tracks?: Array<{title:string;artist:string;url:string;cover?:string}>; memories?: Array<{key:string;value:string}>; id?: string; title?: string; contact?: string } | undefined;
+                      return (
+                        <div key={i} className="my-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+                          <div className="flex items-center gap-2 font-mono uppercase tracking-widest text-[10px] text-primary/80">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                            herramienta · {toolName}
+                            {state && <span className="text-muted-foreground">· {state}</span>}
+                          </div>
+                          {output?.error && <div className="mt-1 text-destructive">{output.error}</div>}
+                          {toolName === "generate_image" && output?.url && (
+                            <img src={output.url} alt="" className="mt-2 max-h-80 rounded-md border border-primary/30" />
+                          )}
+                          {toolName === "search_music" && output?.tracks && (
+                            <ul className="mt-1 space-y-1">
+                              {output.tracks.map((t, j) => (
+                                <li key={j} className="flex items-center gap-2">
+                                  {t.cover && <img src={t.cover} alt="" className="h-8 w-8 rounded" />}
+                                  <a href={t.url} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{t.title}</a>
+                                  <span className="text-muted-foreground truncate">— {t.artist}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {toolName === "recall" && output?.memories && (
+                            <ul className="mt-1 space-y-0.5">
+                              {output.memories.map((mm, j) => (
+                                <li key={j}><span className="text-primary">{mm.key}:</span> {mm.value}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {toolName === "remember" && output?.ok && <div className="mt-1 text-emerald-400">Guardado ✓</div>}
+                          {toolName === "save_document" && output?.ok && <div className="mt-1 text-emerald-400">Documento guardado: {output.title}</div>}
+                          {toolName === "send_whatsapp" && output?.ok && <div className="mt-1 text-emerald-400">Mensaje enviado a {output.contact}</div>}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
                 </div>
               </div>
             );

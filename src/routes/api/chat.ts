@@ -1,9 +1,10 @@
 import "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, stepCountIs, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { ASSISTANT_PERSONAS, getModule } from "@/lib/modules";
+import { buildChatTools } from "@/lib/chat-tools";
 import type { Database } from "@/integrations/supabase/types";
 
 type Body = {
@@ -91,9 +92,13 @@ export const Route = createFileRoute("/api/chat")({
         const gateway = createLovableAiGatewayProvider(apiKey);
         const model = gateway("google/gemini-3-flash-preview");
 
+        const tools = buildChatTools({ supabase, userId, apiKey });
+
         const result = streamText({
           model,
           system,
+          tools,
+          stopWhen: stepCountIs(5),
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
 
