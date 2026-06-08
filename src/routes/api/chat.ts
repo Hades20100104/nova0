@@ -92,9 +92,13 @@ export const Route = createFileRoute("/api/chat")({
         const gateway = createLovableAiGatewayProvider(apiKey);
         const model = gateway("google/gemini-3-flash-preview");
 
+        const tools = buildChatTools({ supabase, userId, apiKey });
+
         const result = streamText({
           model,
           system,
+          tools,
+          stopWhen: stepCountIs(5),
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
 
