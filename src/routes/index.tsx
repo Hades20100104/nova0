@@ -1,8 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import novaLogo from "@/assets/nova-logo.png";
 import neviraLogo from "@/assets/nevira-logo.png";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,12 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function SelectorPage() {
-  const navigate = useNavigate();
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate({ to: "/auth" });
-    });
-  }, [navigate]);
+
 
   return (
     <div className="min-h-screen w-full grid grid-cols-1 md:grid-cols-2">
