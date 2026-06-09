@@ -1,10 +1,17 @@
-import { MessageSquare, Sparkles, Music2, Image as ImageIcon, FileText, Brain, Heart, Disc3, Wand2, Layers, Clock, Star, Settings as SettingsIcon, TrendingUp, Workflow, Database, Radio, BookOpen, Shield, Cpu, Gauge, Code2 } from "lucide-react";
+import { MessageSquare, Sparkles, Music2, Image as ImageIcon, FileText, Brain, Heart, Disc3, Wand2, Layers, Clock, Star, Settings as SettingsIcon, TrendingUp, Workflow, Database, Radio, BookOpen, Shield, Cpu, Gauge, Code2, Trash2, Download, Plus, Send, Phone as PhoneIcon, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { getModule } from "@/lib/modules";
 import { MusicPlayerWidget } from "@/components/dashboard/MusicPlayerWidget";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { Waveform } from "@/components/dashboard/Waveform";
 import { Icon3D } from "@/components/Icon3D";
 import { AjustesPanel } from "@/components/sections/ThemeSettings";
+import {
+  useNovaThreads, useGeneratedImages, useGeneratedDocuments, useUserMemory,
+  useDeleteMemory, useWhatsappContacts, useAddContact, useDeleteContact,
+  downloadDocument,
+} from "@/lib/module-data";
+import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
 function AmbientParticles({ count = 14 }: { count?: number }) {
