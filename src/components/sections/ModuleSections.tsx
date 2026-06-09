@@ -169,36 +169,8 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
 
     case "documentos":
-      return (
-        <section className="smart-room theme-transition animate-fade-in">
-          <AmbientParticles count={10} />
-          <RoomHeader icon={FileText} eyebrow="Biblioteca viva · NOVA"
-            title="Documentos" subtitle="Hojas holográficas que se reorganizan según tu pensamiento." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { t: "Plan de Negocio", s: "Proyecto NOVA · Hoy", w: 1820, tag: "Estrategia" },
-              { t: "Ideas Creativas", s: "Brainstorming · Ayer", w: 940, tag: "Creatividad" },
-              { t: "Guion Video", s: "Campaña 2035 · hace 2 días", w: 2310, tag: "Narrativa" },
-              { t: "Notas de Viaje", s: "Tokio · hace 5 días", w: 670, tag: "Diario" },
-              { t: "Manifiesto", s: "Personal · 18 may", w: 480, tag: "Identidad" },
-              { t: "Investigación IA", s: "Estudio · 12 may", w: 3100, tag: "Conocimiento" },
-            ].map((d) => (
-              <div key={d.t} className="paper-sheen relative rounded-2xl p-5 holo-card overflow-hidden">
-                <div className="flex items-center justify-between mb-3">
-                  <Icon3D className="h-11 w-11"><FileText className="h-5 w-5" /></Icon3D>
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-primary/80 font-mono px-2 py-0.5 rounded-full border border-primary/30">{d.tag}</span>
-                </div>
-                <div className="font-display text-lg tracking-wider">{d.t}</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{d.s}</div>
-                <div className="mt-3 flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
-                  <Layers className="h-3 w-3" /> {d.w.toLocaleString()} palabras
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5"><ChatCta onChat={onChat} label="Crear documento" /></div>
-        </section>
-      );
+      return <DocumentosRoom onChat={onChat} />;
+
 
     case "memoria":
       return (
