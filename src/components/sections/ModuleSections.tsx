@@ -165,43 +165,8 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
       );
 
     case "imagenes":
-      return (
-        <section className="smart-room theme-transition animate-fade-in">
-          <AmbientParticles count={20} />
-          <RoomHeader icon={ImageIcon} eyebrow="Laboratorio visual · NOVA"
-            title="Imágenes IA" subtitle="Un atelier holográfico para conjurar mundos a partir de palabras." />
-          <div className="flex flex-wrap gap-2 mb-5 text-[10px] uppercase tracking-[0.3em] font-mono">
-            {["Todas", "Cinemático", "Surreal", "Paisajes", "Retrato", "Abstracto"].map((t, i) => (
-              <span key={t} className={`px-3 py-1.5 rounded-full border backdrop-blur-sm transition ${
-                i === 0 ? "border-primary bg-primary/25 glow-text" : "border-primary/30 bg-card/40 hover:bg-primary/10"
-              }`}>{t}</span>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="holo-card aspect-[4/5] rounded-2xl border border-primary/30 overflow-hidden relative group"
-                style={{
-                  background: `
-                    radial-gradient(circle at ${20 + i * 9}% ${30 + (i * 7) % 50}%, color-mix(in oklab, var(--glow) 55%, transparent), transparent 55%),
-                    linear-gradient(${120 + i * 25}deg, color-mix(in oklab, var(--primary) 55%, transparent), color-mix(in oklab, var(--accent) 45%, transparent), #06030f)`,
-                  boxShadow: "0 0 24px color-mix(in oklab, var(--glow) 30%, transparent)",
-                }}>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_30%,rgba(255,255,255,0.4),transparent_55%)]" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-t from-background/80 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 text-[10px] uppercase tracking-widest opacity-90 flex items-center gap-1">
-                  <Wand2 className="h-3 w-3" /> Escena {i + 1}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 flex items-center gap-3">
-            <ChatCta onChat={onChat} label="Generar nueva imagen" />
-            <span className="text-[10px] uppercase tracking-[0.3em] font-mono text-muted-foreground">
-              Modelo · NOVA-Vision · 2035
-            </span>
-          </div>
-        </section>
-      );
+      return <ImagenesRoom onChat={onChat} />;
+
 
     case "documentos":
       return (
