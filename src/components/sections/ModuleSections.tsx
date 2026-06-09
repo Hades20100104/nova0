@@ -219,24 +219,8 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
       );
 
     case "whatsapp":
-      return (
-        <Panel title="WhatsApp" subtitle="Mensajería creativa" cta="Redactar mensaje" onCta={onChat}>
-          <div className="space-y-2 max-w-xl mx-auto">
-            {[
-              { from: "NOVA", text: "Te propongo este texto creativo para tu cumpleañera ✨" },
-              { from: "Tú", text: "Perfecto, mándalo a mamá" },
-              { from: "NOVA", text: "Mensaje enviado y guardado en historial 💌" },
-            ].map((m, i) => (
-              <div key={i} className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                m.from === "NOVA" ? "ml-auto bg-primary/25 border border-primary/40" : "bg-card/50 border border-border"
-              }`}>
-                <div className="text-[9px] uppercase tracking-widest opacity-70 mb-1">{m.from}</div>
-                {m.text}
-              </div>
-            ))}
-          </div>
-        </Panel>
-      );
+      return <WhatsappRoom onChat={onChat} />;
+
 
     case "finanzas":
       return (
