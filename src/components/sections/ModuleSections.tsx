@@ -173,63 +173,8 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
 
     case "memoria":
-      return (
-        <section className="smart-room theme-transition animate-fade-in">
-          <AmbientParticles count={12} />
-          <RoomHeader icon={Brain} eyebrow="Mente conectada · NOVA"
-            title="Memoria" subtitle="Una constelación de recuerdos vivos, enlazados por significado." />
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 md:col-span-7 min-h-[360px] relative rounded-2xl border border-primary/30 overflow-hidden"
-              style={{ background: "radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--glow) 25%, transparent), transparent 65%)" }}>
-              {/* radial links */}
-              {Array.from({ length: 9 }).map((_, i) => {
-                const a = (i / 9) * Math.PI * 2;
-                const len = 38;
-                return (
-                  <div key={`l${i}`} className="mem-link"
-                    style={{ width: `${len}%`, transform: `rotate(${(a * 180) / Math.PI}deg)` }} />
-                );
-              })}
-              {/* outer nodes */}
-              {Array.from({ length: 9 }).map((_, i) => {
-                const a = (i / 9) * Math.PI * 2;
-                const x = 50 + Math.cos(a) * 38;
-                const y = 50 + Math.sin(a) * 38;
-                return (
-                  <div key={`n${i}`} className="mem-node"
-                    style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.25}s` }} />
-                );
-              })}
-              {/* core */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-20 w-20 rounded-full bg-primary/40 border border-primary grid place-items-center"
-                style={{ boxShadow: "0 0 50px var(--glow), inset 0 0 30px color-mix(in oklab, white 25%, transparent)" }}>
-                <Brain className="h-7 w-7 text-foreground" />
-              </div>
-            </div>
-            <div className="col-span-12 md:col-span-5 space-y-3">
-              <div className="rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-md p-4">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">Recuerdo activo</div>
-                <div className="font-display text-xl mt-1">Inspírate en lugares</div>
-                <p className="text-xs text-muted-foreground mt-2">20 mayo 2024 — enlazado con <span className="text-primary">Viajes</span>, <span className="text-primary">Inspiración</span>, <span className="text-primary">Proyectos</span>.</p>
-                <div className="mt-3 flex items-center gap-2 text-[10px] uppercase tracking-widest font-mono text-muted-foreground">
-                  <Clock className="h-3 w-3" /> 142 conexiones · 8 dominios
-                </div>
-              </div>
-              <div className="rounded-2xl border border-primary/25 bg-card/30 backdrop-blur-md p-4">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-mono mb-2">Conexiones sugeridas</div>
-                <div className="space-y-1.5 text-xs">
-                  {["Diseñar viaje a Kyoto", "Releer notas de Lisboa", "Plan creativo verano"].map((c) => (
-                    <div key={c} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-primary/10 transition cursor-pointer">
-                      <Star className="h-3 w-3 text-primary" /> {c}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <ChatCta onChat={onChat} label="Conectar ideas" />
-            </div>
-          </div>
-        </section>
-      );
+      return <MemoriaRoom onChat={onChat} />;
+
 
 
     case "automatizaciones":
