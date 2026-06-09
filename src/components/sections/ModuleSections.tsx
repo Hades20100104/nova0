@@ -114,46 +114,8 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
   switch (slug) {
     case "conversacion":
-      return (
-        <section className="smart-room theme-transition animate-fade-in">
-          <AmbientParticles count={18} />
-          <RoomHeader icon={Heart} eyebrow="Sala de diálogo · NOVA"
-            title="Conversación" subtitle="Una habitación íntima para pensar en voz alta. NOVA escucha, refleja y te acompaña." />
-          <div className="relative grid grid-cols-12 gap-6">
-            <div className="col-span-12 md:col-span-7 relative flex flex-col items-center justify-center min-h-[360px]">
-              <div className="holo-ring h-64 w-64 grid place-items-center">
-                <div className="absolute inset-10 rounded-full border border-primary/25" />
-                <div className="absolute inset-20 rounded-full bg-primary/20 blur-xl" />
-                <Waveform variant="smooth" height={90} bars={56} />
-              </div>
-              <div className="mt-6 flex flex-wrap justify-center gap-2 text-[10px] uppercase tracking-[0.3em] font-mono">
-                {["Reflexionar", "Desahogarse", "Crear", "Soñar"].map((t) => (
-                  <span key={t} className="px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 backdrop-blur-sm">{t}</span>
-                ))}
-              </div>
-              <ChatCta onChat={onChat} label="Abrir conversación" />
-            </div>
-            <div className="col-span-12 md:col-span-5 space-y-3">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">Recuerdos recientes</div>
-              {[
-                { t: "Sesión creativa", d: "Hoy · 15:20", e: "✨" },
-                { t: "Ideas para proyecto", d: "Hoy · 14:05", e: "💡" },
-                { t: "Inspiración diaria", d: "Ayer · 19:45", e: "🌙" },
-                { t: "Plan de negocios", d: "Ayer · 11:30", e: "🚀" },
-              ].map((s) => (
-                <div key={s.t} className="group relative flex items-center gap-3 rounded-xl border border-primary/25 bg-card/40 backdrop-blur-md px-4 py-3 hover:border-primary/50 hover:bg-primary/10 transition cursor-pointer">
-                  <div className="text-xl">{s.e}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate">{s.t}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{s.d}</div>
-                  </div>
-                  <MessageSquare className="h-3.5 w-3.5 text-primary opacity-0 group-hover:opacity-100 transition" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      );
+      return <ConversacionRoom onChat={onChat} />;
+
 
     case "musica":
       return (
