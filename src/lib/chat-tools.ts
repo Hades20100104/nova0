@@ -20,27 +20,36 @@ const generateImage = (ctx: Ctx) =>
       prompt: z.string().min(3).max(2000).describe("Descripción detallada de la imagen a generar"),
     }),
     execute: async ({ prompt }) => {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${ctx.apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: "google/gemini-2.5-flash-image", prompt }),
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
       });
       if (!res.ok) {
         const t = await res.text();
         return { ok: false, error: `Image gateway ${res.status}: ${t.slice(0, 200)}` };
       }
-      const json = (await res.json()) as { data?: { b64_json?: string; url?: string }[] };
-      const item = json.data?.[0];
-      const b64 = item?.b64_json;
-      if (!b64) return { ok: false, error: "Sin datos de imagen" };
+      const json = (await res.json()) as {
+        choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+      };
+      const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const m = dataUrl?.match(/^data:(image\/[^;]+);base64,(.+)$/);
+      if (!m) return { ok: false, error: "Sin datos de imagen" };
+      const mime = m[1];
+      const b64 = m[2];
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const path = `${ctx.userId}/${Date.now()}.png`;
+      const ext = mime.split("/")[1] ?? "png";
+      const path = `${ctx.userId}/${Date.now()}.${ext}`;
       const up = await ctx.supabase.storage
         .from("generated-images")
-        .upload(path, bytes, { contentType: "image/png", upsert: false });
+        .upload(path, bytes, { contentType: mime, upsert: false });
       if (up.error) return { ok: false, error: up.error.message };
       const { data: signed } = await ctx.supabase.storage
         .from("generated-images")
