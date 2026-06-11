@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
@@ -8,6 +8,7 @@ import { ModulePanel } from "@/components/dashboard/ModulePanel";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
+import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
 import { getModule } from "@/lib/modules";
@@ -24,10 +25,10 @@ export const Route = createFileRoute("/_authenticated/nevira")({
 });
 
 function NeviraHome() {
-  const navigate = useNavigate();
   const create = useServerFn(createThread);
   const [module, setModule] = useState("panel");
   const [navOpen, setNavOpen] = useState(false);
+  const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleSelect = useCallback((slug: string) => {
@@ -43,7 +44,7 @@ function NeviraHome() {
       if (firstMessage && typeof window !== "undefined") {
         window.sessionStorage.setItem(`pending-msg:${id}`, firstMessage);
       }
-      navigate({ to: "/nevira/$threadId", params: { threadId: id } });
+      setInlineThread(id);
     } catch (e) { console.error(e); }
   };
 
@@ -171,6 +172,14 @@ function NeviraHome() {
               <HudCorners />
               <NeviraSection slug={module} onChat={() => startChat(module)} />
             </div>
+          )}
+          {inlineThread && (
+            <InlineChatPanel
+              assistant="nevira"
+              threadId={inlineThread}
+              module={module}
+              onClose={() => setInlineThread(null)}
+            />
           )}
         </div>
 

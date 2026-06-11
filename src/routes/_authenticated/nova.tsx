@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
@@ -6,6 +6,7 @@ import { NovaSphereClient } from "@/components/NovaSphereClient";
 import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
+import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { NovaSection } from "@/components/sections/ModuleSections";
 import { getModule } from "@/lib/modules";
 import { useTheme, novaThemeClass, fontClass } from "@/lib/theme";
@@ -19,10 +20,10 @@ export const Route = createFileRoute("/_authenticated/nova")({
 });
 
 function NovaHome() {
-  const navigate = useNavigate();
   const create = useServerFn(createThread);
   const [module, setModule] = useState("home");
   const [navOpen, setNavOpen] = useState(false);
+  const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleSelect = useCallback((slug: string) => {
@@ -38,7 +39,7 @@ function NovaHome() {
       if (firstMessage && typeof window !== "undefined") {
         window.sessionStorage.setItem(`pending-msg:${id}`, firstMessage);
       }
-      navigate({ to: "/nova/$threadId", params: { threadId: id } });
+      setInlineThread(id);
     } catch (e) { console.error(e); }
   };
 
@@ -109,6 +110,14 @@ function NovaHome() {
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">
               <NovaSection slug={module} onChat={() => startChat(module)} />
             </div>
+          )}
+          {inlineThread && (
+            <InlineChatPanel
+              assistant="nova"
+              threadId={inlineThread}
+              module={module}
+              onClose={() => setInlineThread(null)}
+            />
           )}
         </div>
 
