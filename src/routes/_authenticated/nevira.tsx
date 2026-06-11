@@ -8,6 +8,7 @@ import { ModulePanel } from "@/components/dashboard/ModulePanel";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
+import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
 import { getModule } from "@/lib/modules";
