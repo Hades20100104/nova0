@@ -24,10 +24,10 @@ export const Route = createFileRoute("/_authenticated/nevira")({
 });
 
 function NeviraHome() {
-  const navigate = useNavigate();
   const create = useServerFn(createThread);
   const [module, setModule] = useState("panel");
   const [navOpen, setNavOpen] = useState(false);
+  const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleSelect = useCallback((slug: string) => {
@@ -43,7 +43,7 @@ function NeviraHome() {
       if (firstMessage && typeof window !== "undefined") {
         window.sessionStorage.setItem(`pending-msg:${id}`, firstMessage);
       }
-      navigate({ to: "/nevira/$threadId", params: { threadId: id } });
+      setInlineThread(id);
     } catch (e) { console.error(e); }
   };
 
