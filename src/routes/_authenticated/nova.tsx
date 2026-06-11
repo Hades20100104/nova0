@@ -111,6 +111,14 @@ function NovaHome() {
               <NovaSection slug={module} onChat={() => startChat(module)} />
             </div>
           )}
+          {inlineThread && (
+            <InlineChatPanel
+              assistant="nova"
+              threadId={inlineThread}
+              module={module}
+              onClose={() => setInlineThread(null)}
+            />
+          )}
         </div>
 
         <LiquidChatBar assistant="nova" onSubmit={submit} />
