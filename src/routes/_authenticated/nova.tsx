@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
@@ -6,6 +6,7 @@ import { NovaSphereClient } from "@/components/NovaSphereClient";
 import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
+import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { NovaSection } from "@/components/sections/ModuleSections";
 import { getModule } from "@/lib/modules";
 import { useTheme, novaThemeClass, fontClass } from "@/lib/theme";
