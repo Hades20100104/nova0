@@ -172,6 +172,14 @@ function NeviraHome() {
               <NeviraSection slug={module} onChat={() => startChat(module)} />
             </div>
           )}
+          {inlineThread && (
+            <InlineChatPanel
+              assistant="nevira"
+              threadId={inlineThread}
+              module={module}
+              onClose={() => setInlineThread(null)}
+            />
+          )}
         </div>
 
         <LiquidChatBar assistant="nevira" onSubmit={(t) => startChat(module, t)} />
