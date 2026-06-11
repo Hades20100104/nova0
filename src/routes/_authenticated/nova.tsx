@@ -20,10 +20,10 @@ export const Route = createFileRoute("/_authenticated/nova")({
 });
 
 function NovaHome() {
-  const navigate = useNavigate();
   const create = useServerFn(createThread);
   const [module, setModule] = useState("home");
   const [navOpen, setNavOpen] = useState(false);
+  const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleSelect = useCallback((slug: string) => {
@@ -39,7 +39,7 @@ function NovaHome() {
       if (firstMessage && typeof window !== "undefined") {
         window.sessionStorage.setItem(`pending-msg:${id}`, firstMessage);
       }
-      navigate({ to: "/nova/$threadId", params: { threadId: id } });
+      setInlineThread(id);
     } catch (e) { console.error(e); }
   };
 
