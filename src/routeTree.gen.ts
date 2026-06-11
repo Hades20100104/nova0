@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedNovaRouteImport } from './routes/_authenticated/nova'
 import { Route as AuthenticatedNeviraRouteImport } from './routes/_authenticated/nevira'
+import { Route as ApiSpotifyCallbackRouteImport } from './routes/api/spotify/callback'
 import { Route as AuthenticatedNovaThreadIdRouteImport } from './routes/_authenticated/nova.$threadId'
 import { Route as AuthenticatedNeviraThreadIdRouteImport } from './routes/_authenticated/nevira.$threadId'
 
@@ -47,6 +48,11 @@ const AuthenticatedNeviraRoute = AuthenticatedNeviraRouteImport.update({
   path: '/nevira',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiSpotifyCallbackRoute = ApiSpotifyCallbackRouteImport.update({
+  id: '/api/spotify/callback',
+  path: '/api/spotify/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedNovaThreadIdRoute =
   AuthenticatedNovaThreadIdRouteImport.update({
     id: '/$threadId',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/_authenticated/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/nevira/$threadId'
     | '/nova/$threadId'
+    | '/api/spotify/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/nevira/$threadId'
     | '/nova/$threadId'
+    | '/api/spotify/callback'
   id:
     | '__root__'
     | '/'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/_authenticated/nevira/$threadId'
     | '/_authenticated/nova/$threadId'
+    | '/api/spotify/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -125,6 +137,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiSpotifyCallbackRoute: typeof ApiSpotifyCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/nevira'
       preLoaderRoute: typeof AuthenticatedNeviraRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/spotify/callback': {
+      id: '/api/spotify/callback'
+      path: '/api/spotify/callback'
+      fullPath: '/api/spotify/callback'
+      preLoaderRoute: typeof ApiSpotifyCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/nova/$threadId': {
       id: '/_authenticated/nova/$threadId'
@@ -229,7 +249,18 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiSpotifyCallbackRoute: ApiSpotifyCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
