@@ -70,6 +70,20 @@ export function AssistantChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
+  // External senders (e.g. per-module chips) can inject messages.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ threadId?: string; text?: string }>).detail;
+      if (!detail?.text) return;
+      if (detail.threadId && detail.threadId !== threadId) return;
+      sendMessage({ text: detail.text });
+    };
+    window.addEventListener("assistant:send", handler);
+    return () => window.removeEventListener("assistant:send", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]);
+
   const isSubmitting = status === "submitted";
   const isStreaming = status === "streaming";
   const isErrored = status === "error" || !!error;
