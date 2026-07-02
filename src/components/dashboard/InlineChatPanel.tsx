@@ -3,7 +3,6 @@ import { X, ExternalLink, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { getModule } from "@/lib/modules";
 import { getModuleChatConfig } from "@/lib/module-chat-config";
-import { useEffect, useState } from "react";
 
 type Props = {
   assistant: "nova" | "nevira";
@@ -18,19 +17,11 @@ export function InlineChatPanel({ assistant, threadId, module, onClose }: Props)
   const cfg = getModuleChatConfig(assistant, module);
   const Icon = moduleDef.icon;
 
-  // Allow the chips to inject a suggestion into the composer
-  const [seed, setSeed] = useState<string | null>(null);
-  useEffect(() => {
-    if (!seed) return;
-    // Write to sessionStorage so AssistantChat can pick it up via pending-msg mechanism
-    try {
-      window.sessionStorage.setItem(`pending-msg:${threadId}`, seed);
-      window.dispatchEvent(new CustomEvent("assistant:pending-refresh", { detail: { threadId } }));
-    } catch (e) {
-      console.error(e);
-    }
-    setSeed(null);
-  }, [seed, threadId]);
+  const sendChip = (text: string) => {
+    window.dispatchEvent(
+      new CustomEvent("assistant:send", { detail: { threadId, text } }),
+    );
+  };
 
   return (
     <div
