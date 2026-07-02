@@ -92,7 +92,7 @@ export function InlineChatPanel({ assistant, threadId, module, onClose }: Props)
           {cfg.chips.map((chip) => (
             <button
               key={chip.label}
-              onClick={() => setSeed(chip.prompt)}
+              onClick={() => sendChip(chip.prompt)}
               className="shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition hover:scale-[1.02]"
               style={{
                 borderColor: `color-mix(in oklab, ${cfg.accent} 45%, transparent)`,
