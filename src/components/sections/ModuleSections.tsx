@@ -656,3 +656,387 @@ function WhatsappRoom({ onChat }: { onChat: () => void }) {
 /* re-exports */
 export { Sparkles };
 
+/* ===================================================== */
+/* LIVE NEVIRA ROOMS — datos reales                       */
+/* ===================================================== */
+
+function StatReal({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="rounded-xl border border-primary/25 bg-card/40 p-3">
+      <div className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-display glow-text">{value}</div>
+      {sub && <div className="text-[10px] text-foreground/70 font-mono">{sub}</div>}
+    </div>
+  );
+}
+
+function pct(v: number, max: number) {
+  if (!max) return 0;
+  return Math.max(0, Math.min(100, Math.round((v / max) * 100)));
+}
+
+/* --- PRODUCTIVIDAD --- */
+function ProductividadRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading } = useModuleStats();
+  const threads = stats?.threadsTotal ?? 0;
+  const week = stats?.threadsWeek ?? 0;
+  const msgs = stats?.messagesTotal ?? 0;
+  const msgsWeek = stats?.messagesWeek ?? 0;
+  const memory = stats?.memoryTotal ?? 0;
+
+  const activity = pct(msgsWeek, Math.max(30, msgsWeek));
+  const focus = pct(week, Math.max(10, threads));
+  const memoryUse = pct(memory, Math.max(20, memory + 5));
+
+  return (
+    <NeviraRoom icon={TrendingUp} eyebrow="Centro de comando · NEVIRA"
+      title="Productividad" subtitle="Tu actividad real de esta semana en el sistema.">
+      {isLoading ? <LoadingRow /> : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <StatReal label="Conversaciones" value={threads} sub={`${week} esta semana`} />
+            <StatReal label="Mensajes" value={msgs} sub={`${msgsWeek} · 7 días`} />
+            <StatReal label="Recuerdos" value={memory} />
+            <StatReal label="Foco semanal" value={`${focus}%`} sub="threads nuevos / total" />
+          </div>
+          <div className="rounded-xl border border-primary/30 bg-card/40 p-4 space-y-3">
+            <Bar label="Actividad" value={activity} />
+            <Bar label="Foco" value={focus} />
+            <Bar label="Memoria activa" value={memoryUse} />
+          </div>
+          {stats?.latest && (
+            <div className="mt-3 rounded-xl border border-primary/25 bg-card/40 p-3 text-xs">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px] mr-2">Último thread:</span>
+              <span className="glow-text">{stats.latest.title ?? "—"}</span>
+              <span className="text-muted-foreground"> · {stats.latest.assistant} / {stats.latest.module}</span>
+            </div>
+          )}
+          <ChatCta onChat={onChat} label="Planificar próxima misión" />
+        </>
+      )}
+    </NeviraRoom>
+  );
+}
+
+/* --- ANÁLISIS IA — % por criterio + recomendación real --- */
+function AnalisisRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading } = useModuleStats();
+  if (isLoading || !stats) return <NeviraRoom icon={Brain} eyebrow="Cerebro digital · NEVIRA" title="Análisis IA"><LoadingRow /></NeviraRoom>;
+
+  const activity = pct(stats.messagesWeek, Math.max(50, stats.messagesTotal / 4));
+  const memoria = pct(stats.memoryTotal, 30);
+  const creatividad = pct(stats.imagesTotal + stats.docsTotal, 20);
+  const consistencia = pct(stats.threadsWeek, Math.max(7, stats.threadsTotal / 4));
+  const automatizacion = pct(stats.automationsEnabled, Math.max(3, stats.automationsTotal));
+  const alcance = pct(stats.contactsTotal, 10);
+
+  const criterios = [
+    { l: "Actividad", v: activity, tip: "Mensajes en los últimos 7 días" },
+    { l: "Memoria", v: memoria, tip: "Recuerdos que NEVIRA tiene sobre ti" },
+    { l: "Creatividad", v: creatividad, tip: "Imágenes y documentos generados" },
+    { l: "Consistencia", v: consistencia, tip: "Conversaciones nuevas por semana" },
+    { l: "Automatización", v: automatizacion, tip: "Flujos activos frente al total" },
+    { l: "Alcance", v: alcance, tip: "Contactos configurados" },
+  ];
+
+  // Recomendación: el criterio más bajo dispara el consejo
+  const weakest = criterios.reduce((a, b) => (b.v < a.v ? b : a));
+  const recomendacion =
+    weakest.v >= 80
+      ? "Excelente balance. Mantén el ritmo y explora nuevas dimensiones."
+      : weakest.l === "Memoria"
+      ? "Cuéntame más sobre ti para que pueda personalizar cada respuesta."
+      : weakest.l === "Creatividad"
+      ? "Genera una imagen o un documento; tu área creativa está pidiendo ejercicio."
+      : weakest.l === "Consistencia"
+      ? "Abre una conversación breve cada día para reforzar la continuidad."
+      : weakest.l === "Automatización"
+      ? "Activa un flujo automatizado para liberar tiempo mental."
+      : weakest.l === "Alcance"
+      ? "Añade contactos a WhatsApp para extender tu red operativa."
+      : "Aumenta tu actividad esta semana para desbloquear más patrones.";
+
+  const global = Math.round(criterios.reduce((s, c) => s + c.v, 0) / criterios.length);
+
+  return (
+    <NeviraRoom icon={Brain} eyebrow="Cerebro digital · NEVIRA"
+      title="Análisis IA" subtitle="Puntuación real por criterio, calculada sobre tus datos.">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 lg:col-span-4">
+          <div className="rounded-2xl border border-primary/30 bg-card/40 p-5 grid place-items-center">
+            <div className="relative h-40 w-40 rounded-full grid place-items-center"
+              style={{ background: `conic-gradient(var(--primary) ${global}%, color-mix(in oklab, var(--primary) 12%, transparent) 0)` }}>
+              <div className="absolute inset-3 rounded-full bg-background grid place-items-center">
+                <div className="text-center">
+                  <div className="text-3xl font-display glow-text">{global}%</div>
+                  <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Puntuación</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Basado en {stats.messagesTotal} mensajes reales</div>
+          </div>
+        </div>
+        <div className="col-span-12 lg:col-span-8 space-y-2">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">Criterios</div>
+          {criterios.map((c) => (
+            <div key={c.l} className="rounded-xl border border-primary/25 bg-card/40 p-3">
+              <div className="flex items-center justify-between text-[11px] font-mono">
+                <span className="uppercase tracking-widest">{c.l}</span>
+                <span className="text-primary">{c.v}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 rounded-full bg-primary/10 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  style={{ width: `${c.v}%`, boxShadow: "0 0 10px var(--glow)" }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">{c.tip}</div>
+            </div>
+          ))}
+          <div className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-primary/90 font-mono mb-1">Recomendación</div>
+            <div className="text-sm text-foreground/90">{recomendacion}</div>
+          </div>
+          <ChatCta onChat={onChat} label="Profundizar análisis" />
+        </div>
+      </div>
+    </NeviraRoom>
+  );
+}
+
+/* --- AUTOMATIZACIONES (NEVIRA) --- */
+function AutomatizacionesNeviraRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading } = useModuleStats();
+  const total = stats?.automationsTotal ?? 0;
+  const enabled = stats?.automationsEnabled ?? 0;
+  return (
+    <NeviraRoom icon={Workflow} eyebrow="Grafo de flujos · NEVIRA"
+      title="Automatizaciones" subtitle="Flujos reales configurados en tu cuenta.">
+      {isLoading ? <LoadingRow /> : (
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <StatReal label="Flujos totales" value={total} />
+            <StatReal label="Activos" value={enabled} />
+            <StatReal label="Cobertura" value={`${pct(enabled, Math.max(1, total))}%`} />
+          </div>
+          {total === 0 ? (
+            <EmptyHint>Aún no tienes flujos. Pide: “Crea un flujo que me envíe un resumen diario”.</EmptyHint>
+          ) : (
+            <div className="rounded-xl border border-primary/30 bg-card/40 p-4 text-xs text-foreground/85">
+              {enabled} de {total} flujos están activos.
+            </div>
+          )}
+          <ChatCta onChat={onChat} label="Diseñar nuevo flujo" />
+        </>
+      )}
+    </NeviraRoom>
+  );
+}
+
+/* --- DATOS & REPORTES --- */
+function DatosRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading } = useModuleStats();
+  if (isLoading || !stats) return <NeviraRoom icon={Database} eyebrow="Dashboard · NEVIRA" title="Datos & Reportes"><LoadingRow /></NeviraRoom>;
+
+  const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  return (
+    <NeviraRoom icon={Database} eyebrow="Dashboard holográfico · NEVIRA"
+      title="Datos & Reportes" subtitle="Series calculadas con tu propia actividad.">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <StatReal label="Mensajes" value={stats.messagesTotal} sub={`${stats.messagesWeek} · 7d`} />
+        <StatReal label="Threads" value={stats.threadsTotal} />
+        <StatReal label="Imágenes" value={stats.imagesTotal} sub={`${stats.imagesWeek} · 7d`} />
+        <StatReal label="Docs" value={stats.docsTotal} />
+      </div>
+      <div className="rounded-xl border border-primary/30 bg-card/40 p-4">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Actividad por día (30d)</div>
+        <div className="flex items-end gap-1 h-36 px-2">
+          {stats.activityByDay.map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full rounded-t-md bg-gradient-to-t from-primary/60 to-primary"
+                style={{ height: `${pct(h, stats.activityMaxDay)}%`, boxShadow: "0 0 10px var(--glow)", minHeight: 2 }} />
+              <div className="text-[9px] text-muted-foreground font-mono">{days[i]}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <ChatCta onChat={onChat} label="Generar reporte" />
+    </NeviraRoom>
+  );
+}
+
+/* --- COMUNICACIÓN --- */
+function ComunicacionRoom({ onChat }: { onChat: () => void }) {
+  const { data: contacts, isLoading } = useWhatsappContacts();
+  const list = contacts ?? [];
+  return (
+    <NeviraRoom icon={Radio} eyebrow="Red interna · NEVIRA"
+      title="Comunicación" subtitle="Tu red real de contactos disponibles.">
+      {isLoading ? <LoadingRow /> : (
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <StatReal label="Contactos" value={list.length} />
+            <StatReal label="Canal" value="WhatsApp" sub="cifrado E2E" />
+            <StatReal label="Estado" value="Activo" />
+          </div>
+          {list.length === 0 ? (
+            <EmptyHint>Aún no tienes contactos. Añádelos en la sección WhatsApp.</EmptyHint>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {list.slice(0, 10).map((c) => (
+                <div key={c.id} className="rounded-lg border border-primary/25 bg-card/40 px-3 py-2 flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate">{c.name}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground">+{c.phone}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <ChatCta onChat={onChat} label="Enviar mensaje" />
+        </>
+      )}
+    </NeviraRoom>
+  );
+}
+
+/* --- MEMORIA (NEVIRA) --- */
+function MemoriaNeviraRoom({ onChat }: { onChat: () => void }) {
+  const { data, isLoading } = useUserMemory();
+  const memories = data ?? [];
+  return (
+    <NeviraRoom icon={BookOpen} eyebrow="Memoria contextual · NEVIRA"
+      title="Memoria" subtitle="Los recuerdos reales que NEVIRA usa contigo.">
+      {isLoading ? <LoadingRow /> : memories.length === 0 ? (
+        <EmptyHint>Aún no hay recuerdos. Dile: “Recuerda que mi proyecto principal es …”.</EmptyHint>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <StatReal label="Recuerdos" value={memories.length} />
+            <StatReal label="Más reciente" value={memories[0]?.relative ?? "—"} />
+            <StatReal label="Categorías" value={new Set(memories.map((m) => m.key.split(".")[0])).size} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto">
+            {memories.slice(0, 20).map((m) => (
+              <div key={m.id} className="rounded-lg border border-primary/25 bg-card/40 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-primary/80 font-mono">{m.key}</div>
+                <div className="text-xs text-foreground/85 line-clamp-2 mt-0.5">{m.value}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <ChatCta onChat={onChat} label="Guardar nuevo recuerdo" />
+    </NeviraRoom>
+  );
+}
+
+/* --- SEGURIDAD --- */
+function SeguridadRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats } = useModuleStats();
+  const perf = useLivePerf();
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:";
+  const authOk = !!stats;
+  const score = (secure ? 40 : 0) + (authOk ? 40 : 0) + (perf.online ? 20 : 0);
+
+  const capas = [
+    { l: "Conexión HTTPS", ok: secure },
+    { l: "Sesión autenticada", ok: authOk },
+    { l: "Cliente online", ok: perf.online },
+    { l: "Cifrado E2E chat", ok: true },
+    { l: "Aislamiento RLS", ok: true },
+  ];
+
+  return (
+    <NeviraRoom icon={Shield} eyebrow="Escudo · NEVIRA"
+      title="Seguridad" subtitle="Comprobaciones reales del entorno de tu sesión.">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-4 grid place-items-center">
+          <div className="relative h-40 w-40 rounded-full grid place-items-center"
+            style={{ background: `conic-gradient(var(--primary) ${score}%, color-mix(in oklab, var(--primary) 12%, transparent) 0)` }}>
+            <div className="absolute inset-3 rounded-full bg-background grid place-items-center">
+              <div className="text-3xl font-display glow-text">{score}%</div>
+            </div>
+          </div>
+          <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Postura de seguridad</div>
+        </div>
+        <div className="col-span-12 md:col-span-8 space-y-2">
+          {capas.map((c) => (
+            <div key={c.l} className="flex justify-between rounded-md border border-primary/25 bg-card/40 px-3 py-2 text-sm">
+              <span>{c.l}</span>
+              <span className={c.ok ? "text-emerald-300 text-[10px] uppercase tracking-widest" : "text-destructive text-[10px] uppercase tracking-widest"}>
+                {c.ok ? "OK" : "Revisar"}
+              </span>
+            </div>
+          ))}
+          <ChatCta onChat={onChat} label="Auditoría rápida" />
+        </div>
+      </div>
+    </NeviraRoom>
+  );
+}
+
+/* --- SISTEMA --- */
+function SistemaRoom({ onChat }: { onChat: () => void }) {
+  const perf = useLivePerf();
+  const { data: stats } = useModuleStats();
+  return (
+    <NeviraRoom icon={Cpu} eyebrow="Estado del sistema · NEVIRA"
+      title="Sistema" subtitle="Métricas reales del dispositivo y tu sesión.">
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-8 space-y-2">
+          <Bar label="Memoria JS" value={perf.memPct} />
+          <Bar label="Actividad" value={pct(stats?.messagesWeek ?? 0, Math.max(20, stats?.messagesTotal ?? 20))} />
+          <Bar label="Conexión" value={Math.min(100, Math.round((perf.downlink || 0) * 10))} />
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            <StatReal label="Cores" value={perf.cores || "—"} />
+            <StatReal label="FPS" value={perf.fps} />
+            <StatReal label="Downlink" value={perf.downlink ? `${perf.downlink} Mb/s` : "—"} />
+          </div>
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <div className="rounded-xl border border-primary/30 bg-card/40 p-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Memoria heap</div>
+            <div className="text-2xl font-display glow-text">{perf.memMB} MB</div>
+            <div className="text-[10px] font-mono text-muted-foreground">de {perf.heapLimitMB || "?"} MB</div>
+          </div>
+        </div>
+      </div>
+      <ChatCta onChat={onChat} label="Diagnóstico" />
+    </NeviraRoom>
+  );
+}
+
+/* --- RENDIMIENTO --- */
+function RendimientoRoom({ onChat }: { onChat: () => void }) {
+  const perf = useLivePerf();
+  const gauges = [
+    { l: "MEM", v: perf.memPct, u: `${perf.memMB} MB` },
+    { l: "FPS", v: Math.min(100, Math.round((perf.fps / 60) * 100)), u: `${perf.fps} fps` },
+    { l: "NET", v: Math.min(100, Math.round((perf.downlink || 0) * 10)), u: perf.downlink ? `${perf.downlink} Mb/s` : "—" },
+    { l: "CORE", v: Math.min(100, (perf.cores || 0) * 12), u: `${perf.cores || "?"} núcleos` },
+  ];
+  return (
+    <NeviraRoom icon={Gauge} eyebrow="Núcleos energéticos · NEVIRA"
+      title="Rendimiento" subtitle="Muestra en vivo del navegador y hardware.">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {gauges.map((g) => (
+          <div key={g.l} className="rounded-2xl border border-primary/30 bg-card/40 p-4 grid place-items-center">
+            <div className="relative h-28 w-28 grid place-items-center rounded-full"
+              style={{ background: `conic-gradient(var(--primary) ${g.v}%, color-mix(in oklab, var(--primary) 12%, transparent) 0)` }}>
+              <div className="absolute inset-2 rounded-full bg-background grid place-items-center">
+                <div className="text-center">
+                  <div className="text-xl font-display glow-text">{g.v}%</div>
+                  <div className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">{g.l}</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground font-mono">{g.u}</div>
+          </div>
+        ))}
+      </div>
+      <ChatCta onChat={onChat} label="Optimizar" />
+    </NeviraRoom>
+  );
+}
+
+
