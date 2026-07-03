@@ -12,6 +12,7 @@ import {
   useDeleteMemory, useWhatsappContacts, useAddContact, useDeleteContact,
   downloadDocument,
 } from "@/lib/module-data";
+import { useModuleStats, useLivePerf } from "@/lib/module-stats";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
