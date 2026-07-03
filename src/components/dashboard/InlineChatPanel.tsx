@@ -63,7 +63,7 @@ export function InlineChatPanel({ assistant, threadId, module, onClose }: Props)
       )}
 
       <aside
-        className="z-30 flex flex-col overflow-hidden animate-slide-in"
+        className="z-30 flex flex-col overflow-hidden animate-fade-in"
         style={{
           ...dockStyle,
           background: `linear-gradient(180deg, color-mix(in oklab, ${cfg.accent} 8%, transparent), color-mix(in oklab, var(--background) 94%, transparent))`,
