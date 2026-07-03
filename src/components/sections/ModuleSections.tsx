@@ -332,44 +332,6 @@ export function NeviraSection({ slug, onChat }: { slug: string; onChat: () => vo
           </div>
         </NeviraRoom>
       );
-            <div className="col-span-12 lg:col-span-6">
-              <div className="holo-workspace rounded-xl p-3">
-                <div className="code-block">
-                  <div><span className="code-tok-com">// componente generado por NEVIRA</span></div>
-                  <div><span className="code-tok-key">export function</span> <span className="code-tok-fn">NeuralCard</span>() &#123;</div>
-                  <div>  <span className="code-tok-key">const</span> state = <span className="code-tok-fn">useNeuralState</span>(<span className="code-tok-str">"aurora"</span>);</div>
-                  <div>  <span className="code-tok-key">return</span> (</div>
-                  <div>    &lt;<span className="code-tok-fn">HoloPanel</span> glow=&#123;<span className="code-tok-num">0.8</span>&#125;&gt;</div>
-                  <div>      &#123;state.<span className="code-tok-fn">render</span>()&#125;</div>
-                  <div>    &lt;/<span className="code-tok-fn">HoloPanel</span>&gt;</div>
-                  <div>  );</div>
-                  <div>&#125;</div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  {["Compilar", "Vista previa", "Desplegar"].map((b) => (
-                    <button key={b} onClick={onChat}
-                      className="rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-[10px] uppercase tracking-[0.25em] font-mono hover:bg-primary/25 transition">
-                      {b}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="col-span-12 lg:col-span-3 space-y-3">
-              <div className="rounded-xl border border-primary/30 p-3 holo-workspace">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-primary/80 mb-2">Vista previa</div>
-                <div className="aspect-video rounded-lg border border-primary/40 grid place-items-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-mono">
-                  Render en vivo
-                </div>
-              </div>
-              <div className="rounded-xl border border-primary/30 bg-card/40 p-3">
-                <div className="text-xs text-foreground/85">Describe el sistema que quieres construir y NEVIRA lo materializa.</div>
-                <ChatCta onChat={onChat} label="Hablar con NEVIRA" />
-              </div>
-            </div>
-          </div>
-        </NeviraRoom>
-      );
 
     case "ajustes":
       return (
