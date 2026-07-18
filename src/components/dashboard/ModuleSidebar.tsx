@@ -1,9 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu } from "lucide-react";
+import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu, Trash2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getModules, type ModuleDef } from "@/lib/modules";
 import { Icon3D } from "@/components/Icon3D";
+import { useUserSections, useSectionMutations } from "@/hooks/use-user-sections";
 import neviraLogo from "@/assets/nevira-logo.png";
 import novaLogo from "@/assets/nova-logo.png";
 
@@ -116,6 +117,7 @@ export function ModuleSidebar({
             </div>
           </div>
         ))}
+        <UserSections assistant={assistant} active={active} onSelect={onSelect} />
       </nav>
 
       {footer}
@@ -134,5 +136,73 @@ export function ModuleSidebar({
         </button>
       </div>
     </aside>
+  );
+}
+
+function UserSections({
+  assistant,
+  active,
+  onSelect,
+}: {
+  assistant: "nova" | "nevira";
+  active: string;
+  onSelect: (slug: string) => void;
+}) {
+  const { data: sections = [] } = useUserSections(assistant);
+  const { remove } = useSectionMutations();
+  const items = sections;
+  return (
+    <div>
+      <div className="sidebar-section-label flex items-center justify-between">
+        <span>Mías</span>
+        <button
+          onClick={() => onSelect("section:__new__")}
+          title="Nueva sección (pídeselo al asistente)"
+          className="grid h-5 w-5 place-items-center rounded border border-primary/30 text-primary/80 hover:bg-primary/15"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+      {items.length === 0 && (
+        <div className="px-3 pb-2 text-[10px] text-muted-foreground">
+          Pídele al asistente: “crea una sección para…”
+        </div>
+      )}
+      <div className="space-y-1">
+        {items.map((s) => {
+          const slug = `section:${s.slug}`;
+          const isActive = slug === active;
+          return (
+            <div key={s.id} className="group flex items-center gap-1">
+              <button
+                onClick={() => onSelect(slug)}
+                className={`module-item flex-1 ${isActive ? "is-active" : ""}`}
+              >
+                <span className="module-bar" />
+                <Icon3D className="h-9 w-9 shrink-0" active={isActive}>
+                  <span className="text-sm">{s.icon || "✨"}</span>
+                </Icon3D>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="module-label truncate">{s.label}</div>
+                  <div className="module-desc truncate">
+                    {s.created_by === "ai" ? "Creado por la IA" : "Personal"}
+                  </div>
+                </div>
+                {isActive && <ChevronRight className="h-3.5 w-3.5 text-primary" />}
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`¿Eliminar "${s.label}"?`)) remove.mutate({ slug: s.slug });
+                }}
+                title="Eliminar"
+                className="opacity-0 group-hover:opacity-100 transition text-muted-foreground hover:text-red-400 p-1"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

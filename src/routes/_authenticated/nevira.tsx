@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
+import { runSkill } from "@/lib/sections.functions";
 import { NeviraCube } from "@/components/NeviraCube";
 import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ModulePanel } from "@/components/dashboard/ModulePanel";
@@ -11,6 +12,9 @@ import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
+import { DynamicSection } from "@/components/dynamic/DynamicSection";
+import { useUserSections } from "@/hooks/use-user-sections";
+import type { Layout } from "@/lib/section-blocks";
 import { getModule } from "@/lib/modules";
 import { useTheme, neviraThemeClass, fontClass } from "@/lib/theme";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,7 +35,19 @@ function NeviraHome() {
   const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  const runSkillFn = useServerFn(runSkill);
+  const { data: userSections = [] } = useUserSections("nevira");
+
   const handleSelect = useCallback((slug: string) => {
+    if (slug === "section:__new__") {
+      setNavOpen(false);
+      window.dispatchEvent(
+        new CustomEvent("assistant:send", {
+          detail: { text: "Crea una sección personalizada. Pregúntame qué trackear y usa create_section." },
+        }),
+      );
+      return;
+    }
     setModule(slug);
     setNavOpen(false);
   }, []);
@@ -77,9 +93,17 @@ function NeviraHome() {
     ], cta: "Ver seguridad" },
   ];
 
+  const sectionMatch = module.startsWith("section:")
+    ? userSections.find((s) => s.slug === module.slice("section:".length))
+    : undefined;
   const showSection = module !== "panel";
   const { prefs } = useTheme();
   const themeClass = `${neviraThemeClass(prefs.nevira)} ${fontClass(prefs.font)}`;
+  const seedChat = (t: string) => startChat(module, t);
+  const runSkillCall = async (name: string, input: Record<string, unknown>) => {
+    const res = await runSkillFn({ data: { name, input } });
+    return res.output;
+  };
 
   return (
     <div className={`${themeClass} nevira-bg theme-transition flex h-[100dvh] w-screen overflow-hidden`}>
@@ -130,7 +154,7 @@ function NeviraHome() {
             <div className="min-w-0">
               <h1 className="font-display text-xl md:text-2xl tracking-[0.25em] glow-text truncate">NEVIRA</h1>
               <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate">
-                {showSection ? getModule("nevira", module).label : "Sistema Operativo Inteligente"}
+                {sectionMatch ? sectionMatch.label : showSection ? getModule("nevira", module).label : "Sistema Operativo Inteligente"}
               </p>
             </div>
           </div>
@@ -170,7 +194,16 @@ function NeviraHome() {
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">
               <HudCorners />
-              <NeviraSection slug={module} onChat={() => startChat(module)} />
+              {sectionMatch ? (
+                <DynamicSection
+                  layout={(sectionMatch.layout as unknown) as Layout}
+                  label={sectionMatch.label}
+                  onSeedChat={seedChat}
+                  onRunSkill={runSkillCall}
+                />
+              ) : (
+                <NeviraSection slug={module} onChat={() => startChat(module)} />
+              )}
             </div>
           )}
           {inlineThread && (

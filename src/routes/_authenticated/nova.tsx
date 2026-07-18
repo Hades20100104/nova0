@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
+import { runSkill } from "@/lib/sections.functions";
 import { NovaSphereClient } from "@/components/NovaSphereClient";
 import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { NovaSection } from "@/components/sections/ModuleSections";
+import { DynamicSection } from "@/components/dynamic/DynamicSection";
+import { useUserSections } from "@/hooks/use-user-sections";
 import { getModule } from "@/lib/modules";
 import { useTheme, novaThemeClass, fontClass } from "@/lib/theme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ArrowLeft, Menu } from "lucide-react";
+import type { Layout } from "@/lib/section-blocks";
 
 export const Route = createFileRoute("/_authenticated/nova")({
   head: () => ({ meta: [{ title: "NOVA — IA Creativa" }] }),
@@ -25,8 +29,22 @@ function NovaHome() {
   const [navOpen, setNavOpen] = useState(false);
   const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const runSkillFn = useServerFn(runSkill);
+  const { data: userSections = [] } = useUserSections("nova");
 
   const handleSelect = useCallback((slug: string) => {
+    if (slug === "section:__new__") {
+      setModule("home");
+      setNavOpen(false);
+      window.dispatchEvent(
+        new CustomEvent("assistant:send", {
+          detail: {
+            text: "Crea una sección personalizada para mí. Pregúntame primero qué quiero trackear y luego llama a create_section.",
+          },
+        }),
+      );
+      return;
+    }
     setModule(slug);
     setNavOpen(false);
   }, []);
@@ -44,10 +62,23 @@ function NovaHome() {
   };
 
   const submit = (text: string) => startChat(module, text);
+  const seedChat = (text: string) => startChat(module, text);
+  const runSkillCall = async (name: string, input: Record<string, unknown>) => {
+    const res = await runSkillFn({ data: { name, input } });
+    return res.output;
+  };
 
+  const sectionMatch = module.startsWith("section:")
+    ? userSections.find((s) => s.slug === module.slice("section:".length))
+    : undefined;
   const showSection = module !== "home";
   const { prefs } = useTheme();
   const themeClass = `${novaThemeClass(prefs.nova)} ${fontClass(prefs.font)}`;
+  const headerLabel = sectionMatch
+    ? sectionMatch.label
+    : showSection
+      ? getModule("nova", module).label
+      : "IA Creativa · Consciente · Inspiradora";
 
   return (
     <div className={`nova-bg theme-transition ${themeClass} flex h-[100dvh] w-screen overflow-hidden`}>
@@ -88,7 +119,7 @@ function NovaHome() {
             <div className="min-w-0">
               <h1 className="font-display text-xl md:text-2xl tracking-[0.3em] glow-text truncate">NOVA</h1>
               <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate">
-                {showSection ? getModule("nova", module).label : "IA Creativa · Consciente · Inspiradora"}
+                {headerLabel}
               </p>
             </div>
           </div>
@@ -108,7 +139,16 @@ function NovaHome() {
           </div>
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">
-              <NovaSection slug={module} onChat={() => startChat(module)} />
+              {sectionMatch ? (
+                <DynamicSection
+                  layout={(sectionMatch.layout as unknown) as Layout}
+                  label={sectionMatch.label}
+                  onSeedChat={seedChat}
+                  onRunSkill={runSkillCall}
+                />
+              ) : (
+                <NovaSection slug={module} onChat={() => startChat(module)} />
+              )}
             </div>
           )}
           {inlineThread && (

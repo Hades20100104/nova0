@@ -24,6 +24,7 @@ export type Database = {
           last_used_at: string | null
           name: string
           params_schema: Json
+          section_slug: string | null
           updated_at: string
           usage_count: number
           user_id: string
@@ -37,6 +38,7 @@ export type Database = {
           last_used_at?: string | null
           name: string
           params_schema?: Json
+          section_slug?: string | null
           updated_at?: string
           usage_count?: number
           user_id: string
@@ -50,6 +52,7 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           params_schema?: Json
+          section_slug?: string | null
           updated_at?: string
           usage_count?: number
           user_id?: string
@@ -333,6 +336,30 @@ export type Database = {
         }
         Relationships: []
       }
+      section_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       spotify_connections: {
         Row: {
           access_token: string
@@ -396,6 +423,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           value?: string
+        }
+        Relationships: []
+      }
+      user_sections: {
+        Row: {
+          accent: string | null
+          assistant: string
+          created_at: string
+          created_by: string
+          icon: string | null
+          id: string
+          label: string
+          layout: Json
+          slug: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent?: string | null
+          assistant: string
+          created_at?: string
+          created_by?: string
+          icon?: string | null
+          id?: string
+          label: string
+          layout?: Json
+          slug: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent?: string | null
+          assistant?: string
+          created_at?: string
+          created_by?: string
+          icon?: string | null
+          id?: string
+          label?: string
+          layout?: Json
+          slug?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { LayoutSchema } from "./section-blocks";
 
 type SB = SupabaseClient<Database>;
 
@@ -267,6 +268,88 @@ const searchMusic = (_ctx: Ctx) =>
     },
   });
 
+/* ---------------- SELF-EXTENSION: sections + skills ---------------- */
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || `sec-${Date.now().toString(36)}`;
+
+const createSectionTool = (ctx: Ctx) =>
+  tool({
+    description:
+      "Crea una nueva sección personalizada en el sidebar del usuario, compuesta por bloques (stat/list/chart/action/chat_prompt/markdown). Úsalo cuando el usuario pida que la app cree una sección nueva para trackear, visualizar u organizar algo. Elige bloques y fuentes de la whitelist.",
+    inputSchema: z.object({
+      assistant: z.enum(["nova", "nevira"]).default("nova"),
+      label: z.string().min(1).max(60),
+      icon: z.string().max(40).optional().describe("emoji o nombre de icono lucide"),
+      accent: z.string().max(40).optional().describe("color HSL o hex"),
+      layout: LayoutSchema,
+    }),
+    execute: async (input) => {
+      const slug = slugify(input.label);
+      const { data, error } = await ctx.supabase
+        .from("user_sections")
+        .insert({
+          user_id: ctx.userId,
+          assistant: input.assistant,
+          slug,
+          label: input.label,
+          icon: input.icon ?? null,
+          accent: input.accent ?? null,
+          layout: input.layout as unknown as never,
+          created_by: "ai",
+        } as never)
+        .select("slug, label")
+        .single();
+      if (error) return { ok: false, error: error.message };
+      const row = data as unknown as { slug: string; label: string };
+      return { ok: true, slug: row.slug, label: row.label };
+    },
+  });
+
+const attachSkillTool = (ctx: Ctx) =>
+  tool({
+    description:
+      "Registra un skill ejecutable (prompt/instrucciones) que la app puede invocar desde un bloque 'action'. El skill se ejecuta como un mini-agente con su propia descripción y código en texto. Úsalo cuando una sección necesite una acción reutilizable.",
+    inputSchema: z.object({
+      section_slug: z.string().max(40).optional(),
+      name: z.string().min(1).max(60).regex(/^[a-z0-9_]+$/, "snake_case"),
+      description: z.string().min(1).max(400),
+      code: z.string().min(1).max(6000).describe("Instrucciones/prompt del skill en texto plano"),
+    }),
+    execute: async (input) => {
+      const { data: existing } = await ctx.supabase
+        .from("agent_skills")
+        .select("id")
+        .eq("user_id", ctx.userId)
+        .eq("name", input.name)
+        .maybeSingle();
+      const payload = {
+        user_id: ctx.userId,
+        name: input.name,
+        description: input.description,
+        code: input.code,
+        section_slug: input.section_slug ?? null,
+        enabled: true,
+      };
+      if (existing) {
+        const { error } = await ctx.supabase
+          .from("agent_skills")
+          .update(payload as never)
+          .eq("id", existing.id);
+        if (error) return { ok: false, error: error.message };
+        return { ok: true, name: input.name, updated: true };
+      }
+      const { error } = await ctx.supabase.from("agent_skills").insert(payload as never);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, name: input.name, created: true };
+    },
+  });
+
 /* ---------------- Build set ---------------- */
 export function buildChatTools(ctx: Ctx) {
   return {
@@ -276,5 +359,7 @@ export function buildChatTools(ctx: Ctx) {
     recall: recall(ctx),
     send_whatsapp: sendWhatsapp(ctx),
     search_music: searchMusic(ctx),
+    create_section: createSectionTool(ctx),
+    attach_skill: attachSkillTool(ctx),
   };
 }

@@ -1,84 +1,105 @@
+# Auto-creación de secciones NOVA/NEVIRA
 
-# Rediseño completo NEVIRA / NOVA
+La app podrá crear sus propias secciones bajo demanda (comando del usuario en el chat) o por propuesta de la IA cuando detecte un patrón. Cada sección se compone de bloques (widgets) definidos por JSON y puede invocar skills ejecutables en el sandbox QuickJS que ya existe (`agent_skills`). Todo es por usuario.
 
-Adopto el sistema visual del ZIP `nova-nevira-companion-main`: dos modos completos con switch, sidebar modular, tipografía y tokens de color del nuevo `styles.css`, layout estilo HUD para NEVIRA y atmósfera holográfica para NOVA. Mantengo todo el backend actual (chat agente, música/Spotify, imágenes IA, documentos, automatizaciones, WhatsApp, memoria, skills, auth con Supabase).
+## Modelo de datos
 
-## Arquitectura de rutas
+Dos tablas nuevas + reutilizamos `agent_skills`:
 
-Reemplazo el árbol actual por dos layouts pathless con sus propios sidebars:
+```text
+user_sections
+├─ id uuid pk
+├─ user_id uuid  ← auth.uid()
+├─ assistant   'nova' | 'nevira'
+├─ slug        text  (unique por user_id, kebab-case)
+├─ label       text
+├─ icon        text  (lucide id o emoji)
+├─ accent      text  (hsl var o hex)
+├─ layout      jsonb ← array de bloques (ver contrato)
+├─ created_by  'user' | 'ai'
+├─ status      'active' | 'archived'
+└─ timestamps
 
-```
-src/routes/
-  __root.tsx              (shell html, ThemeProvider NEVIRA↔NOVA)
-  index.tsx               (landing/redirect a /nova o /nevira según último modo)
-  auth.tsx                (sin cambios funcionales, re-skin)
-  _nova.tsx               (layout NOVA: sidebar violeta + LiquidChatBar)
-    _nova/inicio.tsx
-    _nova/conversacion.tsx     -> usa chat agente actual
-    _nova/musica.tsx           -> Spotify + MusicPlayerWidget
-    _nova/imagenes.tsx         -> image.functions actual
-    _nova/documentos.tsx       -> docs.functions actual
-    _nova/memoria.tsx          -> memory.functions actual
-    _nova/automatizaciones.tsx -> automations actual
-    _nova/calendario.tsx       (UI demo)
-    _nova/whatsapp.tsx         -> whatsapp.functions actual
-    _nova/finanzas.tsx         (UI demo)
-    _nova/ajustes.tsx          (tema, tipografía, paleta, asistente)
-  _nevira.tsx             (layout NEVIRA Core: sidebar cian + HUD)
-    _nevira/panel.tsx           (Director del panel — vista general)
-    _nevira/productividad.tsx   (UI demo: tareas/proyectos/notas)
-    _nevira/automatizaciones.tsx (reusa runner real + grafo demo)
-    _nevira/comunicacion.tsx    (UI demo)
-    _nevira/analisis.tsx        (UI demo)
-    _nevira/datos.tsx           (UI demo)
-    _nevira/memoria.tsx         (UI demo del grafo)
-    _nevira/codigo.tsx          (UI demo del laboratorio de código)
-    _nevira/seguridad.tsx       (UI demo)
-    _nevira/sistema.tsx         (UI demo)
-    _nevira/rendimiento.tsx     (UI demo CPU/RAM/GPU)
+section_events (opcional, para "la IA propone")
+├─ id, user_id, kind (suggest|used|dismissed), payload jsonb, created_at
 ```
 
-Las rutas viejas (`/chat`, `/automations`, `/gallery`, `/spotify/callback`) se mantienen como redirects al equivalente NOVA para no romper enlaces.
+RLS: SELECT/INSERT/UPDATE/DELETE `WHERE user_id = auth.uid()`. GRANT a `authenticated` y `service_role`.
 
-## Sistema de diseño
+## Contrato de layout (JSON)
 
-- `src/styles.css` reescrito con los dos temas (NEVIRA día / NOVA noche) y variantes de paleta (Aurora, Rosa Cósmica, Bosque Cuántico, Solar, Monocromo) y pares tipográficos (Sora, Atuendo, Instrument Serif, JetBrains Mono).
-- `src/lib/theme.ts`: provider con `mode: "nevira" | "nova"`, `palette`, `font`, persistido en localStorage + tabla `user_preferences` (ya existe en backend para sincronizar).
-- Switch ESTRELLA NUEVA ↔ NEVIRA en cada sidebar; navega al layout opuesto.
+Un bloque = uno de los tipos ya soportados por la app, para no ejecutar código arbitrario en el front:
 
-## Componentes nuevos (portados/adaptados del ZIP)
+```json
+{
+  "blocks": [
+    { "type": "stat",        "title": "Docs", "source": "count:generated_documents" },
+    { "type": "list",        "title": "Últimas imágenes", "source": "query:images.recent", "limit": 6 },
+    { "type": "chart",       "title": "Actividad", "source": "query:messages.by_day", "range": 30 },
+    { "type": "action",      "title": "Resumir semana", "skill": "weekly_recap", "input": {} },
+    { "type": "chat_prompt", "title": "Pregúntame", "seed": "Analiza mis últimas notas" },
+    { "type": "markdown",    "content": "Notas rápidas..." }
+  ]
+}
+```
 
-- `ModuleSidebar` (lista de módulos por modo, con categorías CREAR/PENSAR/CONECTAR para NOVA y OPERADOR/ANALIZAR/PROTEGIDO para NEVIRA).
-- `LiquidChatBar` (composer flotante inferior, “Escribe o habla con NOVA…” / “Consulta a NEVIRA…”) que invoca el chat agente real.
-- `ModulePanel` (marco con esquinas HUD, encabezado + descripción).
-- `ClockBadge`, `PerfGauge`, `HudTelemetry`, `Waveform`, `ListeningWidget`, `MusicPlayerWidget`, `RecentActivity`, `QuickAccessBar`, `NovaSphere`, `NeviraCube`, `Icon3D`.
-- Páginas demo: portar el contenido visual de `ModuleSections.tsx` (892 líneas) repartido en cada ruta correspondiente.
+Los `source` son un whitelist cerrado (`count:<table>`, `query:<preset>`) resuelto en `src/lib/section-sources.ts`. La IA nunca escribe SQL libre.
 
-## Backend (sin cambios estructurales)
+## Skills ejecutables (extiende lo que ya existe)
 
-- Reuso de: `chat.functions`, `image.functions`, `docs.functions`, `memory.functions`, `skills.functions`, `sandbox.functions`, `spotify.functions`, `whatsapp.functions`, `web-search.functions`, `automations`.
-- Auth y RLS existentes intactos.
-- Las páginas demo nuevas (Finanzas, Productividad, NEVIRA Core/Análisis/Seguridad/etc.) usan datos mock con `// TODO: conectar a backend` marcado.
+`agent_skills` ya guarda código JS que corre en `sandbox.functions.ts` (QuickJS, 3s). Añadimos:
 
-## Limpieza
+- Campo `section_slug` (nullable) para asociar un skill a una sección.
+- Herramientas nuevas en `chat-tools.ts`:
+  - `create_section({ label, icon, accent, layout, assistant })` → inserta en `user_sections`.
+  - `update_section({ slug, patch })`.
+  - `attach_skill({ section_slug, name, description, code })` → guarda en `agent_skills` con validación.
+  - `run_skill({ name, input })` → ya existe vía sandbox.
+- Cuando un bloque `action` se pulsa, se invoca `run_skill` con el input configurado y el resultado se renderiza (texto / json / imagen).
 
-Componentes actuales que dejan de usarse y se eliminan: `HomeHero`, `Orb`, `AppSidebar`, `MobileTabBar`, `MenuDrawer`, `QuickActions`, `DashboardCard`, `OnboardingModal` (reemplazo por nuevo onboarding minimal), `ThemeSwitch` (lo reemplaza el switch dual del sidebar). `ChatBubble`, `ChatComposer`, `ImageMessage`, `SpotifyPlayer`, `PickerMap`, `SoundWaves`, `WhatsAppConfirm`, `SkillsManager`, `SettingsDrawer`, `AgentActionChip` se mantienen y se re-skinnean para encajar con el nuevo tema (sin lógica nueva).
+## Flujo "el usuario lo pide"
 
-## Detalles técnicos clave
+1. Usuario en el chat: *"crea una sección para trackear mis hábitos".*
+2. El modelo planifica y llama `create_section` con un layout inicial + un skill opcional (`attach_skill`).
+3. La sección aparece inmediatamente en el sidebar (React Query invalida el listado).
+4. El usuario puede pulsar acciones → corren en sandbox.
 
-- Tipografía cargada vía `<link>` en `__root.tsx` (Sora, Outfit/Atuendo, Instrument Serif, JetBrains Mono) — nunca `@import` URL.
-- Tokens en `@theme inline` para soportar el patrón shadcn.
-- Sidebar implementado con `@/components/ui/sidebar` (shadcn) + estilos custom para el look HUD/holográfico.
-- LiquidChatBar es global dentro de cada layout (`_nova.tsx` / `_nevira.tsx`) y comparte estado con la ruta activa para enviar prompts contextuales al chat agente.
-- `index.tsx` lee la preferencia y redirige a `/nova/inicio` o `/nevira/panel`.
+## Flujo "la IA lo propone"
 
-## Entrega en orden
+Un hook ligero `useSectionSuggestions` mira contadores (docs, imágenes, memoria) cada N min y, si supera umbrales, dispara una server fn `proposeSection` que pide al modelo un layout candidato y lo guarda como `section_events(kind='suggest')`. Aparece un toast/chip en el home ofreciendo *"Crear sección: Diario de fotos"* → confirma → `create_section`.
 
-1. styles.css + theme.ts + provider + fuentes en `__root.tsx`.
-2. ModuleSidebar + LiquidChatBar + ModulePanel + primitivos HUD.
-3. Layouts `_nova.tsx` y `_nevira.tsx` + redirect en `index.tsx` + redirects de rutas viejas.
-4. Páginas NOVA (Inicio, Conversación, Música, Imágenes, Documentos, Memoria, Automatizaciones, Calendario, WhatsApp, Finanzas, Ajustes) conectando las server functions reales donde existen.
-5. Páginas NEVIRA Core (Panel, Productividad, Automatizaciones, Comunicación, Análisis, Datos, Memoria, Código, Seguridad, Sistema, Rendimiento) como UI demo con datos mock.
-6. Eliminación de componentes obsoletos y verificación de tipos/build.
+## Sidebar y rutas
 
-¿Apruebas el plan para implementarlo?
+- Rutas dinámicas ya existentes por assistant. Añadir `src/routes/_authenticated/nova.section.$slug.tsx` (y equivalente Nevira) que:
+  1. Carga la sección con `requireSupabaseAuth` por slug.
+  2. Renderiza `<DynamicSection layout=... />` con los bloques whitelisted.
+- `ModuleSidebar` mezcla módulos estáticos + `user_sections` del usuario.
+
+## Seguridad
+
+- Todo el código de skills corre en QuickJS aislado (ya existe), sin `fetch`/`import` fuera de las tools expuestas.
+- Los `source` de bloques son enumerados; la IA no puede inyectar SQL ni URLs.
+- Un skill nuevo requiere confirmación del usuario la primera vez (chip "Ejecutar" en el chat, no auto-run).
+
+## Ficheros a tocar
+
+Nuevos:
+- `supabase/migrations/*_user_sections.sql` (tablas + RLS + GRANT + campo en `agent_skills`).
+- `src/lib/sections.functions.ts` (CRUD + `proposeSection`).
+- `src/lib/section-sources.ts` (resolver whitelisted).
+- `src/components/dynamic/DynamicSection.tsx` + bloques (`StatBlock`, `ListBlock`, `ChartBlock`, `ActionBlock`, `ChatPromptBlock`, `MarkdownBlock`).
+- `src/routes/_authenticated/nova.section.$slug.tsx` y `nevira.section.$slug.tsx`.
+- `src/hooks/use-section-suggestions.ts`.
+
+Editados:
+- `src/lib/chat-tools.ts` → añadir `create_section`, `update_section`, `attach_skill`.
+- `src/components/dashboard/ModuleSidebar.tsx` → mezclar secciones dinámicas + menú "＋ Nueva sección".
+- `src/components/SkillsManager.tsx` → mostrar skills vinculados a secciones.
+
+## No incluido (para acotar)
+
+- Generación de `.tsx` reales (requiere rebuild).
+- Compartir secciones entre usuarios.
+- Marketplace / import-export.
+
+¿Aprueba este alcance para implementarlo?
