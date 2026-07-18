@@ -93,7 +93,7 @@ export const updateSection = createServerFn({ method: "POST" })
     if (patch.layout) patch.layout = patch.layout as unknown;
     const { data: row, error } = await context.supabase
       .from("user_sections")
-      .update(patch)
+      .update(patch as never)
       .eq("user_id", context.userId)
       .eq("slug", data.slug)
       .select("*")
