@@ -1,9 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu } from "lucide-react";
+import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu, Trash2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getModules, type ModuleDef } from "@/lib/modules";
 import { Icon3D } from "@/components/Icon3D";
+import { useUserSections, useSectionMutations } from "@/hooks/use-user-sections";
 import neviraLogo from "@/assets/nevira-logo.png";
 import novaLogo from "@/assets/nova-logo.png";
 
@@ -116,6 +117,7 @@ export function ModuleSidebar({
             </div>
           </div>
         ))}
+        <UserSections assistant={assistant} active={active} onSelect={onSelect} />
       </nav>
 
       {footer}
