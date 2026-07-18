@@ -93,9 +93,17 @@ function NeviraHome() {
     ], cta: "Ver seguridad" },
   ];
 
+  const sectionMatch = module.startsWith("section:")
+    ? userSections.find((s) => s.slug === module.slice("section:".length))
+    : undefined;
   const showSection = module !== "panel";
   const { prefs } = useTheme();
   const themeClass = `${neviraThemeClass(prefs.nevira)} ${fontClass(prefs.font)}`;
+  const seedChat = (t: string) => startChat(module, t);
+  const runSkillCall = async (name: string, input: Record<string, unknown>) => {
+    const res = await runSkillFn({ data: { name, input } });
+    return res.output;
+  };
 
   return (
     <div className={`${themeClass} nevira-bg theme-transition flex h-[100dvh] w-screen overflow-hidden`}>
