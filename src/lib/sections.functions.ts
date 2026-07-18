@@ -297,3 +297,40 @@ export const attachSectionSkill = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, id: row.id };
   });
+
+/* ---------- Skill runner (LLM-backed, safe) ---------- */
+
+const RunSkillInput = z.object({
+  name: z.string().min(1).max(60),
+  input: z.record(z.string(), z.unknown()).default({}),
+});
+
+export const runSkill = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RunSkillInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: skill, error } = await context.supabase
+      .from("agent_skills")
+      .select("name, description, code, enabled")
+      .eq("user_id", context.userId)
+      .eq("name", data.name)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!skill) throw new Error(`Skill "${data.name}" no encontrado`);
+    if (!skill.enabled) throw new Error(`Skill "${data.name}" está deshabilitado`);
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY no configurado");
+
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = gateway("google/gemini-3-flash-preview");
+    const system = `Eres un skill llamado "${skill.name}". Descripción: ${skill.description}.\n\nInstrucciones internas (código del skill):\n${skill.code}\n\nDevuelve solo la salida final del skill, sin prólogos.`;
+    const userMsg = `Entrada: ${JSON.stringify(data.input)}`;
+
+    const result = await generateText({
+      model,
+      system,
+      prompt: userMsg,
+    });
+    return { ok: true, output: result.text };
+  });
