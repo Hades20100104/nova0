@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { LayoutSchema } from "./section-blocks";
 
 type SB = SupabaseClient<Database>;
 
