@@ -35,7 +35,19 @@ function NeviraHome() {
   const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  const runSkillFn = useServerFn(runSkill);
+  const { data: userSections = [] } = useUserSections("nevira");
+
   const handleSelect = useCallback((slug: string) => {
+    if (slug === "section:__new__") {
+      setNavOpen(false);
+      window.dispatchEvent(
+        new CustomEvent("assistant:send", {
+          detail: { text: "Crea una sección personalizada. Pregúntame qué trackear y usa create_section." },
+        }),
+      );
+      return;
+    }
     setModule(slug);
     setNavOpen(false);
   }, []);
