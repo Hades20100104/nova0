@@ -29,8 +29,22 @@ function NovaHome() {
   const [navOpen, setNavOpen] = useState(false);
   const [inlineThread, setInlineThread] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const runSkillFn = useServerFn(runSkill);
+  const { data: userSections = [] } = useUserSections("nova");
 
   const handleSelect = useCallback((slug: string) => {
+    if (slug === "section:__new__") {
+      setModule("home");
+      setNavOpen(false);
+      window.dispatchEvent(
+        new CustomEvent("assistant:send", {
+          detail: {
+            text: "Crea una sección personalizada para mí. Pregúntame primero qué quiero trackear y luego llama a create_section.",
+          },
+        }),
+      );
+      return;
+    }
     setModule(slug);
     setNavOpen(false);
   }, []);
@@ -48,10 +62,23 @@ function NovaHome() {
   };
 
   const submit = (text: string) => startChat(module, text);
+  const seedChat = (text: string) => startChat(module, text);
+  const runSkillCall = async (name: string, input: Record<string, unknown>) => {
+    const res = await runSkillFn({ data: { name, input } });
+    return res.output;
+  };
 
+  const sectionMatch = module.startsWith("section:")
+    ? userSections.find((s) => s.slug === module.slice("section:".length))
+    : undefined;
   const showSection = module !== "home";
   const { prefs } = useTheme();
   const themeClass = `${novaThemeClass(prefs.nova)} ${fontClass(prefs.font)}`;
+  const headerLabel = sectionMatch
+    ? sectionMatch.label
+    : showSection
+      ? getModule("nova", module).label
+      : "IA Creativa · Consciente · Inspiradora";
 
   return (
     <div className={`nova-bg theme-transition ${themeClass} flex h-[100dvh] w-screen overflow-hidden`}>
