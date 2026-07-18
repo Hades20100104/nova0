@@ -154,7 +154,7 @@ function NeviraHome() {
             <div className="min-w-0">
               <h1 className="font-display text-xl md:text-2xl tracking-[0.25em] glow-text truncate">NEVIRA</h1>
               <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate">
-                {showSection ? getModule("nevira", module).label : "Sistema Operativo Inteligente"}
+                {sectionMatch ? sectionMatch.label : showSection ? getModule("nevira", module).label : "Sistema Operativo Inteligente"}
               </p>
             </div>
           </div>
@@ -194,7 +194,16 @@ function NeviraHome() {
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">
               <HudCorners />
-              <NeviraSection slug={module} onChat={() => startChat(module)} />
+              {sectionMatch ? (
+                <DynamicSection
+                  layout={(sectionMatch.layout as unknown) as Layout}
+                  label={sectionMatch.label}
+                  onSeedChat={seedChat}
+                  onRunSkill={runSkillCall}
+                />
+              ) : (
+                <NeviraSection slug={module} onChat={() => startChat(module)} />
+              )}
             </div>
           )}
           {inlineThread && (
