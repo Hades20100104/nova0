@@ -65,9 +65,9 @@ export const createSection = createServerFn({ method: "POST" })
         label: data.label,
         icon: data.icon ?? null,
         accent: data.accent ?? null,
-        layout: data.layout as unknown as Record<string, unknown>,
+        layout: data.layout as unknown as never,
         created_by: data.created_by,
-      })
+      } as never)
       .select("*")
       .single();
     if (error) throw new Error(error.message);
