@@ -23,7 +23,12 @@ function StatBlock({ block }: { block: Extract<Block, { type: "stat" }> }) {
 
 function ListBlock({ block }: { block: Extract<Block, { type: "list" }> }) {
   const q = useSectionSource(block.source, { limit: block.limit });
-  const items = q.data?.kind === "list" ? q.data.items : [];
+  const items = (q.data?.kind === "list" ? q.data.items : []) as Array<{
+    id: string;
+    title: string;
+    subtitle?: string;
+    image?: string;
+  }>;
   return (
     <div className="rounded-xl border border-primary/25 bg-card/40 p-4">
       <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono mb-3">

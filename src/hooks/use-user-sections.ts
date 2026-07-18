@@ -28,15 +28,15 @@ export function useSectionMutations() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["user_sections"] });
   return {
     create: useMutation({
-      mutationFn: (data: Parameters<typeof create>[0]["data"]) => create({ data }),
+      mutationFn: (data: unknown) => create({ data: data as never }),
       onSuccess: invalidate,
     }),
     update: useMutation({
-      mutationFn: (data: Parameters<typeof update>[0]["data"]) => update({ data }),
+      mutationFn: (data: unknown) => update({ data: data as never }),
       onSuccess: invalidate,
     }),
     remove: useMutation({
-      mutationFn: (data: Parameters<typeof remove>[0]["data"]) => remove({ data }),
+      mutationFn: (data: { slug: string }) => remove({ data }),
       onSuccess: invalidate,
     }),
   };
