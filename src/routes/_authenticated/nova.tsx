@@ -139,7 +139,16 @@ function NovaHome() {
           </div>
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">
-              <NovaSection slug={module} onChat={() => startChat(module)} />
+              {sectionMatch ? (
+                <DynamicSection
+                  layout={(sectionMatch.layout as unknown) as Layout}
+                  label={sectionMatch.label}
+                  onSeedChat={seedChat}
+                  onRunSkill={runSkillCall}
+                />
+              ) : (
+                <NovaSection slug={module} onChat={() => startChat(module)} />
+              )}
             </div>
           )}
           {inlineThread && (
