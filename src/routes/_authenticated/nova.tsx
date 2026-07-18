@@ -119,7 +119,7 @@ function NovaHome() {
             <div className="min-w-0">
               <h1 className="font-display text-xl md:text-2xl tracking-[0.3em] glow-text truncate">NOVA</h1>
               <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-muted-foreground truncate">
-                {showSection ? getModule("nova", module).label : "IA Creativa · Consciente · Inspiradora"}
+                {headerLabel}
               </p>
             </div>
           </div>
