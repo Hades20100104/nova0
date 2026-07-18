@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createThread } from "@/lib/threads.functions";
+import { runSkill } from "@/lib/sections.functions";
 import { NovaSphereClient } from "@/components/NovaSphereClient";
 import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
 import { NovaSection } from "@/components/sections/ModuleSections";
+import { DynamicSection } from "@/components/dynamic/DynamicSection";
+import { useUserSections } from "@/hooks/use-user-sections";
 import { getModule } from "@/lib/modules";
 import { useTheme, novaThemeClass, fontClass } from "@/lib/theme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ArrowLeft, Menu } from "lucide-react";
+import type { Layout } from "@/lib/section-blocks";
 
 export const Route = createFileRoute("/_authenticated/nova")({
   head: () => ({ meta: [{ title: "NOVA — IA Creativa" }] }),
