@@ -61,6 +61,7 @@ export type Database = {
       }
       assistant_messages: {
         Row: {
+          attachments: Json
           created_at: string
           id: string
           parts: Json
@@ -68,6 +69,7 @@ export type Database = {
           thread_id: string
         }
         Insert: {
+          attachments?: Json
           created_at?: string
           id?: string
           parts: Json
@@ -75,6 +77,7 @@ export type Database = {
           thread_id: string
         }
         Update: {
+          attachments?: Json
           created_at?: string
           id?: string
           parts?: Json
@@ -165,6 +168,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      code_artifacts: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          language: string
+          thread_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          language?: string
+          thread_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          language?: string
+          thread_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_artifacts_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generated_documents: {
         Row: {
