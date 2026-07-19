@@ -163,6 +163,78 @@ function MarkdownBlock({ block }: { block: Extract<Block, { type: "markdown" }> 
   );
 }
 
+function CodePreviewBlock({ block }: { block: Extract<Block, { type: "code_preview" }> }) {
+  const [tab, setTab] = useState<"preview" | "code">("preview");
+  const doc =
+    block.language === "html"
+      ? block.code
+      : block.language === "css"
+      ? `<!doctype html><html><head><style>${block.code}</style></head><body><div class="demo">Preview</div></body></html>`
+      : `<!doctype html><html><head><style>body{font-family:system-ui;color:#eee;background:#0b0d12;padding:16px}</style></head><body><div id="root"></div><script type="module">${block.code}</script></body></html>`;
+  return (
+    <div className="rounded-xl border border-primary/25 bg-card/40 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-primary/20">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">
+          {block.title} · {block.language}
+        </div>
+        <div className="flex gap-1 text-[10px] font-mono">
+          {(["preview", "code"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              data-active={tab === t}
+              className="px-2 py-0.5 rounded border border-primary/30 data-[active=true]:bg-primary/25"
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      {tab === "preview" ? (
+        <iframe
+          title={block.title}
+          srcDoc={doc}
+          sandbox="allow-scripts"
+          style={{ width: "100%", height: block.height, border: "none", background: "#0b0d12" }}
+        />
+      ) : (
+        <pre className="max-h-[420px] overflow-auto p-3 text-[11px] font-mono whitespace-pre-wrap">
+          {block.code}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function OfficeDocBlock({ block }: { block: Extract<Block, { type: "office_doc" }> }) {
+  const viewer =
+    block.format === "pdf"
+      ? block.url
+      : `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(block.url)}`;
+  return (
+    <div className="rounded-xl border border-primary/25 bg-card/40 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-primary/20">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono truncate">
+          {block.title} · {block.format.toUpperCase()}
+        </div>
+        <a
+          href={block.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[10px] font-mono px-2 py-0.5 rounded border border-primary/30 hover:bg-primary/15"
+        >
+          Descargar
+        </a>
+      </div>
+      <iframe
+        title={block.title}
+        src={viewer}
+        style={{ width: "100%", height: block.height, border: "none", background: "#0b0d12" }}
+      />
+    </div>
+  );
+}
+
 /* ---------- Dispatcher ---------- */
 
 export function DynamicSection({
@@ -205,6 +277,18 @@ export function DynamicSection({
               return (
                 <div key={i} className="md:col-span-2">
                   <MarkdownBlock block={b} />
+                </div>
+              );
+            case "code_preview":
+              return (
+                <div key={i} className="md:col-span-2">
+                  <CodePreviewBlock block={b} />
+                </div>
+              );
+            case "office_doc":
+              return (
+                <div key={i} className="md:col-span-2">
+                  <OfficeDocBlock block={b} />
                 </div>
               );
             default:
