@@ -63,6 +63,28 @@ export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
         </div>
       </div>
 
+      <div className="space-y-4 rounded-xl border border-primary/25 bg-card/40 p-4">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">
+          Intensidad visual
+        </div>
+        <label className="block space-y-1">
+          <div className="flex justify-between text-xs">
+            <span>Glow</span><span className="font-mono">{prefs.glow}%</span>
+          </div>
+          <input type="range" min={0} max={100} value={prefs.glow}
+            onChange={(e) => update({ glow: Number(e.target.value) })}
+            className="w-full accent-primary" />
+        </label>
+        <label className="block space-y-1">
+          <div className="flex justify-between text-xs">
+            <span>Animación</span><span className="font-mono">{prefs.animation}%</span>
+          </div>
+          <input type="range" min={0} max={100} value={prefs.animation}
+            onChange={(e) => update({ animation: Number(e.target.value) })}
+            className="w-full accent-primary" />
+        </label>
+      </div>
+
       <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-mono">
         Los cambios se guardan en este dispositivo y se aplican a NOVA y NEVIRA al instante.
       </p>
