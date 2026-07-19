@@ -350,6 +350,177 @@ const attachSkillTool = (ctx: Ctx) =>
     },
   });
 
+/* ---------------- CODE PREVIEW (generates a runnable component + section) ---------------- */
+const generateComponent = (ctx: Ctx) =>
+  tool({
+    description:
+      "Genera un componente/mini-app funcional (HTML+JS+CSS autocontenido) a partir de una descripción y crea una sección con vista previa en vivo (iframe) y el código visible. Úsalo cuando el usuario pida crear una calculadora, formulario, widget, juego simple, visualización, etc.",
+    inputSchema: z.object({
+      title: z.string().min(1).max(80),
+      assistant: z.enum(["nova", "nevira"]).default("nova"),
+      html: z
+        .string()
+        .min(20)
+        .max(60000)
+        .describe(
+          "Documento HTML completo y autocontenido con <style> y <script> embebidos. Debe ejecutarse dentro de un iframe con sandbox='allow-scripts' (sin acceso al padre).",
+        ),
+    }),
+    execute: async ({ title, assistant, html }) => {
+      const slug = slugify(title);
+      const { data: art } = await ctx.supabase
+        .from("code_artifacts")
+        .insert({
+          user_id: ctx.userId,
+          title,
+          language: "html",
+          code: html,
+        } as never)
+        .select("id")
+        .single();
+      const layout = {
+        blocks: [
+          { type: "code_preview" as const, title, language: "html" as const, code: html, height: 480 },
+        ],
+      };
+      const { error } = await ctx.supabase
+        .from("user_sections")
+        .insert({
+          user_id: ctx.userId,
+          assistant,
+          slug,
+          label: title,
+          icon: "code",
+          layout: layout as unknown as never,
+          created_by: "ai",
+        } as never);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, slug, artifact_id: (art as { id: string } | null)?.id };
+    },
+  });
+
+/* ---------------- OFFICE DOCS (docx / xlsx / pptx) ---------------- */
+const generateOfficeDocument = (ctx: Ctx) =>
+  tool({
+    description:
+      "Genera un documento Office real (docx, xlsx o pptx) desde una estructura semántica, lo guarda en la biblioteca del usuario y devuelve una URL firmada visualizable en la app. Úsalo para Word, Excel o PowerPoint.",
+    inputSchema: z.object({
+      title: z.string().min(1).max(120),
+      format: z.enum(["docx", "xlsx", "pptx"]),
+      // Semantic content — the tool decides how to render per format.
+      docx: z
+        .object({
+          paragraphs: z.array(
+            z.object({
+              text: z.string(),
+              heading: z.enum(["h1", "h2", "h3", "p"]).default("p"),
+              bold: z.boolean().optional(),
+            }),
+          ),
+        })
+        .optional(),
+      xlsx: z
+        .object({
+          sheets: z.array(
+            z.object({
+              name: z.string().max(31),
+              rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+            }),
+          ),
+        })
+        .optional(),
+      pptx: z
+        .object({
+          slides: z.array(
+            z.object({
+              title: z.string(),
+              bullets: z.array(z.string()).default([]),
+              notes: z.string().optional(),
+            }),
+          ),
+        })
+        .optional(),
+    }),
+    execute: async ({ title, format, docx: docxIn, xlsx: xlsxIn, pptx: pptxIn }) => {
+      try {
+        let bytes: Uint8Array;
+        let mime: string;
+        if (format === "docx") {
+          const { Document, Packer, Paragraph, HeadingLevel, TextRun } = await import("docx");
+          const paragraphs = (docxIn?.paragraphs ?? [{ text: title, heading: "h1" as const }]).map(
+            (p) =>
+              new Paragraph({
+                heading:
+                  p.heading === "h1"
+                    ? HeadingLevel.HEADING_1
+                    : p.heading === "h2"
+                    ? HeadingLevel.HEADING_2
+                    : p.heading === "h3"
+                    ? HeadingLevel.HEADING_3
+                    : undefined,
+                children: [new TextRun({ text: p.text, bold: p.bold })],
+              }),
+          );
+          const doc = new Document({ sections: [{ children: paragraphs }] });
+          const buf = await Packer.toBuffer(doc);
+          bytes = new Uint8Array(buf);
+          mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else if (format === "xlsx") {
+          const ExcelJS = (await import("exceljs")).default;
+          const wb = new ExcelJS.Workbook();
+          const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [[title]] }];
+          for (const s of sheets) {
+            const ws = wb.addWorksheet(s.name.slice(0, 31) || "Hoja");
+            for (const row of s.rows) ws.addRow(row.map((v) => v ?? ""));
+          }
+          const buf = await wb.xlsx.writeBuffer();
+          bytes = new Uint8Array(buf as ArrayBuffer);
+          mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        } else {
+          const PptxGenJs = (await import("pptxgenjs")).default;
+          const p = new PptxGenJs();
+          const slides = pptxIn?.slides ?? [{ title, bullets: [] }];
+          for (const s of slides) {
+            const slide = p.addSlide();
+            slide.addText(s.title, { x: 0.5, y: 0.4, w: 9, h: 0.8, fontSize: 28, bold: true });
+            if (s.bullets.length) {
+              slide.addText(
+                s.bullets.map((b) => ({ text: b, options: { bullet: true } })),
+                { x: 0.6, y: 1.3, w: 8.8, h: 5, fontSize: 16 },
+              );
+            }
+            if (s.notes) slide.addNotes(s.notes);
+          }
+          const buf = (await p.write({ outputType: "nodebuffer" })) as Buffer;
+          bytes = new Uint8Array(buf);
+          mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+        }
+        const fileName = `${title.replace(/[^a-z0-9\-_. ]/gi, "_").slice(0, 80)}.${format}`;
+        const path = `${ctx.userId}/${Date.now()}-${fileName}`;
+        const up = await ctx.supabase.storage
+          .from("generated-docs")
+          .upload(path, bytes, { contentType: mime, upsert: false });
+        if (up.error) return { ok: false, error: up.error.message };
+        const { data: signed } = await ctx.supabase.storage
+          .from("generated-docs")
+          .createSignedUrl(path, 60 * 60 * 24 * 7);
+        const url = signed?.signedUrl ?? "";
+        await ctx.supabase.from("generated_documents").insert({
+          user_id: ctx.userId,
+          title,
+          prompt: title,
+          format,
+          file_name: fileName,
+          mime_type: mime,
+          storage_path: path,
+        });
+        return { ok: true, url, format, title };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "office error" };
+      }
+    },
+  });
+
 /* ---------------- Build set ---------------- */
 export function buildChatTools(ctx: Ctx) {
   return {
@@ -361,5 +532,7 @@ export function buildChatTools(ctx: Ctx) {
     search_music: searchMusic(ctx),
     create_section: createSectionTool(ctx),
     attach_skill: attachSkillTool(ctx),
+    generate_component: generateComponent(ctx),
+    generate_office_document: generateOfficeDocument(ctx),
   };
 }
