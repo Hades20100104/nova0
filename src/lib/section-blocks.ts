@@ -8,6 +8,8 @@ export const BLOCK_TYPES = [
   "action",
   "chat_prompt",
   "markdown",
+  "code_preview",
+  "office_doc",
 ] as const;
 
 export const SOURCE_WHITELIST = [
@@ -57,6 +59,20 @@ export const BlockSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("markdown"),
     content: z.string().max(4000),
+  }),
+  z.object({
+    type: z.literal("code_preview"),
+    title: z.string().max(80),
+    language: z.enum(["html", "react", "js", "css"]).default("html"),
+    code: z.string().min(1).max(60000),
+    height: z.number().int().min(160).max(1200).default(420),
+  }),
+  z.object({
+    type: z.literal("office_doc"),
+    title: z.string().max(120),
+    format: z.enum(["docx", "xlsx", "pptx", "pdf"]),
+    url: z.string().url(),
+    height: z.number().int().min(240).max(1400).default(560),
   }),
 ]);
 
