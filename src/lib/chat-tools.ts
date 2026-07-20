@@ -424,7 +424,7 @@ const generateOfficeDocument = (ctx: Ctx) =>
           sheets: z.array(
             z.object({
               name: z.string().max(31),
-              rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+              rows: z.array(z.object({ cells: z.array(z.string()) })),
             }),
           ),
         })
