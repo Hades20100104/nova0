@@ -468,7 +468,7 @@ const generateOfficeDocument = (ctx: Ctx) =>
         } else if (format === "xlsx") {
           const ExcelJS = (await import("exceljs")).default;
           const wb = new ExcelJS.Workbook();
-          const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [[title]] }];
+          const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [{ cells: [title] }] }];
           for (const s of sheets) {
             const ws = wb.addWorksheet(s.name.slice(0, 31) || "Hoja");
             for (const row of s.rows) ws.addRow((Array.isArray(row) ? row : row.cells).map((v) => v ?? ""));
