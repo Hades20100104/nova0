@@ -424,7 +424,7 @@ const generateOfficeDocument = (ctx: Ctx) =>
           sheets: z.array(
             z.object({
               name: z.string().max(31),
-              rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+              rows: z.array(z.object({ cells: z.array(z.string()) })),
             }),
           ),
         })
@@ -468,10 +468,10 @@ const generateOfficeDocument = (ctx: Ctx) =>
         } else if (format === "xlsx") {
           const ExcelJS = (await import("exceljs")).default;
           const wb = new ExcelJS.Workbook();
-          const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [[title]] }];
+          const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [{ cells: [title] }] }];
           for (const s of sheets) {
             const ws = wb.addWorksheet(s.name.slice(0, 31) || "Hoja");
-            for (const row of s.rows) ws.addRow(row.map((v) => v ?? ""));
+            for (const row of s.rows) ws.addRow((Array.isArray(row) ? row : row.cells).map((v) => v ?? ""));
           }
           const buf = await wb.xlsx.writeBuffer();
           bytes = new Uint8Array(buf as ArrayBuffer);
