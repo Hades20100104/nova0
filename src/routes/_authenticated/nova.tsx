@@ -19,7 +19,16 @@ import { ArrowLeft, Menu } from "lucide-react";
 import type { Layout } from "@/lib/section-blocks";
 
 export const Route = createFileRoute("/_authenticated/nova")({
-  head: () => ({ meta: [{ title: "NOVA — IA Creativa" }] }),
+  head: () => ({
+    meta: [
+      { title: "NOVA — IA Creativa Cósmica 3D" },
+      { name: "description", content: "NOVA, tu asistente creativo con esfera 3D: genera imágenes, escribe, imagina y responde con voz tipo JARVIS." },
+      { property: "og:title", content: "NOVA — IA Creativa Cósmica" },
+      { property: "og:description", content: "Asistente creativo con voz e interfaz 3D. Crea imágenes, documentos y música con IA." },
+      { property: "og:url", content: "https://nova0.lovable.app/nova" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/nova" }],
+  }),
   component: NovaHome,
 });
 
@@ -112,6 +121,7 @@ function NovaHome() {
                 onClick={() => setModule("home")}
                 className="grid h-9 w-9 place-items-center rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 transition shrink-0"
                 title="Volver al inicio"
+                aria-label="Volver al inicio"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>

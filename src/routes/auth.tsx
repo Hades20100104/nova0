@@ -8,7 +8,16 @@ import { toast } from "sonner";
 import novaLogo from "@/assets/nova-logo.png";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Acceso — NOVA & NEVIRA" }] }),
+  head: () => ({
+    meta: [
+      { title: "Acceder a NOVA & NEVIRA" },
+      { name: "description", content: "Inicia sesión o crea tu cuenta para usar los asistentes NOVA y NEVIRA con voz, memoria y automatizaciones." },
+      { property: "og:title", content: "Acceder a NOVA & NEVIRA" },
+      { property: "og:description", content: "Entra a tus asistentes personales con IA: chat, imágenes, documentos y automatización." },
+      { property: "og:url", content: "https://nova0.lovable.app/auth" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/auth" }],
+  }),
   component: AuthPage,
 });
 
@@ -44,11 +53,11 @@ function AuthPage() {
   };
 
   return (
-    <div className="nova-bg min-h-screen flex items-center justify-center p-6">
+    <main className="nova-bg min-h-screen flex items-center justify-center p-6">
       <div className="glass glow-ring relative w-full max-w-md rounded-3xl p-8 fade-up">
         <div className="flex flex-col items-center mb-8">
           <img src={novaLogo} alt="" width={80} height={80} className="drop-shadow-[0_0_30px_var(--glow)]" />
-          <h1 className="mt-3 text-2xl font-display tracking-wide glow-text">NOVA · NEVIRA</h1>
+          <h1 className="mt-3 text-2xl font-display tracking-wide glow-text">Acceder a NOVA &amp; NEVIRA</h1>
           <p className="text-sm text-muted-foreground mt-1">Asistentes inteligentes</p>
         </div>
         <form onSubmit={submit} className="space-y-4">
@@ -67,11 +76,12 @@ function AuthPage() {
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
+          aria-label="Cambiar entre inicio de sesión y registro"
           className="mt-5 w-full text-sm text-muted-foreground hover:text-primary transition"
         >
           {mode === "login" ? "¿No tienes cuenta? Crear una" : "Ya tengo cuenta, iniciar sesión"}
         </button>
       </div>
-    </div>
+    </main>
   );
 }

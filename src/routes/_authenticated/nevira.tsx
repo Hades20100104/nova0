@@ -24,7 +24,16 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/nevira")({
-  head: () => ({ meta: [{ title: "NEVIRA — Sistema Operativo Inteligente" }] }),
+  head: () => ({
+    meta: [
+      { title: "NEVIRA — Sistema Operativo Inteligente" },
+      { name: "description", content: "NEVIRA, tu dashboard con IA: analítica en vivo, automatizaciones, memoria y voz tipo JARVIS para productividad." },
+      { property: "og:title", content: "NEVIRA — Dashboard IA con voz" },
+      { property: "og:description", content: "Sistema operativo inteligente: métricas, automatización, WhatsApp y documentos, todo desde un solo panel." },
+      { property: "og:url", content: "https://nova0.lovable.app/nevira" },
+    ],
+    links: [{ rel: "canonical", href: "https://nova0.lovable.app/nevira" }],
+  }),
   component: NeviraHome,
 });
 
@@ -147,6 +156,7 @@ function NeviraHome() {
                 onClick={() => setModule("panel")}
                 className="grid h-9 w-9 place-items-center rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 transition shrink-0"
                 title="Volver al panel"
+                aria-label="Volver al panel"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>

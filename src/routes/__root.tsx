@@ -100,6 +100,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "NEVIRA & NOVA",
+          url: "https://nova0.lovable.app",
+          description: "Dos asistentes de IA con voz: NOVA creativa 3D y NEVIRA sistema operativo inteligente.",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "NEVIRA & NOVA",
+          url: "https://nova0.lovable.app",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
