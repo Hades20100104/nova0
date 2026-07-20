@@ -471,7 +471,7 @@ const generateOfficeDocument = (ctx: Ctx) =>
           const sheets = xlsxIn?.sheets ?? [{ name: "Hoja1", rows: [[title]] }];
           for (const s of sheets) {
             const ws = wb.addWorksheet(s.name.slice(0, 31) || "Hoja");
-            for (const row of s.rows) ws.addRow(row.map((v) => v ?? ""));
+            for (const row of s.rows) ws.addRow((Array.isArray(row) ? row : row.cells).map((v) => v ?? ""));
           }
           const buf = await wb.xlsx.writeBuffer();
           bytes = new Uint8Array(buf as ArrayBuffer);
