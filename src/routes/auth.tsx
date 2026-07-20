@@ -76,11 +76,12 @@ function AuthPage() {
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
+          aria-label="Cambiar entre inicio de sesión y registro"
           className="mt-5 w-full text-sm text-muted-foreground hover:text-primary transition"
         >
           {mode === "login" ? "¿No tienes cuenta? Crear una" : "Ya tengo cuenta, iniciar sesión"}
         </button>
       </div>
-    </div>
+    </main>
   );
 }
