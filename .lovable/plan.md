@@ -1,57 +1,83 @@
-# Plan: 4 mejoras mayores
+## 1) Comunicación interna estilo WhatsApp (1‑a‑1 + grupos + IA compartida)
 
-## 1) Preview de código en "Código IA"
+**DB (una sola migración):**
+- `chat_rooms` (id, kind: 'dm'|'group', name, avatar_url, created_by, ai_enabled bool, ai_assistant enum('nova','nevira'))
+- `chat_members` (room_id, user_id, role: 'owner'|'member', joined_at) — PK compuesta
+- `chat_room_messages` (id, room_id, sender_id nullable, sender_kind: 'user'|'ai', body, attachments jsonb, created_at)
+- `profiles`: añadir `username` único (búsqueda por @).
+- RLS: solo miembros ven mensajes/room; INSERT si eres miembro; INSERT en members solo owner. GRANTs correctos.
+- Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE chat_room_messages, chat_members, chat_rooms`.
 
-- Nueva sección/módulo `codigo` (Nova/Nevira) con:
-- Editor read-only (Monaco ligero o `<pre>` con highlight) mostrando el código generado.
-- Sandbox de preview: `<iframe srcDoc>` que renderiza HTML/CSS/JS o un bundle React vía `@babel/standalone` + import maps (React/ReactDOM UMD).
-- Toggle Code / Preview / Split.
+**Server fns (`src/lib/rooms.functions.ts`):** `searchUsers`, `createRoom` (dm/group), `listMyRooms`, `getRoom`, `addMember`, `leaveRoom`, `sendRoomMessage`, `invokeAiInRoom` (si `ai_enabled`, corre chat con contexto del room y publica como `sender_kind='ai'`).
 
-- Nueva tool `generate_component` en `chat-tools.ts`: el LLM devuelve `{ language: 'html'|'react', code }`, se guarda en tabla `code_artifacts` (id, user_id, title, language, code, created_at).
-- Hook `useCodeArtifacts` + componente `CodeSandboxViewer.tsx`.
+**UI:** nueva sección `comunicacion` con:
+- Sidebar de rooms + botón "Nuevo" (buscar @username, crear DM o grupo).
+- Panel de conversación (burbujas, adjuntos ya soportados por bucket `chat-attachments`, realtime subscribe).
+- Toggle "Incluir IA (NOVA/NEVIRA)" en el room → mencionar con `@nova` invoca `invokeAiInRoom`.
 
-## 2) Personalización ampliada (incluye NEVIRA)
+## 2) Análisis IA del mundo (Web + X/Reddit)
 
-- Extender `src/lib/theme.ts`:
-  - Presets Nevira (Cyan HUD, Amber Tactical, Emerald Ops, Crimson Alert, Mono Ghost).
-  - Presets Nova adicionales (Aurora, Sunset, Nebula Green).
-  - Controles: intensidad glow (0–100), densidad de grilla HUD, radio de bordes, animaciones on/off, wallpaper (gradient / solid / imagen).
-- `ThemeSettings.tsx` reorganizado en tabs Nova / Nevira / Global (fuente, densidad, animaciones).
-- Persistencia en `user_memory` (key `ui:prefs`) además de localStorage.
+**Tools nuevas en `chat-tools.ts` (contextuales a la sección `analisis-ia`):**
+- `analyze_trends({ topic, region?, timeframe? })`: combina `web_search` (DuckDuckGo ya integrado) + gateway X (`/2/tweets/search/recent`) + Reddit JSON (`https://www.reddit.com/search.json`, sin auth para lectura). Devuelve resumen + fuentes + sentimiento aproximado.
+- `analyze_person({ name })`: mismo pipeline enfocado en menciones/bio pública. Nunca datos privados.
+- `analyze_topic_report({ topic })`: llama a las dos + LLM para redactar informe estructurado.
 
-## 3) Ventana de contexto + adjuntos
+**Conector X:** requiere que el usuario conecte X (api_key). Si no está conectado, la tool devuelve un aviso amable con acción "Conectar X".
 
-- `LiquidChatBar` y `InlineChatPanel`: botón 📎 para imágenes (jpg/png/webp) y archivos (pdf, txt, md, csv).
-  - Subida a bucket `chat-attachments` (nuevo, privado), signed URL 1h.
-  - Se envían al chat como `content` multimodal (`image_url` o `file` con base64/URL).
-- Aumentar historial en `chat.functions.ts`: pasar últimos 30 mensajes (antes probable 10).
-- Tabla `assistant_messages`: añadir columna `attachments jsonb` para persistir metadatos.
+**UI:** la sección `analisis-ia` gana un panel dedicado (input de tópico/persona, timeframe, chips de resultados con fuentes clicables, chart de menciones por día).
 
-## 4) Documentos Office + visor
+## 3) Identidad real por sección (las 3 opciones combinadas)
 
-- Tool `generate_office_document` (docx / xlsx / pptx) usando:
-  - `docx` (npm) para Word.
-  - `exceljs` para Excel.
-  - `pptxgenjs` para PowerPoint.
-  - Se ejecuta en server fn, sube a bucket `generated-docs`, registra en `generated_documents` con `format`.
-- Visor in-app:
-  - PDF/imagen: iframe.
-  - docx/xlsx/pptx: Office Online viewer (`https://view.officeapps.live.com/op/embed.aspx?src=<signed_url>`) como iframe, con fallback de descarga.
-- Nueva sección `documentos` con lista + `DocumentViewer.tsx` modal.
+**Modelo nuevo `src/lib/section-agents.ts`:**
+```ts
+type SectionAgent = {
+  slug: string;            // 'imagenes', 'documentos', ...
+  name: string;            // 'Lumen', 'Codex', 'Aria', 'Atlas', 'Echo'...
+  voice: 'jarvis'|'natural'|'warm'|'crisp';
+  systemPrompt: string;    // rol + límites
+  allowedTools: string[];  // whitelist de tools por sección
+  forbiddenTools?: string[];
+  ui: 'gallery'|'editor'|'chat'|'map'|'dashboard';
+};
+```
 
-## Detalles técnicos
+**Enforcement en chat:**
+- `chat.functions.ts` acepta `sectionSlug`. Antes de exponer tools al modelo filtra por `allowedTools`.
+- Si el usuario pide algo fuera de contexto ("genera una imagen" en Documentos), el sistema responde con sugerencia de cambiar de sección + botón de redirección (no ejecuta).
 
-- Migraciones: `code_artifacts`, columna `attachments` en `assistant_messages`, bucket `chat-attachments`.
-- Nuevas deps: `docx`, `exceljs`, `pptxgenjs`, `@babel/standalone` (para preview React), `prismjs` (highlight liviano).
-- Server fns nuevas: `saveCodeArtifact`, `listCodeArtifacts`, `generateOfficeDoc`, `uploadChatAttachment`.
-- Todo detrás de `requireSupabaseAuth`.
+**Sub‑agentes por sección (propuesta inicial):**
+- Imágenes → **Lumen** (voz warm, tools: `generate_image`, `edit_image`).
+- Documentos → **Atlas** (crisp, tools: `generate_office_document`, `save_document`).
+- Código IA → **Codex** (jarvis, tools: `generate_component`, `create_section`).
+- Memoria → **Mnemo** (natural, tools: `remember`, `recall`).
+- WhatsApp → **Hermes** (natural, tools: `send_whatsapp`).
+- Música → **Rhea** (warm, tools Spotify).
+- Análisis IA → **Oráculo** (crisp, tools: `analyze_*`, `web_search`).
+- Comunicación → **Iris** (natural, tools: `send_room_message`, `invoke_ai_in_room`).
+- Automatizaciones → **Nomad** (jarvis, tools de automations).
+
+**UI dedicada por sección (reemplaza el "chat + widgets genérico"):**
+- Imágenes: galería como vista principal + composer de prompt lateral; chat colapsado.
+- Documentos: lista + visor embebido; composer minimal.
+- Código IA: split code/preview a pantalla completa.
+- Comunicación: layout tipo mensajería (sin HUD decorativo).
+- Otras secciones mantienen HUD pero con agente propio y tools filtradas.
+
+Cada agente aparece con su nombre y avatar/color en la burbuja del chat, y la barra `LiquidChatBar` muestra "Hablando con **Lumen** · Imágenes".
 
 ## Orden de ejecución
 
-1. Migraciones + buckets.
-2. Adjuntos + contexto extendido (base para todo el chat).
-3. Personalización (rápido, aislado).
-4. Código IA + preview.
-5. Documentos Office + visor.
+1. Migración + realtime + tabla usuarios searchable (base para comunicación).
+2. Section-agents registry + filtrado de tools + UI del header del chat (impacto inmediato en identidad).
+3. Análisis IA (tools + panel dedicado).
+4. Comunicación interna (rooms UI + realtime + IA compartida).
+5. Refinar UIs dedicadas por sección (Imágenes/Documentos/Código en modo full).
 
-¿Apruebas para implementarlo todo en secuencia?
+## Detalles técnicos
+
+- Nuevas deps: ninguna obligatoria (usamos fetch + gateway X existente).
+- Conector requerido para tendencias completas: **X** (via `standard_connectors--connect`) — Reddit y Web funcionan sin claves.
+- Todo detrás de `requireSupabaseAuth`. Rooms con RLS estricto por membresía.
+- `attachments` en room messages reutiliza el bucket `chat-attachments` (signed URLs 1h).
+
+¿Apruebas para ejecutarlo en ese orden?
