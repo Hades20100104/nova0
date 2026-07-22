@@ -56,7 +56,7 @@ export const listMyRooms = createServerFn({ method: "GET" })
 
     // Enrich DMs with the other user's display name
     const dmIds = (rooms ?? []).filter((r) => r.kind === "dm").map((r) => r.id);
-    const otherMap = new Map<string, { display_name: string | null; username: string | null; avatar_url: string | null }>();
+    const otherMap = new Map<string, { display_name: string | null; username: string | null }>();
     if (dmIds.length) {
       const { data: allMembers } = await context.supabase
         .from("chat_members")
