@@ -13,7 +13,7 @@ export const searchUsers = createServerFn({ method: "POST" })
     if (!term) return { users: [] };
     const { data: rows, error } = await context.supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select("id, username, display_name")
       .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
       .neq("id", context.userId)
       .limit(15);
@@ -70,7 +70,7 @@ export const listMyRooms = createServerFn({ method: "GET" })
       if (otherIds.size) {
         const { data: profs } = await context.supabase
           .from("profiles")
-          .select("id, display_name, username, avatar_url")
+          .select("id, display_name, username")
           .in("id", Array.from(otherIds));
         const byId = new Map(
           (profs ?? []).map((p) => [
@@ -79,7 +79,7 @@ export const listMyRooms = createServerFn({ method: "GET" })
               id: string;
               display_name: string | null;
               username: string | null;
-              avatar_url: string | null;
+              
             },
           ]),
         );
@@ -91,7 +91,7 @@ export const listMyRooms = createServerFn({ method: "GET" })
             otherMap.set(mm.room_id, {
               display_name: p.display_name,
               username: p.username,
-              avatar_url: p.avatar_url,
+              
             });
         }
       }
@@ -201,7 +201,7 @@ export const getRoom = createServerFn({ method: "POST" })
     const uids = (members ?? []).map((m) => (m as { user_id: string }).user_id);
     const { data: profs } = await context.supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select("id, username, display_name")
       .in("id", uids);
     return { room, members: members ?? [], profiles: profs ?? [] };
   });
