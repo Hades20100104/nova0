@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { ASSISTANT_PERSONAS, getModule } from "@/lib/modules";
 import { buildChatTools } from "@/lib/chat-tools";
+import { getSectionAgent } from "@/lib/section-agents";
 import type { Database } from "@/integrations/supabase/types";
 
 type Body = {
@@ -58,12 +59,17 @@ export const Route = createFileRoute("/api/chat")({
         if (!apiKey) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         const moduleDef = getModule(assistant, module ?? "home");
-        const system = `${ASSISTANT_PERSONAS[assistant]}\n\nContexto activo: ${moduleDef.label}.\n${moduleDef.systemPrompt}`;
+        const agent = getSectionAgent(assistant, module ?? "home");
+
+        const agentPreamble = agent
+          ? `Eres "${agent.name}" — ${agent.title} (subagente de ${assistant.toUpperCase()}). ${agent.systemPrompt}\n\nHerramientas disponibles SOLO en esta sección: ${agent.allowedTools.join(", ") || "(ninguna)"}. Si el usuario pide algo que requiere otra herramienta no disponible aquí, no lo intentes: responde brevemente y sugiere ir a la sección correspondiente (por ejemplo: "Eso lo hace mejor Atlas en Documentos — cambia a la sección Documentos").`
+          : `${ASSISTANT_PERSONAS[assistant]}\n\nContexto activo: ${moduleDef.label}.\n${moduleDef.systemPrompt}`;
+
+        const system = `${ASSISTANT_PERSONAS[assistant]}\n\n${agentPreamble}`;
 
         // Persist the latest user message (only the most recent one to avoid duplicates)
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
         if (lastUser) {
-          // Check if it's already saved
           const { data: existing } = await supabase
             .from("assistant_messages")
             .select("id")
@@ -75,7 +81,8 @@ export const Route = createFileRoute("/api/chat")({
           const lastPartsStr = JSON.stringify(lastUser.parts);
           const isDup =
             existing?.[0] &&
-            JSON.stringify((existing[0] as unknown as { parts?: unknown }).parts ?? null) === lastPartsStr;
+            JSON.stringify((existing[0] as unknown as { parts?: unknown }).parts ?? null) ===
+              lastPartsStr;
           if (!isDup) {
             await supabase.from("assistant_messages").insert({
               thread_id: threadId,
@@ -92,7 +99,7 @@ export const Route = createFileRoute("/api/chat")({
         const gateway = createLovableAiGatewayProvider(apiKey);
         const model = gateway("google/gemini-3-flash-preview");
 
-        const tools = buildChatTools({ supabase, userId, apiKey });
+        const tools = buildChatTools({ supabase, userId, apiKey }, agent?.allowedTools);
 
         const result = streamText({
           model,

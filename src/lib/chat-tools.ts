@@ -521,9 +521,217 @@ const generateOfficeDocument = (ctx: Ctx) =>
     },
   });
 
+/* ---------------- WEB / SOCIAL SEARCH (analysis) ---------------- */
+const webSearch = (_ctx: Ctx) =>
+  tool({
+    description:
+      "Busca en la web (DuckDuckGo) resultados relevantes para un tema, tendencia o persona. Devuelve título, url y snippet. Cita las fuentes.",
+    inputSchema: z.object({
+      query: z.string().min(2).max(300),
+      limit: z.number().int().min(1).max(10).default(6),
+    }),
+    execute: async ({ query, limit }) => {
+      try {
+        const res = await fetch(`https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
+          headers: { "User-Agent": "Mozilla/5.0 NovaBot/1.0" },
+        });
+        const html = await res.text();
+        const matches: { title: string; url: string; snippet: string }[] = [];
+        const re =
+          /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(html)) && matches.length < limit) {
+          const clean = (s: string) => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+          let url = m[1];
+          const dd = url.match(/uddg=([^&]+)/);
+          if (dd) url = decodeURIComponent(dd[1]);
+          matches.push({ url, title: clean(m[2]), snippet: clean(m[3]).slice(0, 260) });
+        }
+        return { ok: true, results: matches };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "error" };
+      }
+    },
+  });
+
+const redditSearch = (_ctx: Ctx) =>
+  tool({
+    description:
+      "Busca menciones y discusiones públicas en Reddit sobre un tema/persona. Devuelve título, subreddit, url, upvotes y snippet.",
+    inputSchema: z.object({
+      query: z.string().min(2).max(200),
+      limit: z.number().int().min(1).max(15).default(8),
+      sort: z.enum(["relevance", "hot", "new", "top"]).default("relevance"),
+    }),
+    execute: async ({ query, limit, sort }) => {
+      try {
+        const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&limit=${limit}&sort=${sort}`;
+        const res = await fetch(url, { headers: { "User-Agent": "NovaBot/1.0 (analysis)" } });
+        if (!res.ok) return { ok: false, error: `Reddit ${res.status}` };
+        const j = (await res.json()) as {
+          data?: { children?: Array<{ data: Record<string, unknown> }> };
+        };
+        const items = (j.data?.children ?? []).map((c) => {
+          const d = c.data as {
+            title?: string;
+            subreddit?: string;
+            permalink?: string;
+            ups?: number;
+            selftext?: string;
+            created_utc?: number;
+          };
+          return {
+            title: d.title ?? "",
+            subreddit: d.subreddit ?? "",
+            url: d.permalink ? `https://reddit.com${d.permalink}` : "",
+            upvotes: d.ups ?? 0,
+            snippet: (d.selftext ?? "").slice(0, 240),
+            created: d.created_utc ? new Date(d.created_utc * 1000).toISOString() : null,
+          };
+        });
+        return { ok: true, posts: items };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "error" };
+      }
+    },
+  });
+
+const xSearch = (_ctx: Ctx) =>
+  tool({
+    description:
+      "Busca posts públicos recientes en X (Twitter) sobre un tema o persona. Requiere conector X activo.",
+    inputSchema: z.object({
+      query: z.string().min(2).max(200),
+      max_results: z.number().int().min(10).max(50).default(15),
+    }),
+    execute: async ({ query, max_results }) => {
+      try {
+        const lovKey = process.env.LOVABLE_API_KEY;
+        const xKey = process.env.X_API_KEY;
+        if (!lovKey || !xKey) {
+          return {
+            ok: false,
+            error:
+              "X no conectado. Ve a Ajustes → Conectores y activa X para búsquedas sociales.",
+          };
+        }
+        const url = `https://connector-gateway.lovable.dev/x/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=${max_results}&tweet.fields=created_at,public_metrics&expansions=author_id&user.fields=username,name`;
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${lovKey}`,
+            "X-Connection-Api-Key": xKey,
+          },
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          return { ok: false, error: `X ${res.status}: ${t.slice(0, 240)}` };
+        }
+        const j = (await res.json()) as {
+          data?: Array<{
+            id: string;
+            text: string;
+            created_at?: string;
+            author_id?: string;
+            public_metrics?: Record<string, number>;
+          }>;
+          includes?: { users?: Array<{ id: string; username: string; name: string }> };
+        };
+        const users = new Map((j.includes?.users ?? []).map((u) => [u.id, u]));
+        const posts = (j.data ?? []).map((t) => {
+          const u = t.author_id ? users.get(t.author_id) : undefined;
+          return {
+            text: t.text,
+            created_at: t.created_at,
+            author: u ? `@${u.username}` : "",
+            url: u ? `https://x.com/${u.username}/status/${t.id}` : "",
+            metrics: t.public_metrics ?? {},
+          };
+        });
+        return { ok: true, posts };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "error" };
+      }
+    },
+  });
+
+const analyzeTopic = (ctx: Ctx) =>
+  tool({
+    description:
+      "Informe estructurado sobre un tema/persona pública combinando web + Reddit + X. Solo información pública. Cita las fuentes.",
+    inputSchema: z.object({
+      topic: z.string().min(2).max(160),
+      focus: z.enum(["trend", "person", "brand", "event"]).default("trend"),
+    }),
+    execute: async ({ topic, focus }) => {
+      const w = await webSearch(ctx).execute!(
+        { query: topic, limit: 6 },
+        { toolCallId: "w", messages: [] } as never,
+      );
+      const r = await redditSearch(ctx).execute!(
+        { query: topic, limit: 6, sort: "relevance" },
+        { toolCallId: "r", messages: [] } as never,
+      );
+      const x = await xSearch(ctx).execute!(
+        { query: topic, max_results: 15 },
+        { toolCallId: "x", messages: [] } as never,
+      );
+      return {
+        ok: true,
+        topic,
+        focus,
+        sources: {
+          web: (w as { results?: unknown[] }).results ?? [],
+          reddit: (r as { posts?: unknown[] }).posts ?? [],
+          x: (x as { posts?: unknown[] }).posts ?? [],
+          x_error: (x as { error?: string }).error,
+        },
+      };
+    },
+  });
+
+/* ---------------- INTERNAL ROOMS ---------------- */
+const sendRoomMessage = (ctx: Ctx) =>
+  tool({
+    description:
+      "Publica un mensaje en una sala interna. Necesitas el room_id (list_rooms lo devuelve).",
+    inputSchema: z.object({
+      room_id: z.string().uuid(),
+      body: z.string().min(1).max(4000),
+    }),
+    execute: async ({ room_id, body }) => {
+      const { error } = await ctx.supabase.from("chat_room_messages").insert({
+        room_id,
+        sender_id: ctx.userId,
+        sender_kind: "user",
+        body,
+      } as never);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+  });
+
+const listRoomsTool = (ctx: Ctx) =>
+  tool({
+    description: "Lista las salas de comunicación interna del usuario.",
+    inputSchema: z.object({}),
+    execute: async () => {
+      const { data: memberships } = await ctx.supabase
+        .from("chat_members")
+        .select("room_id")
+        .eq("user_id", ctx.userId);
+      const ids = (memberships ?? []).map((r) => (r as { room_id: string }).room_id);
+      if (!ids.length) return { ok: true, rooms: [] };
+      const { data: rooms } = await ctx.supabase
+        .from("chat_rooms")
+        .select("id, kind, name, ai_enabled, ai_assistant, updated_at")
+        .in("id", ids);
+      return { ok: true, rooms: rooms ?? [] };
+    },
+  });
+
 /* ---------------- Build set ---------------- */
-export function buildChatTools(ctx: Ctx) {
-  return {
+export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
+  const all = {
     generate_image: generateImage(ctx),
     save_document: saveDocument(ctx),
     remember: remember(ctx),
@@ -534,5 +742,17 @@ export function buildChatTools(ctx: Ctx) {
     attach_skill: attachSkillTool(ctx),
     generate_component: generateComponent(ctx),
     generate_office_document: generateOfficeDocument(ctx),
-  };
+    web_search: webSearch(ctx),
+    reddit_search: redditSearch(ctx),
+    x_search: xSearch(ctx),
+    analyze_topic: analyzeTopic(ctx),
+    send_room_message: sendRoomMessage(ctx),
+    list_rooms: listRoomsTool(ctx),
+  } as const;
+  if (!allowedTools?.length) return all;
+  const filtered: Record<string, (typeof all)[keyof typeof all]> = {};
+  for (const key of allowedTools) {
+    if (key in all) filtered[key] = all[key as keyof typeof all];
+  }
+  return filtered as typeof all;
 }

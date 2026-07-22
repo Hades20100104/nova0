@@ -169,6 +169,112 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_members: {
+        Row: {
+          joined_at: string
+          role: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          role?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          role?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_room_messages: {
+        Row: {
+          ai_name: string | null
+          attachments: Json
+          body: string
+          created_at: string
+          id: string
+          room_id: string
+          sender_id: string | null
+          sender_kind: string
+        }
+        Insert: {
+          ai_name?: string | null
+          attachments?: Json
+          body?: string
+          created_at?: string
+          id?: string
+          room_id: string
+          sender_id?: string | null
+          sender_kind?: string
+        }
+        Update: {
+          ai_name?: string | null
+          attachments?: Json
+          body?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          sender_id?: string | null
+          sender_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          ai_assistant: string | null
+          ai_enabled: boolean
+          avatar_url: string | null
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_assistant?: string | null
+          ai_enabled?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          kind: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_assistant?: string | null
+          ai_enabled?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       code_artifacts: {
         Row: {
           code: string
@@ -357,6 +463,7 @@ export type Database = {
           nova_color: string
           theme: string
           updated_at: string
+          username: string | null
         }
         Insert: {
           assistant_name?: string | null
@@ -367,6 +474,7 @@ export type Database = {
           nova_color?: string
           theme?: string
           updated_at?: string
+          username?: string | null
         }
         Update: {
           assistant_name?: string | null
@@ -377,6 +485,7 @@ export type Database = {
           nova_color?: string
           theme?: string
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -547,7 +656,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_room_member: {
+        Args: { _room: string; _user: string }
+        Returns: boolean
+      }
+      is_room_owner: {
+        Args: { _room: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
