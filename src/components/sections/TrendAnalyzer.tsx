@@ -78,9 +78,7 @@ export function TrendAnalyzer() {
       </form>
 
       {run.isPending && (
-        <p className="text-xs text-muted-foreground">
-          Rastreando web, Reddit y X sobre “{topic}”…
-        </p>
+        <p className="text-xs text-muted-foreground">Rastreando web, Reddit y X sobre “{topic}”…</p>
       )}
 
       {data && (

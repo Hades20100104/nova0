@@ -414,9 +414,7 @@ function NewRoomDialog({
               <button
                 key={u.id}
                 onClick={() =>
-                  setSelected((prev) =>
-                    on ? prev.filter((p) => p.id !== u.id) : [...prev, u],
-                  )
+                  setSelected((prev) => (on ? prev.filter((p) => p.id !== u.id) : [...prev, u]))
                 }
                 className={`w-full text-left rounded-lg px-3 py-2 border text-sm transition ${
                   on ? "border-primary/60 bg-primary/10" : "border-primary/20 hover:bg-primary/5"
