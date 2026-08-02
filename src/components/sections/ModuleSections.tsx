@@ -13,6 +13,8 @@ import {
   downloadDocument,
 } from "@/lib/module-data";
 import { useModuleStats, useLivePerf } from "@/lib/module-stats";
+import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
+import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -797,6 +799,9 @@ function AnalisisRoom({ onChat }: { onChat: () => void }) {
           </div>
           <ChatCta onChat={onChat} label="Profundizar análisis" />
         </div>
+        <div className="col-span-12">
+          <TrendAnalyzer />
+        </div>
       </div>
     </NeviraRoom>
   );
@@ -865,36 +870,11 @@ function DatosRoom({ onChat }: { onChat: () => void }) {
 
 /* --- COMUNICACIÓN --- */
 function ComunicacionRoom({ onChat }: { onChat: () => void }) {
-  const { data: contacts, isLoading } = useWhatsappContacts();
-  const list = contacts ?? [];
   return (
     <NeviraRoom icon={Radio} eyebrow="Red interna · NEVIRA"
-      title="Comunicación" subtitle="Tu red real de contactos disponibles.">
-      {isLoading ? <LoadingRow /> : (
-        <>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <StatReal label="Contactos" value={list.length} />
-            <StatReal label="Canal" value="WhatsApp" sub="cifrado E2E" />
-            <StatReal label="Estado" value="Activo" />
-          </div>
-          {list.length === 0 ? (
-            <EmptyHint>Aún no tienes contactos. Añádelos en la sección WhatsApp.</EmptyHint>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {list.slice(0, 10).map((c) => (
-                <div key={c.id} className="rounded-lg border border-primary/25 bg-card/40 px-3 py-2 flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate">{c.name}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">+{c.phone}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <ChatCta onChat={onChat} label="Enviar mensaje" />
-        </>
-      )}
+      title="Comunicación" subtitle="Mensajería interna en tiempo real: chats directos, grupos e IA compartida.">
+      <RoomsMessenger assistant="nevira" />
+      <ChatCta onChat={onChat} label="Pedir ayuda a Iris" />
     </NeviraRoom>
   );
 }
