@@ -10,15 +10,12 @@ export const searchUsers = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ q: z.string().min(1).max(60) }).parse(d))
   .handler(async ({ data, context }) => {
     const term = data.q.replace(/^@/, "").trim().toLowerCase();
-    if (!term) return { users: [] };
-    const { data: rows, error } = await context.supabase
-      .from("profiles")
-      .select("id, username, display_name")
-      .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
-      .neq("id", context.userId)
-      .limit(15);
+    if (term.length < 2) return { users: [] };
+    // Uses a security-definer RPC that only returns id/username/display_name,
+    // instead of blanket SELECT access on profiles.
+    const { data: rows, error } = await context.supabase.rpc("search_profiles", { _term: term });
     if (error) throw new Error(error.message);
-    return { users: rows ?? [] };
+    return { users: (rows ?? []) as Array<{ id: string; username: string | null; display_name: string | null }> };
   });
 
 export const setMyUsername = createServerFn({ method: "POST" })
