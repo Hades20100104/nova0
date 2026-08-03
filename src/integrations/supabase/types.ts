@@ -656,12 +656,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_room_attachment: {
+        Args: { _object_name: string; _user: string }
+        Returns: boolean
+      }
       is_room_member: {
         Args: { _room: string; _user: string }
         Returns: boolean
       }
       is_room_owner: {
         Args: { _room: string; _user: string }
+        Returns: boolean
+      }
+      search_profiles: {
+        Args: { _term: string }
+        Returns: {
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
+      shares_room_with: {
+        Args: { _other: string; _user: string }
         Returns: boolean
       }
     }
