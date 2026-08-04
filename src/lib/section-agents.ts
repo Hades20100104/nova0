@@ -282,7 +282,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.16 190)",
     systemPrompt:
       "Eres Kairos, subagente de productividad (GTD/OKR). Organizas, priorizas y guardas hechos en memoria.",
-    allowedTools: [T.remember, T.recall, T.create_section],
+    allowedTools: [T.remember, T.recall, T.create_section, T.create_plan, T.add_task, T.update_task, T.list_tasks, T.prioritize_tasks, T.create_goal, T.track_habit, T.productivity_summary],
     ui: "dashboard",
   },
   {
