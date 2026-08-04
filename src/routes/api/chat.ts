@@ -6,6 +6,7 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { ASSISTANT_PERSONAS, getModule } from "@/lib/modules";
 import { buildChatTools } from "@/lib/chat-tools";
 import { getSectionAgent } from "@/lib/section-agents";
+import { buildUserContext, INTELLIGENCE_DIRECTIVES } from "@/lib/user-context";
 import type { Database } from "@/integrations/supabase/types";
 
 type Body = {
