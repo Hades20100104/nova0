@@ -749,10 +749,13 @@ export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
     analyze_topic: analyzeTopic(ctx),
     send_room_message: sendRoomMessage(ctx),
     list_rooms: listRoomsTool(ctx),
+    ...buildProductivityTools(ctx),
   } as const;
+  // Intelligence tools are always available: memoria, aprendizaje e índice de confianza.
+  const ALWAYS = ["report_confidence", "learn_insight", "list_insights", "recall"];
   if (!allowedTools?.length) return all;
   const filtered: Record<string, (typeof all)[keyof typeof all]> = {};
-  for (const key of allowedTools) {
+  for (const key of [...allowedTools, ...ALWAYS]) {
     if (key in all) filtered[key] = all[key as keyof typeof all];
   }
   return filtered as typeof all;
