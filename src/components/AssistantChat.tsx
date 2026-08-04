@@ -277,6 +277,36 @@ export function AssistantChat({
                             {state && <span className="text-muted-foreground">· {state}</span>}
                           </div>
                           {output?.error && <div className="mt-1 text-destructive">{output.error}</div>}
+                          {toolName === "report_confidence" && output && (() => {
+                            const c = output as unknown as {
+                              confidence?: number; evidence?: string; risk?: string;
+                              reasoning?: string; needs_research?: boolean;
+                            };
+                            const conf = c.confidence ?? 0;
+                            const tone = conf >= 80 ? "oklch(0.75 0.18 150)" : conf >= 55 ? "oklch(0.8 0.16 85)" : "oklch(0.7 0.2 25)";
+                            return (
+                              <div className="mt-2 space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full border px-2 py-0.5 font-mono" style={{ borderColor: tone, color: tone }}>
+                                    Confianza {conf}%
+                                  </span>
+                                  <span className="rounded-full border border-primary/30 px-2 py-0.5">Evidencia: {c.evidence}</span>
+                                  <span className="rounded-full border border-primary/30 px-2 py-0.5">Riesgo: {c.risk}</span>
+                                  {c.needs_research && (
+                                    <span className="rounded-full border border-amber-400/50 px-2 py-0.5 text-amber-300">Requiere investigación</span>
+                                  )}
+                                </div>
+                                <div className="h-1 w-full rounded-full bg-background/60">
+                                  <div className="h-1 rounded-full" style={{ width: `${conf}%`, background: tone }} />
+                                </div>
+                                {c.reasoning && <div className="text-muted-foreground">{c.reasoning}</div>}
+                              </div>
+                            );
+                          })()}
+                          {toolName === "learn_insight" && output?.ok && (
+                            <div className="mt-1 text-primary/90">Aprendido y guardado en memoria contextual.</div>
+                          )}
+
                           {toolName === "generate_image" && output?.url && (
                             <img src={output.url} alt="" className="mt-2 max-h-80 rounded-md border border-primary/30" />
                           )}
