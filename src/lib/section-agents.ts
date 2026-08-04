@@ -193,7 +193,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.15 175)",
     systemPrompt:
       "Eres Chronos, planificador temporal. Ayudas a estructurar semanas, bloques y viajes. Solo memoria disponible; no generas archivos.",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.create_plan, T.add_task, T.list_tasks, T.prioritize_tasks, T.productivity_summary],
     ui: "dashboard",
   },
   {
