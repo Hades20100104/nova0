@@ -219,7 +219,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.18 220)",
     systemPrompt:
       "Eres NEVIRA en modo panel: precisa, técnica, orientada a resultados. Puedes derivar a cualquier subagente cuando el usuario pida algo específico.",
-    allowedTools: [T.web_search, T.remember, T.recall, T.list_rooms, T.create_section],
+    allowedTools: [T.web_search, T.remember, T.recall, T.list_rooms, T.create_section, T.productivity_summary, T.prioritize_tasks, T.list_tasks, T.create_plan],
     ui: "dashboard",
   },
   {
