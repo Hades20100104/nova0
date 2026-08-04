@@ -107,7 +107,7 @@ export const Route = createFileRoute("/api/chat")({
           model,
           system,
           tools,
-          stopWhen: stepCountIs(5),
+          stopWhen: stepCountIs(12),
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
 
