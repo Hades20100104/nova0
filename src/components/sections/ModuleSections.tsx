@@ -15,6 +15,7 @@ import {
 import { useModuleStats, useLivePerf } from "@/lib/module-stats";
 import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
 import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
+import { ProductivityHub } from "@/components/sections/ProductivityHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
