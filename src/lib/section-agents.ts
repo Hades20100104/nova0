@@ -304,7 +304,7 @@ const AGENTS: SectionAgent[] = [
     voice: "natural",
     color: "oklch(0.72 0.17 270)",
     systemPrompt: "Eres Mnemo. Solo memoria (remember/recall).",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.learn_insight, T.list_insights],
     ui: "dashboard",
   },
   {
