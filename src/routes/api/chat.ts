@@ -6,6 +6,7 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway";
 import { ASSISTANT_PERSONAS, getModule } from "@/lib/modules";
 import { buildChatTools } from "@/lib/chat-tools";
 import { getSectionAgent } from "@/lib/section-agents";
+import { buildUserContext, INTELLIGENCE_DIRECTIVES } from "@/lib/user-context";
 import type { Database } from "@/integrations/supabase/types";
 
 type Body = {
@@ -65,7 +66,8 @@ export const Route = createFileRoute("/api/chat")({
           ? `Eres "${agent.name}" — ${agent.title} (subagente de ${assistant.toUpperCase()}). ${agent.systemPrompt}\n\nHerramientas disponibles SOLO en esta sección: ${agent.allowedTools.join(", ") || "(ninguna)"}. Si el usuario pide algo que requiere otra herramienta no disponible aquí, no lo intentes: responde brevemente y sugiere ir a la sección correspondiente (por ejemplo: "Eso lo hace mejor Atlas en Documentos — cambia a la sección Documentos").`
           : `${ASSISTANT_PERSONAS[assistant]}\n\nContexto activo: ${moduleDef.label}.\n${moduleDef.systemPrompt}`;
 
-        const system = `${ASSISTANT_PERSONAS[assistant]}\n\n${agentPreamble}`;
+        const userContext = await buildUserContext(supabase, userId);
+        const system = `${ASSISTANT_PERSONAS[assistant]}\n\n${agentPreamble}\n\n${INTELLIGENCE_DIRECTIVES}${userContext}`;
 
         // Persist the latest user message (only the most recent one to avoid duplicates)
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
@@ -105,7 +107,7 @@ export const Route = createFileRoute("/api/chat")({
           model,
           system,
           tools,
-          stopWhen: stepCountIs(5),
+          stopWhen: stepCountIs(12),
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
 

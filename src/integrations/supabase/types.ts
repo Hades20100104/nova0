@@ -316,6 +316,44 @@ export type Database = {
           },
         ]
       }
+      focus_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          minutes: number
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          minutes?: number
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          minutes?: number
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_documents: {
         Row: {
           created_at: string
@@ -375,6 +413,113 @@ export type Database = {
           prompt?: string
           public_url?: string
           storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          created_at: string
+          description: string | null
+          horizon: string
+          id: string
+          progress: number
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          horizon?: string
+          id?: string
+          progress?: number
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          horizon?: string
+          id?: string
+          progress?: number
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_logs: {
+        Row: {
+          created_at: string
+          done_on: string
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done_on?: string
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          done_on?: string
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          archived: boolean
+          cadence: string
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          target_per_week: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          cadence?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          target_per_week?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          cadence?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          target_per_week?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -489,6 +634,45 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          name: string
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          name: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          name?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       section_events: {
         Row: {
           created_at: string
@@ -552,9 +736,113 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          effort: number
+          estimate_minutes: number | null
+          id: string
+          impact: number
+          notes: string | null
+          position: number
+          priority: number
+          project_id: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          effort?: number
+          estimate_minutes?: number | null
+          id?: string
+          impact?: number
+          notes?: string | null
+          position?: number
+          priority?: number
+          project_id?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          effort?: number
+          estimate_minutes?: number | null
+          id?: string
+          impact?: number
+          notes?: string | null
+          position?: number
+          priority?: number
+          project_id?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_insights: {
+        Row: {
+          confidence: number
+          content: string
+          created_at: string
+          evidence: string | null
+          id: string
+          kind: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          content: string
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          kind?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          content?: string
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          kind?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_memory: {
         Row: {
+          category: string
+          confidence: number
           created_at: string
+          hits: number
           id: string
           key: string
           updated_at: string
@@ -562,7 +850,10 @@ export type Database = {
           value: string
         }
         Insert: {
+          category?: string
+          confidence?: number
           created_at?: string
+          hits?: number
           id?: string
           key: string
           updated_at?: string
@@ -570,7 +861,10 @@ export type Database = {
           value: string
         }
         Update: {
+          category?: string
+          confidence?: number
           created_at?: string
+          hits?: number
           id?: string
           key?: string
           updated_at?: string

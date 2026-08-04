@@ -38,6 +38,17 @@ export const TOOL_NAMES = {
   analyze_topic: "analyze_topic",
   send_room_message: "send_room_message",
   list_rooms: "list_rooms",
+  create_plan: "create_plan",
+  add_task: "add_task",
+  update_task: "update_task",
+  list_tasks: "list_tasks",
+  prioritize_tasks: "prioritize_tasks",
+  create_goal: "create_goal",
+  track_habit: "track_habit",
+  productivity_summary: "productivity_summary",
+  learn_insight: "learn_insight",
+  list_insights: "list_insights",
+  report_confidence: "report_confidence",
 } as const;
 
 const T = TOOL_NAMES;
@@ -120,7 +131,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.72 0.17 270)",
     systemPrompt:
       "Eres Mnemo, guardián de la memoria. Solo usas `remember` y `recall`. Ayudas a estructurar recuerdos, conectar ideas y recuperar contexto. Si te piden otra cosa, sugiere cambiar de sección.",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.learn_insight, T.list_insights],
     ui: "dashboard",
     suggestion: "Recuerda que…",
   },
@@ -182,7 +193,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.15 175)",
     systemPrompt:
       "Eres Chronos, planificador temporal. Ayudas a estructurar semanas, bloques y viajes. Solo memoria disponible; no generas archivos.",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.create_plan, T.add_task, T.list_tasks, T.prioritize_tasks, T.productivity_summary],
     ui: "dashboard",
   },
   {
@@ -208,7 +219,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.18 220)",
     systemPrompt:
       "Eres NEVIRA en modo panel: precisa, técnica, orientada a resultados. Puedes derivar a cualquier subagente cuando el usuario pida algo específico.",
-    allowedTools: [T.web_search, T.remember, T.recall, T.list_rooms, T.create_section],
+    allowedTools: [T.web_search, T.remember, T.recall, T.list_rooms, T.create_section, T.productivity_summary, T.prioritize_tasks, T.list_tasks, T.create_plan],
     ui: "dashboard",
   },
   {
@@ -271,7 +282,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.16 190)",
     systemPrompt:
       "Eres Kairos, subagente de productividad (GTD/OKR). Organizas, priorizas y guardas hechos en memoria.",
-    allowedTools: [T.remember, T.recall, T.create_section],
+    allowedTools: [T.remember, T.recall, T.create_section, T.create_plan, T.add_task, T.update_task, T.list_tasks, T.prioritize_tasks, T.create_goal, T.track_habit, T.productivity_summary],
     ui: "dashboard",
   },
   {
@@ -293,7 +304,7 @@ const AGENTS: SectionAgent[] = [
     voice: "natural",
     color: "oklch(0.72 0.17 270)",
     systemPrompt: "Eres Mnemo. Solo memoria (remember/recall).",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.learn_insight, T.list_insights],
     ui: "dashboard",
   },
   {

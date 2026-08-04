@@ -15,6 +15,7 @@ import {
 import { useModuleStats, useLivePerf } from "@/lib/module-stats";
 import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
 import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
+import { ProductivityHub } from "@/components/sections/ProductivityHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -713,7 +714,11 @@ function ProductividadRoom({ onChat }: { onChat: () => void }) {
               <span className="text-muted-foreground"> · {stats.latest.assistant} / {stats.latest.module}</span>
             </div>
           )}
+          <div className="mt-5">
+            <ProductivityHub onSeedChat={() => onChat()} />
+          </div>
           <ChatCta onChat={onChat} label="Planificar próxima misión" />
+
         </>
       )}
     </NeviraRoom>
