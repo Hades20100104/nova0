@@ -131,7 +131,7 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.72 0.17 270)",
     systemPrompt:
       "Eres Mnemo, guardián de la memoria. Solo usas `remember` y `recall`. Ayudas a estructurar recuerdos, conectar ideas y recuperar contexto. Si te piden otra cosa, sugiere cambiar de sección.",
-    allowedTools: [T.remember, T.recall],
+    allowedTools: [T.remember, T.recall, T.learn_insight, T.list_insights],
     ui: "dashboard",
     suggestion: "Recuerda que…",
   },
