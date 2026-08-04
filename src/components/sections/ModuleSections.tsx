@@ -713,7 +713,11 @@ function ProductividadRoom({ onChat }: { onChat: () => void }) {
               <span className="text-muted-foreground"> · {stats.latest.assistant} / {stats.latest.module}</span>
             </div>
           )}
+          <div className="mt-5">
+            <ProductivityHub onSeedChat={() => onChat()} />
+          </div>
           <ChatCta onChat={onChat} label="Planificar próxima misión" />
+
         </>
       )}
     </NeviraRoom>
