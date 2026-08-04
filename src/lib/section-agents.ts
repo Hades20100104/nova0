@@ -38,6 +38,17 @@ export const TOOL_NAMES = {
   analyze_topic: "analyze_topic",
   send_room_message: "send_room_message",
   list_rooms: "list_rooms",
+  create_plan: "create_plan",
+  add_task: "add_task",
+  update_task: "update_task",
+  list_tasks: "list_tasks",
+  prioritize_tasks: "prioritize_tasks",
+  create_goal: "create_goal",
+  track_habit: "track_habit",
+  productivity_summary: "productivity_summary",
+  learn_insight: "learn_insight",
+  list_insights: "list_insights",
+  report_confidence: "report_confidence",
 } as const;
 
 const T = TOOL_NAMES;
