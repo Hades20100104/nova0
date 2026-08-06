@@ -16,6 +16,7 @@ import { useModuleStats, useLivePerf } from "@/lib/module-stats";
 import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
 import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
 import { ProductivityHub } from "@/components/sections/ProductivityHub";
+import { AutomationsHub } from "@/components/sections/AutomationsHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -205,6 +206,7 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
             <Stat label="Ejecutados hoy" value="24" />
             <Stat label="Eficiencia" value="98%" delta="+2%" />
           </div>
+                  <div className="mt-4"><AutomationsHub /></div>
         </Panel>
       );
 
@@ -834,6 +836,7 @@ function AutomatizacionesNeviraRoom({ onChat }: { onChat: () => void }) {
               {enabled} de {total} flujos están activos.
             </div>
           )}
+          <div className="mt-4"><AutomationsHub /></div>
           <ChatCta onChat={onChat} label="Diseñar nuevo flujo" />
         </>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
+import { loadPersona, personaPayload } from "@/lib/personalization";
 import ReactMarkdown from "react-markdown";
 import { Send, Mic, MicOff, Sparkles, Cpu, Square, RotateCcw, AlertTriangle, Loader2, Volume2, VolumeX } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +40,7 @@ export function AssistantChat({
       const headers: Record<string, string> = {};
       if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`;
       return {
-        body: { messages, threadId: id, assistant, module },
+        body: { messages, threadId: id, assistant, module, persona: personaPayload(loadPersona()) },
         headers,
       };
     },

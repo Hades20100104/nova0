@@ -7,6 +7,7 @@ import { ASSISTANT_PERSONAS, getModule } from "@/lib/modules";
 import { buildChatTools } from "@/lib/chat-tools";
 import { getSectionAgent } from "@/lib/section-agents";
 import { buildUserContext, INTELLIGENCE_DIRECTIVES } from "@/lib/user-context";
+import { buildPersonaDirectives, type PersonaPayload } from "@/lib/persona-prompt";
 import type { Database } from "@/integrations/supabase/types";
 
 type Body = {
@@ -14,6 +15,7 @@ type Body = {
   threadId?: string;
   assistant?: "nova" | "nevira";
   module?: string;
+  persona?: PersonaPayload;
 };
 
 export const Route = createFileRoute("/api/chat")({
@@ -21,7 +23,7 @@ export const Route = createFileRoute("/api/chat")({
     handlers: {
       POST: async ({ request }: { request: Request }) => {
         const body = (await request.json()) as Body;
-        const { messages, threadId, assistant, module } = body;
+        const { messages, threadId, assistant, module, persona } = body;
 
         if (!Array.isArray(messages) || !threadId || !assistant) {
           return new Response("Bad request", { status: 400 });
@@ -67,7 +69,7 @@ export const Route = createFileRoute("/api/chat")({
           : `${ASSISTANT_PERSONAS[assistant]}\n\nContexto activo: ${moduleDef.label}.\n${moduleDef.systemPrompt}`;
 
         const userContext = await buildUserContext(supabase, userId);
-        const system = `${ASSISTANT_PERSONAS[assistant]}\n\n${agentPreamble}\n\n${INTELLIGENCE_DIRECTIVES}${userContext}`;
+        const system = `${ASSISTANT_PERSONAS[assistant]}\n\n${agentPreamble}\n\n${INTELLIGENCE_DIRECTIVES}${buildPersonaDirectives(persona)}${userContext}`;
 
         // Persist the latest user message (only the most recent one to avoid duplicates)
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
