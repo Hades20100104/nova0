@@ -4,6 +4,7 @@ import {
 } from "@/lib/theme";
 import { Check, Palette, Type } from "lucide-react";
 import { VoiceSettings } from "./VoiceSettings";
+import { PersonalizationPanel } from "./PersonalizationPanel";
 
 export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
   const { prefs, update } = useTheme();
@@ -94,18 +95,19 @@ export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
 
 // Wrapper used in Ajustes section content
 export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
-  const [tab, setTab] = useState<"tema" | "voz" | "asistente">("tema");
+  const [tab, setTab] = useState<"tema" | "personalidad" | "voz" | "asistente">("tema");
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em] font-mono">
         {[
           { id: "tema",       label: "Tema y Tipografía" },
+          { id: "personalidad", label: "Personalización IA" },
           { id: "voz",        label: "Voz" },
           { id: "asistente",  label: "Asistente" },
         ].map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id as "tema" | "voz" | "asistente")}
+            onClick={() => setTab(t.id as "tema" | "personalidad" | "voz" | "asistente")}
             className={`px-3 py-1.5 rounded-full border transition ${
               tab === t.id
                 ? "border-primary bg-primary/25 glow-text"
@@ -117,6 +119,7 @@ export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
         ))}
       </div>
       {tab === "tema" && <ThemeSettings assistant={assistant} />}
+      {tab === "personalidad" && <PersonalizationPanel />}
       {tab === "voz" && <VoiceSettings assistant={assistant} />}
       {tab === "asistente" && (
         <div className="space-y-3 text-sm">
