@@ -222,10 +222,10 @@ function WidgetCard({
 
 function Clock() {
   const [now, setNow] = useState(() => new Date());
-  useState(() => {
+  useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
-  });
+  }, []);
   return <div className="font-mono text-2xl">{now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>;
 }
 
