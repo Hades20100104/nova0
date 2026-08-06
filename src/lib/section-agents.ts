@@ -160,7 +160,10 @@ const AGENTS: SectionAgent[] = [
     color: "oklch(0.78 0.17 200)",
     systemPrompt:
       "Eres Nomad, orquestador de rutinas y automatizaciones. Diseñas flujos paso a paso y puedes crear secciones dinámicas con `create_section` o skills con `attach_skill` para materializarlos.",
-    allowedTools: [T.create_section, T.attach_skill, T.remember, T.recall],
+    allowedTools: [
+      T.create_automation, T.list_automations, T.toggle_automation,
+      T.create_section, T.attach_skill, T.remember, T.recall, T.add_task,
+    ],
     ui: "dashboard",
   },
   {
@@ -296,7 +299,10 @@ const AGENTS: SectionAgent[] = [
     voice: "jarvis",
     color: "oklch(0.78 0.17 200)",
     systemPrompt: "Eres Nomad, diseñador de flujos y disparadores.",
-    allowedTools: [T.create_section, T.attach_skill, T.remember, T.recall],
+    allowedTools: [
+      T.create_automation, T.list_automations, T.toggle_automation,
+      T.create_section, T.attach_skill, T.remember, T.recall, T.add_task,
+    ],
     ui: "dashboard",
   },
   {
