@@ -730,6 +730,90 @@ const listRoomsTool = (ctx: Ctx) =>
     },
   });
 
+
+/* ---------------- AUTOMATIONS ---------------- */
+const createAutomation = (ctx: Ctx) =>
+  tool({
+    description:
+      "Crea un flujo de automatización con disparador (manual, time HH:MM, interval en minutos, voice con frase, app_open) y una cadena de pasos (ai, notify, speak, task, open_section).",
+    inputSchema: z.object({
+      name: z.string().min(1).max(80),
+      trigger: z.object({
+        type: z.enum(["manual", "time", "interval", "voice", "app_open"]),
+        at: z.string().max(5).optional(),
+        minutes: z.number().int().min(5).max(1440).optional(),
+        phrase: z.string().max(60).optional(),
+      }),
+      steps: z
+        .array(
+          z.object({
+            type: z.enum(["ai", "notify", "speak", "task", "open_section"]),
+            value: z.string().min(1).max(1200),
+          }),
+        )
+        .min(1)
+        .max(8),
+    }),
+    execute: async ({ name, trigger, steps }) => {
+      const mapped = steps.map((s) =>
+        s.type === "ai"
+          ? { type: "ai", prompt: s.value }
+          : s.type === "notify"
+            ? { type: "notify", message: s.value }
+            : s.type === "speak"
+              ? { type: "speak", text: s.value }
+              : s.type === "task"
+                ? { type: "task", title: s.value }
+                : { type: "open_section", slug: s.value },
+      );
+      const { data, error } = await ctx.supabase
+        .from("automations")
+        .insert({
+          user_id: ctx.userId,
+          name,
+          enabled: true,
+          trigger_type: trigger.type,
+          trigger_config: trigger as never,
+          action_type: "chain",
+          action_config: { steps: mapped } as never,
+        } as never)
+        .select("id, name")
+        .single();
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, automation: data };
+    },
+  });
+
+const listAutomationsTool = (ctx: Ctx) =>
+  tool({
+    description: "Lista los flujos de automatización del usuario con su estado.",
+    inputSchema: z.object({}),
+    execute: async () => {
+      const { data, error } = await ctx.supabase
+        .from("automations")
+        .select("id, name, enabled, trigger_type, trigger_config, last_triggered_at, last_state")
+        .eq("user_id", ctx.userId)
+        .order("created_at", { ascending: false });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, automations: data ?? [] };
+    },
+  });
+
+const toggleAutomationTool = (ctx: Ctx) =>
+  tool({
+    description: "Activa o desactiva un flujo de automatización por id.",
+    inputSchema: z.object({ id: z.string().uuid(), enabled: z.boolean() }),
+    execute: async ({ id, enabled }) => {
+      const { error } = await ctx.supabase
+        .from("automations")
+        .update({ enabled } as never)
+        .eq("id", id)
+        .eq("user_id", ctx.userId);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+  });
+
 /* ---------------- Build set ---------------- */
 export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
   const all = {
@@ -749,6 +833,9 @@ export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
     analyze_topic: analyzeTopic(ctx),
     send_room_message: sendRoomMessage(ctx),
     list_rooms: listRoomsTool(ctx),
+    create_automation: createAutomation(ctx),
+    list_automations: listAutomationsTool(ctx),
+    toggle_automation: toggleAutomationTool(ctx),
     ...buildProductivityTools(ctx),
   } as const;
   // Intelligence tools are always available: memoria, aprendizaje e índice de confianza.

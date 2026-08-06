@@ -206,6 +206,7 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
             <Stat label="Ejecutados hoy" value="24" />
             <Stat label="Eficiencia" value="98%" delta="+2%" />
           </div>
+                  <div className="mt-4"><AutomationsHub /></div>
         </Panel>
       );
 
