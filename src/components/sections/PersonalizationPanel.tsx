@@ -393,7 +393,7 @@ function Chips({
   );
 }
 
-export function PersonalizationPanel() {
+export function PersonalizationPanel({ assistant = "nova" }: { assistant?: "nova" | "nevira" }) {
   const [tab, setTab] = useState<"personalidad" | "apariencia" | "widgets">("personalidad");
   return (
     <div className="space-y-4">
@@ -411,7 +411,7 @@ export function PersonalizationPanel() {
         ))}
       </div>
       {tab === "personalidad" && <PersonalityTab />}
-      {tab === "apariencia" && <AppearanceTab />}
+      {tab === "apariencia" && <AppearanceTab assistant={assistant} />}
       {tab === "widgets" && <WidgetsTab />}
     </div>
   );

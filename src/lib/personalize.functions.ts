@@ -45,10 +45,23 @@ async function ask(prompt: string, system: string) {
 
 export const generateAppearance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { prompt: string }) => z.object({ prompt: z.string().min(2).max(300) }).parse(d))
+  .inputValidator((d: { prompt: string; assistant?: "nova" | "nevira" | "both" }) =>
+    z
+      .object({
+        prompt: z.string().min(2).max(300),
+        assistant: z.enum(["nova", "nevira", "both"]).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
+    const target =
+      data.assistant === "nevira"
+        ? "Se aplicará a NEVIRA (HUD técnico, cian/azul por defecto)."
+        : data.assistant === "nova"
+          ? "Se aplicará a NOVA (interfaz cósmica, violeta/magenta por defecto)."
+          : "Se aplicará a ambos asistentes.";
     const raw = await ask(
-      `Crea una paleta para esta descripción: "${data.prompt}"`,
+      `Crea una paleta para esta descripción: "${data.prompt}". ${target}`,
       `Eres un diseñador de sistemas de color. Devuelve SOLO JSON con esta forma:
 {"label":"nombre corto","primary":"oklch(L C H)","accent":"oklch(L C H)","glow":"oklch(L C H)","aura":"oklch(L C H)"}
 Reglas: usa exclusivamente formato oklch() con lightness entre 0.6 y 0.85 para primary/accent (la app tiene fondo oscuro), croma 0.03–0.28. Sin texto extra.`,
@@ -72,4 +85,15 @@ Sin texto extra.`,
     );
     const widget = WidgetSchema.parse(extractJson(raw));
     return { widget: { ...widget, id: `w-${Date.now().toString(36)}` } };
+  });
+
+export const describeUserMirror = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { summary: string }) => z.object({ summary: z.string().min(2).max(4000) }).parse(d))
+  .handler(async ({ data }) => {
+    const text = await ask(
+      `Datos de uso del usuario:\n${data.summary}\n\nDescribe quién crees que es y cómo trabaja.`,
+      `Eres un perfilador con humor afilado pero amable. A partir de métricas de uso de una app de asistentes IA, escribe un retrato del usuario en 4-6 frases: cómo trabaja, qué le obsesiona, sus manías y un consejo final. Nada de datos sensibles ni juicios crueles. Español. Sin listas.`,
+    );
+    return { text: text.trim() };
   });
