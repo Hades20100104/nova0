@@ -7,6 +7,8 @@ import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { Waveform } from "@/components/dashboard/Waveform";
 import { Icon3D } from "@/components/Icon3D";
 import { AjustesPanel } from "@/components/sections/ThemeSettings";
+import { StatsDashboard } from "@/components/sections/StatsDashboard";
+import { CustomWidgets } from "@/components/sections/PersonalizationPanel";
 import {
   useNovaThreads, useGeneratedImages, useGeneratedDocuments, useUserMemory,
   useDeleteMemory, useWhatsappContacts, useAddContact, useDeleteContact,
@@ -254,6 +256,11 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
           <RoomHeader icon={SettingsIcon} eyebrow="Personalización · NOVA"
             title="Ajustes" subtitle="Define la paleta y la tipografía que sientes como tuyas. Tus elecciones viajan a NEVIRA." />
           <AjustesPanel assistant="nova" />
+          <div className="mt-5"><CustomWidgets /></div>
+          <div className="mt-5">
+            <div className="mb-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">Estadísticas</div>
+            <StatsDashboard />
+          </div>
         </section>
       );
 
@@ -871,6 +878,11 @@ function DatosRoom({ onChat }: { onChat: () => void }) {
           ))}
         </div>
       </div>
+      <div className="mt-5">
+        <div className="mb-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">Estadísticas del sistema</div>
+        <StatsDashboard />
+      </div>
+      <div className="mt-4"><CustomWidgets onSeedChat={() => onChat()} /></div>
       <ChatCta onChat={onChat} label="Generar reporte" />
     </NeviraRoom>
   );
