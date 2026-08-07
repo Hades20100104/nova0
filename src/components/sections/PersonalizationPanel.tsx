@@ -72,21 +72,39 @@ function PersonalityTab() {
 
 /* ---------------- Appearance (AI palettes) ---------------- */
 
-function AppearanceTab() {
+function AppearanceTab({ assistant }: { assistant: "nova" | "nevira" }) {
   const { persona, update } = usePersona();
   const gen = useServerFn(generateAppearance);
   const [prompt, setPrompt] = useState("");
+  const [target, setTarget] = useState<"nova" | "nevira" | "both">(assistant);
   const [busy, setBusy] = useState(false);
+
+  const activeFor = (a: "nova" | "nevira") => persona.activeThemes?.[a] ?? null;
+
+  const activate = (id: string | null, scope: "nova" | "nevira" | "both") => {
+    const next = { ...persona.activeThemes };
+    if (scope === "both") {
+      next.nova = id;
+      next.nevira = id;
+    } else next[scope] = id;
+    update({ activeThemes: next });
+  };
 
   const create = async () => {
     if (prompt.trim().length < 2) return;
     setBusy(true);
     try {
-      const { theme } = await gen({ data: { prompt: prompt.trim() } });
-      const themes = [...persona.customThemes, theme as CustomTheme].slice(-12);
-      update({ customThemes: themes, activeCustomTheme: theme.id });
+      const { theme } = await gen({ data: { prompt: prompt.trim(), assistant: target } });
+      const created = { ...(theme as CustomTheme), scope: target };
+      const themes = [...persona.customThemes, created].slice(-12);
+      const next = { ...persona.activeThemes };
+      if (target === "both") {
+        next.nova = created.id;
+        next.nevira = created.id;
+      } else next[target] = created.id;
+      update({ customThemes: themes, activeThemes: next });
       setPrompt("");
-      toast.success(`Apariencia "${theme.label}" aplicada`);
+      toast.success(`Apariencia "${created.label}" aplicada a ${target.toUpperCase()}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo generar la apariencia");
     } finally {
@@ -97,6 +115,21 @@ function AppearanceTab() {
   return (
     <div className="space-y-4">
       <Label>Apariencia generada con IA</Label>
+
+      <div className="flex flex-wrap gap-2">
+        {(["nova", "nevira", "both"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTarget(t)}
+            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-mono transition ${
+              target === t ? "border-primary bg-primary/20" : "border-primary/30 bg-card/40 hover:bg-primary/10"
+            }`}
+          >
+            {t === "both" ? "Ambos" : t}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-2">
         <input
           value={prompt}
@@ -114,48 +147,59 @@ function AppearanceTab() {
         </button>
       </div>
 
-      {persona.activeCustomTheme && (
-        <button
-          onClick={() => update({ activeCustomTheme: null })}
-          className="rounded-full border border-border/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-mono hover:bg-primary/10 transition"
-        >
-          Volver a la paleta base
-        </button>
+      {(activeFor("nova") || activeFor("nevira")) && (
+        <div className="flex flex-wrap gap-2">
+          {(["nova", "nevira"] as const)
+            .filter((a) => activeFor(a))
+            .map((a) => (
+              <button
+                key={a}
+                onClick={() => activate(null, a)}
+                className="rounded-full border border-border/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-mono hover:bg-primary/10 transition"
+              >
+                Restaurar paleta base de {a}
+              </button>
+            ))}
+        </div>
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {persona.customThemes.map((t) => (
-          <div key={t.id} className="relative">
-            <button
-              onClick={() => update({ activeCustomTheme: t.id })}
-              className="w-full rounded-xl border border-primary/25 p-3 text-left transition hover:border-primary"
-              style={{ background: `linear-gradient(135deg, ${t.primary}, ${t.accent})` }}
-            >
-              <span className="block text-xs font-medium text-background/90">{t.label}</span>
-              <span className="mt-6 block h-1.5 rounded-full" style={{ background: t.glow }} />
-            </button>
-            {persona.activeCustomTheme === t.id && (
-              <span className="absolute top-1.5 right-8 grid h-5 w-5 place-items-center rounded-full bg-background/80 border border-primary">
-                <Check className="h-3 w-3 text-primary" />
-              </span>
-            )}
-            <button
-              onClick={() =>
-                update({
-                  customThemes: persona.customThemes.filter((x) => x.id !== t.id),
-                  activeCustomTheme: persona.activeCustomTheme === t.id ? null : persona.activeCustomTheme,
-                })
-              }
-              className="absolute top-1.5 right-1.5 rounded-full bg-background/80 p-1 text-destructive"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
+        {persona.customThemes.map((t) => {
+          const used = (["nova", "nevira"] as const).filter((a) => activeFor(a) === t.id);
+          return (
+            <div key={t.id} className="relative">
+              <button
+                onClick={() => activate(t.id, target)}
+                className="w-full rounded-xl border border-primary/25 p-3 text-left transition hover:border-primary"
+                style={{ background: `linear-gradient(135deg, ${t.primary}, ${t.accent})` }}
+              >
+                <span className="block text-xs font-medium text-background/90">{t.label}</span>
+                <span className="mt-6 block h-1.5 rounded-full" style={{ background: t.glow }} />
+              </button>
+              {used.length > 0 && (
+                <span className="absolute top-1.5 right-8 flex items-center gap-1 rounded-full bg-background/85 border border-primary px-1.5 py-0.5 text-[8px] uppercase tracking-widest text-primary">
+                  <Check className="h-2.5 w-2.5" /> {used.join(" · ")}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  const next = { ...persona.activeThemes };
+                  if (next.nova === t.id) next.nova = null;
+                  if (next.nevira === t.id) next.nevira = null;
+                  update({ customThemes: persona.customThemes.filter((x) => x.id !== t.id), activeThemes: next });
+                }}
+                className="absolute top-1.5 right-1.5 rounded-full bg-background/80 p-1 text-destructive"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
 
 /* ---------------- Widgets ---------------- */
 
