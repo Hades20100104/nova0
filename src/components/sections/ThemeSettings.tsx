@@ -119,7 +119,7 @@ export function AjustesPanel({ assistant }: { assistant: "nova" | "nevira" }) {
         ))}
       </div>
       {tab === "tema" && <ThemeSettings assistant={assistant} />}
-      {tab === "personalidad" && <PersonalizationPanel />}
+      {tab === "personalidad" && <PersonalizationPanel assistant={assistant} />}
       {tab === "voz" && <VoiceSettings assistant={assistant} />}
       {tab === "asistente" && (
         <div className="space-y-3 text-sm">

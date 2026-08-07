@@ -12,6 +12,7 @@ import { NovaSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
 import { useUserSections } from "@/hooks/use-user-sections";
 import { getModule } from "@/lib/modules";
+import { usePersona, customThemeClass } from "@/lib/personalization";
 import { useTheme, novaThemeClass, fontClass } from "@/lib/theme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -82,7 +83,8 @@ function NovaHome() {
     : undefined;
   const showSection = module !== "home";
   const { prefs } = useTheme();
-  const themeClass = `${novaThemeClass(prefs.nova)} ${fontClass(prefs.font)}`;
+  const { persona } = usePersona();
+  const themeClass = `${novaThemeClass(prefs.nova)} ${fontClass(prefs.font)} ${customThemeClass(persona, "nova")}`;
   const headerLabel = sectionMatch
     ? sectionMatch.label
     : showSection

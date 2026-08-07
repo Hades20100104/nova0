@@ -20,6 +20,7 @@ export type CustomTheme = {
   accent: string;
   glow: string;
   aura: string;
+  scope?: "nova" | "nevira" | "both";
 };
 
 export type WidgetKind = "note" | "clock" | "counter" | "progress" | "quote" | "prompt";
@@ -45,7 +46,9 @@ export type PersonaPrefs = {
   language: string; // es, en, fr...
   emoji: boolean;
   customThemes: CustomTheme[];
+  /** legacy single-slot (kept for migration) */
   activeCustomTheme: string | null;
+  activeThemes: { nova: string | null; nevira: string | null };
   widgets: CustomWidget[];
 };
 
@@ -121,6 +124,7 @@ const DEFAULT: PersonaPrefs = {
   emoji: false,
   customThemes: [],
   activeCustomTheme: null,
+  activeThemes: { nova: null, nevira: null },
   widgets: [],
 };
 
@@ -130,7 +134,13 @@ const EVT = "nv-persona-change";
 export function loadPersona(): PersonaPrefs {
   if (typeof window === "undefined") return DEFAULT;
   try {
-    return { ...DEFAULT, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+    const raw = { ...DEFAULT, ...JSON.parse(localStorage.getItem(KEY) || "{}") } as PersonaPrefs;
+    raw.activeThemes = { ...DEFAULT.activeThemes, ...(raw.activeThemes ?? {}) };
+    // migrate legacy single active theme
+    if (raw.activeCustomTheme && !raw.activeThemes.nova && !raw.activeThemes.nevira) {
+      raw.activeThemes = { nova: raw.activeCustomTheme, nevira: raw.activeCustomTheme };
+    }
+    return raw;
   } catch {
     return DEFAULT;
   }
@@ -143,19 +153,30 @@ export function savePersona(p: PersonaPrefs) {
   window.dispatchEvent(new Event(EVT));
 }
 
+export function customThemeClass(p: PersonaPrefs, assistant: "nova" | "nevira") {
+  return p.activeThemes?.[assistant] ? `nv-ct-${assistant}` : "";
+}
+
+/**
+ * Custom palettes must beat the `.theme-pal-*` classes applied on the layout
+ * wrapper, so we inject a stylesheet with !important custom properties instead
+ * of setting inline vars on :root (which the wrapper class would override).
+ */
 export function applyCustomTheme(p: PersonaPrefs) {
   if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const theme = p.customThemes.find((t) => t.id === p.activeCustomTheme);
-  const vars = ["--primary", "--accent", "--glow", "--aura"];
-  if (!theme) {
-    vars.forEach((v) => root.style.removeProperty(v));
-    return;
+  const id = "nv-custom-theme";
+  let el = document.getElementById(id) as HTMLStyleElement | null;
+  if (!el) {
+    el = document.createElement("style");
+    el.id = id;
+    document.head.appendChild(el);
   }
-  root.style.setProperty("--primary", theme.primary);
-  root.style.setProperty("--accent", theme.accent);
-  root.style.setProperty("--glow", theme.glow);
-  root.style.setProperty("--aura", theme.aura);
+  const rule = (assistant: "nova" | "nevira") => {
+    const t = p.customThemes.find((x) => x.id === p.activeThemes?.[assistant]);
+    if (!t) return "";
+    return `.nv-ct-${assistant}{--primary:${t.primary}!important;--accent:${t.accent}!important;--glow:${t.glow}!important;--aura:${t.aura}!important;--ring:${t.primary}!important;--sidebar-primary:${t.primary}!important;}`;
+  };
+  el.textContent = `${rule("nova")}\n${rule("nevira")}`;
 }
 
 export function usePersona() {
