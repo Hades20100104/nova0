@@ -7,6 +7,7 @@ import {
 } from "@/lib/personalization";
 import { generateAppearance, generateWidget } from "@/lib/personalize.functions";
 import { useTasks } from "@/lib/productivity-data";
+import { useModuleStats } from "@/lib/module-stats";
 import { Sparkles, Loader2, Trash2, Plus, Wand2, Check } from "lucide-react";
 
 /* ---------------- Personality ---------------- */
@@ -206,11 +207,15 @@ function AppearanceTab({ assistant }: { assistant: "nova" | "nevira" }) {
 export function CustomWidgets({ onSeedChat }: { onSeedChat?: (text: string) => void }) {
   const { persona } = usePersona();
   const { data: tasks = [] } = useTasks();
+  const { data: stats } = useModuleStats();
   if (!persona.widgets.length) return null;
 
   const counts: Record<string, number> = {
     tasks: tasks.filter((t) => t.status !== "done").length,
-    images: 0, documents: 0, memory: 0, threads: 0,
+    images: stats?.imagesTotal ?? 0,
+    documents: stats?.docsTotal ?? 0,
+    memory: stats?.memoryTotal ?? 0,
+    threads: stats?.threadsTotal ?? 0,
   };
 
   return (

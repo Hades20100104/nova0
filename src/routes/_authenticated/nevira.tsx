@@ -16,6 +16,7 @@ import { DynamicSection } from "@/components/dynamic/DynamicSection";
 import { useUserSections } from "@/hooks/use-user-sections";
 import type { Layout } from "@/lib/section-blocks";
 import { getModule } from "@/lib/modules";
+import { usePersona, customThemeClass } from "@/lib/personalization";
 import { useTheme, neviraThemeClass, fontClass } from "@/lib/theme";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -107,7 +108,8 @@ function NeviraHome() {
     : undefined;
   const showSection = module !== "panel";
   const { prefs } = useTheme();
-  const themeClass = `${neviraThemeClass(prefs.nevira)} ${fontClass(prefs.font)}`;
+  const { persona } = usePersona();
+  const themeClass = `${neviraThemeClass(prefs.nevira)} ${fontClass(prefs.font)} ${customThemeClass(persona, "nevira")}`;
   const seedChat = (t: string) => startChat(module, t);
   const runSkillCall = async (name: string, input: Record<string, unknown>) => {
     const res = await runSkillFn({ data: { name, input } });
