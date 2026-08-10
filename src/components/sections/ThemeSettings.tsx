@@ -1,4 +1,3 @@
-import { MerlinUnlock } from "@/components/merlin/MerlinUnlock";
 import { useState } from "react";
 import {
   NOVA_THEMES, NEVIRA_THEMES, FONT_PRESETS, useTheme,
@@ -16,7 +15,6 @@ export function ThemeSettings({ assistant }: { assistant: "nova" | "nevira" }) {
 
   return (
     <div className="space-y-6">
-      <MerlinUnlock />
       <div>
         <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 font-mono">
           <Palette className="h-3.5 w-3.5" /> Paleta visual de {assistant.toUpperCase()}

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu, Trash2, Plus, Wand2 } from "lucide-react";
+import { LogOut, ChevronRight, User as UserIcon, Sparkles, Cpu, Trash2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getModules, type ModuleDef } from "@/lib/modules";
@@ -101,12 +101,6 @@ export function ModuleSidebar({
             </span>
           </button>
         </div>
-        <button
-          onClick={() => navigate({ to: "/merlin" })}
-          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 py-1.5 text-[11px] uppercase tracking-widest hover:bg-primary/20 transition"
-        >
-          <Wand2 className="h-3 w-3" /> Merlin
-        </button>
       </div>
 
       {/* grouped module list */}
