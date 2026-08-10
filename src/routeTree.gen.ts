@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthenticatedMerlinRouteImport } from './routes/_authenticated/merlin'
 import { Route as AuthenticatedNeviraRouteImport } from './routes/_authenticated/nevira'
 import { Route as AuthenticatedNovaRouteImport } from './routes/_authenticated/nova'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -38,6 +39,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedMerlinRoute = AuthenticatedMerlinRouteImport.update({
+  id: '/merlin',
+  path: '/merlin',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedNeviraRoute = AuthenticatedNeviraRouteImport.update({
   id: '/nevira',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/merlin': typeof AuthenticatedMerlinRoute
   '/nevira': typeof AuthenticatedNeviraRouteWithChildren
   '/nova': typeof AuthenticatedNovaRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/merlin': typeof AuthenticatedMerlinRoute
   '/nevira': typeof AuthenticatedNeviraRouteWithChildren
   '/nova': typeof AuthenticatedNovaRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/merlin': typeof AuthenticatedMerlinRoute
   '/_authenticated/nevira': typeof AuthenticatedNeviraRouteWithChildren
   '/_authenticated/nova': typeof AuthenticatedNovaRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/merlin'
     | '/nevira'
     | '/nova'
     | '/api/chat'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/merlin'
     | '/nevira'
     | '/nova'
     | '/api/chat'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/merlin'
     | '/_authenticated/nevira'
     | '/_authenticated/nova'
     | '/api/chat'
@@ -182,6 +194,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/merlin': {
+      id: '/_authenticated/merlin'
+      path: '/merlin'
+      fullPath: '/merlin'
+      preLoaderRoute: typeof AuthenticatedMerlinRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/nevira': {
       id: '/_authenticated/nevira'
@@ -251,11 +270,13 @@ const AuthenticatedNovaRouteWithChildren =
   AuthenticatedNovaRoute._addFileChildren(AuthenticatedNovaRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedMerlinRoute: typeof AuthenticatedMerlinRoute
   AuthenticatedNeviraRoute: typeof AuthenticatedNeviraRouteWithChildren
   AuthenticatedNovaRoute: typeof AuthenticatedNovaRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedMerlinRoute: AuthenticatedMerlinRoute,
   AuthenticatedNeviraRoute: AuthenticatedNeviraRouteWithChildren,
   AuthenticatedNovaRoute: AuthenticatedNovaRouteWithChildren,
 }
