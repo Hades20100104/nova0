@@ -1053,3 +1053,24 @@
   .module-item:hover { transform: none; }
   .module-item { min-height: 44px; }
 }
+
+/* ─── MERLIN ─── */
+.theme-merlin {
+  --primary: oklch(0.72 0.19 285); --accent: oklch(0.78 0.15 250);
+  --glow: oklch(0.75 0.22 290); --aura: oklch(0.62 0.24 300); --ring: oklch(0.72 0.19 285);
+}
+.merlin-bg {
+  position: relative;
+  background:
+    radial-gradient(1100px 800px at 50% 30%, oklch(0.32 0.18 288 / 0.5), transparent 62%),
+    radial-gradient(800px 600px at 85% 80%, oklch(0.30 0.16 260 / 0.38), transparent 68%),
+    radial-gradient(700px 600px at 12% 85%, oklch(0.28 0.16 310 / 0.35), transparent 70%),
+    linear-gradient(180deg, oklch(0.07 0.05 285) 0%, oklch(0.05 0.04 275) 100%);
+}
+.merlin-bg::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(oklch(0.72 0.19 285 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.72 0.19 285 / 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
