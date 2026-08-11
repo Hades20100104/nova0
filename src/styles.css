@@ -1053,3 +1053,116 @@
   .module-item:hover { transform: none; }
   .module-item { min-height: 44px; }
 }
+
+/* ============ MERLIN — identidad cristalina ============ */
+.theme-merlin {
+  --background: oklch(0.07 0.03 255);
+  --foreground: oklch(0.95 0.02 200);
+  --card: oklch(0.11 0.045 250 / 0.55);
+  --card-foreground: oklch(0.95 0.02 200);
+  --popover: oklch(0.1 0.04 252);
+  --popover-foreground: oklch(0.95 0.02 200);
+  --primary: oklch(0.83 0.12 180);
+  --primary-foreground: oklch(0.08 0.03 255);
+  --secondary: oklch(0.17 0.05 250 / 0.5);
+  --secondary-foreground: oklch(0.95 0.02 200);
+  --muted: oklch(0.15 0.04 250 / 0.5);
+  --muted-foreground: oklch(0.72 0.04 210);
+  --accent: oklch(0.85 0.11 90);
+  --accent-foreground: oklch(0.08 0.03 255);
+  --border: oklch(0.7 0.1 195 / 0.18);
+  --input: oklch(0.16 0.05 250 / 0.5);
+  --ring: oklch(0.83 0.12 180);
+  --glow: oklch(0.86 0.13 185);
+  --aura: oklch(0.7 0.12 250);
+}
+
+.merlin-bg {
+  background:
+    radial-gradient(1100px 800px at 50% 40%, oklch(0.22 0.09 215 / 0.42), transparent 72%),
+    radial-gradient(900px 700px at 15% 85%, oklch(0.2 0.1 260 / 0.35), transparent 72%),
+    radial-gradient(700px 500px at 88% 12%, oklch(0.24 0.08 95 / 0.18), transparent 70%),
+    linear-gradient(180deg, oklch(0.055 0.025 258) 0%, oklch(0.085 0.035 248) 100%);
+  position: relative;
+  isolation: isolate;
+}
+.merlin-bg::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at center, oklch(0.9 0.1 185 / 0.55) 0.6px, transparent 0.7px),
+    radial-gradient(circle at center, oklch(0.9 0.08 90 / 0.4) 0.5px, transparent 0.6px);
+  background-size: 120px 120px, 190px 190px;
+  background-position: 0 0, 60px 40px;
+  mask-image: radial-gradient(ellipse 90% 80% at center, black 20%, transparent 88%);
+  pointer-events: none;
+  animation: merlinDrift 60s linear infinite;
+  z-index: 0;
+}
+.merlin-bg > * { position: relative; z-index: 1; }
+@keyframes merlinDrift {
+  from { background-position: 0 0, 60px 40px; }
+  to   { background-position: 120px 120px, 250px 230px; }
+}
+
+/* núcleo */
+.merlin-core { position: relative; display: grid; place-items: center; }
+.merlin-core__svg { position: relative; width: 100%; height: 100%; overflow: visible;
+  filter: drop-shadow(0 0 26px color-mix(in oklab, var(--glow) 55%, transparent)); }
+.merlin-core__halo {
+  position: absolute; inset: -12%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--glow) 26%, transparent), transparent 68%);
+  filter: blur(28px);
+  animation: merlinBreathe 7s ease-in-out infinite;
+}
+.merlin-core__ring {
+  position: absolute; border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--primary) 40%, transparent);
+}
+.merlin-core__ring--a { inset: 4%;  transform: rotateX(72deg); animation: merlinSpin 22s linear infinite; }
+.merlin-core__ring--b { inset: 12%; transform: rotateY(70deg); animation: merlinSpin 34s linear infinite reverse;
+  border-color: color-mix(in oklab, var(--accent) 40%, transparent); }
+.merlin-core__ring--c { inset: -4%; animation: merlinSpin 48s linear infinite;
+  border-style: dashed; border-color: color-mix(in oklab, var(--glow) 22%, transparent); }
+.merlin-core__crystal { transform-origin: 50px 50px; animation: merlinTilt 18s ease-in-out infinite; }
+.merlin-core__web { transform-origin: 50px 50px; animation: merlinSpinSlow 40s linear infinite; opacity: 0.5; }
+.merlin-core__pulse { animation: merlinPulse 5s ease-in-out infinite; transform-origin: 50px 50px; }
+.merlin-core__node { animation: merlinNode 4s ease-in-out infinite; }
+
+@keyframes merlinSpin { to { transform: rotate(360deg); } }
+@keyframes merlinSpinSlow { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes merlinTilt {
+  0%,100% { transform: rotate(-3deg) scale(1); }
+  50%     { transform: rotate(3deg) scale(1.03); }
+}
+@keyframes merlinPulse { 0%,100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+@keyframes merlinNode { 0%,100% { opacity: 0.25; r: 0.8; } 50% { opacity: 1; r: 1.5; } }
+@keyframes merlinBreathe { 0%,100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 0.95; transform: scale(1.06); } }
+
+/* comportamiento por estado cognitivo */
+.merlin-core--observando .merlin-core__crystal { animation-duration: 26s; }
+.merlin-core--observando .merlin-core__web { opacity: 0.35; }
+.merlin-core--ensenando .merlin-core__web { opacity: 0.9; animation-duration: 16s; }
+.merlin-core--ensenando .merlin-core__pulse { animation-duration: 2.4s; }
+.merlin-core--evaluando .merlin-core__ring--a { animation-duration: 6s; }
+.merlin-core--evaluando .merlin-core__crystal { animation-duration: 6s; }
+.merlin-core--investigando .merlin-core__ring--b { animation-duration: 9s; }
+.merlin-core--investigando .merlin-core__node { animation-duration: 1.4s; }
+.merlin-core--adaptando .merlin-core__crystal { animation: merlinReform 4s ease-in-out infinite; }
+.merlin-core--aprendiendo .merlin-core__halo { animation-duration: 2.8s; }
+.merlin-core--aprendiendo .merlin-core__node { animation-duration: 2s; }
+@keyframes merlinReform {
+  0%,100% { transform: rotate(0deg) scale(1); }
+  35%     { transform: rotate(-9deg) scale(0.94); }
+  70%     { transform: rotate(7deg) scale(1.06); }
+}
+
+/* superficie cristalina reutilizable */
+.merlin-panel {
+  background: linear-gradient(150deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--background) 70%, transparent));
+  border: 1px solid color-mix(in oklab, var(--primary) 18%, transparent);
+  border-radius: 20px;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--glow) 8%, transparent) inset,
+              0 24px 60px -30px color-mix(in oklab, var(--aura) 60%, transparent);
+}
