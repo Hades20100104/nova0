@@ -18,8 +18,9 @@ export const Route = createFileRoute("/")({
 
 function SelectorPage() {
   return (
-    <div className="min-h-screen w-full grid grid-cols-1 md:grid-cols-2">
-      <h1 className="sr-only">Escoge tu Asistente de IA: NOVA o NEVIRA</h1>
+    <div className="min-h-screen w-full grid grid-cols-1 md:grid-cols-3">
+      <h1 className="sr-only">Escoge tu Asistente de IA: NOVA, NEVIRA o MERLIN</h1>
+
       <Link to="/nova" className="nova-bg group relative flex items-center justify-center overflow-hidden p-12 cursor-pointer">
         <div className="relative z-10 text-center fade-up">
           <img src={novaLogo} alt="NOVA" width={160} height={160} className="mx-auto drop-shadow-[0_0_60px_var(--glow)] transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12" />
