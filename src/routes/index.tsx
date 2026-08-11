@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import novaLogo from "@/assets/nova-logo.png";
 import neviraLogo from "@/assets/nevira-logo.png";
+import { MerlinCore } from "@/components/merlin/MerlinCore";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
