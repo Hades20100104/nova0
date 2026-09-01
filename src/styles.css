@@ -1166,3 +1166,50 @@
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--glow) 8%, transparent) inset,
               0 24px 60px -30px color-mix(in oklab, var(--aura) 60%, transparent);
 }
+
+/* ============ MERLIN — universo de conocimiento ============ */
+.ku-stage { background:
+  radial-gradient(600px 420px at 60% 40%, oklch(0.28 0.09 210 / 0.22), transparent 70%); }
+
+.ku-edge {
+  stroke: color-mix(in oklab, var(--primary) 30%, transparent);
+  stroke-width: 0.28;
+  transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;
+}
+.ku-edge--soft { stroke-dasharray: 1.2 1.2; stroke: color-mix(in oklab, var(--accent) 26%, transparent); }
+.ku-edge--active { stroke: var(--glow); stroke-width: 0.55; }
+
+.ku-node { cursor: pointer; transition: opacity 0.3s; }
+.ku-node--dim { opacity: 0.28; }
+.ku-node__halo { fill: color-mix(in oklab, var(--glow) 10%, transparent); transition: fill 0.3s; }
+.ku-node__ring { fill: transparent; stroke: color-mix(in oklab, var(--primary) 55%, transparent); stroke-width: 0.35; }
+.ku-node__fill { fill: color-mix(in oklab, var(--primary) 55%, transparent); transition: r 0.4s ease; }
+.ku-node__label {
+  font-size: 2.1px; text-anchor: middle; letter-spacing: 0.06px;
+  fill: color-mix(in oklab, var(--foreground) 78%, transparent);
+}
+.ku-node--focus .ku-node__halo { fill: color-mix(in oklab, var(--glow) 26%, transparent); }
+.ku-node--focus .ku-node__ring { stroke: var(--glow); stroke-width: 0.6; }
+.ku-node--focus .ku-node__label { fill: var(--foreground); }
+
+.ku-node--dominado .ku-node__fill { fill: color-mix(in oklab, var(--primary) 70%, transparent); }
+.ku-node--desarrollo .ku-node__fill { fill: color-mix(in oklab, var(--accent) 60%, transparent); }
+.ku-node--atencion .ku-node__fill { fill: oklch(0.72 0.16 40 / 0.75); }
+.ku-node--atencion .ku-node__ring { stroke: oklch(0.72 0.16 40 / 0.7); }
+.ku-node--inicio .ku-node__ring { stroke-dasharray: 0.8 0.8; stroke: color-mix(in oklab, var(--muted-foreground) 60%, transparent); }
+
+.ku-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: color-mix(in oklab, var(--primary) 70%, transparent); }
+.ku-dot.ku-node--desarrollo { background: color-mix(in oklab, var(--accent) 65%, transparent); }
+.ku-dot.ku-node--atencion { background: oklch(0.72 0.16 40 / 0.85); }
+.ku-dot.ku-node--inicio { background: transparent; border: 1px dashed color-mix(in oklab, var(--muted-foreground) 70%, transparent); }
+
+.ku-bar { height: 4px; border-radius: 999px; background: color-mix(in oklab, var(--muted) 80%, transparent); overflow: hidden; }
+.ku-bar > i { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--primary) 85%, transparent), var(--glow));
+  box-shadow: 0 0 12px -3px var(--glow); transition: width 0.5s ease; }
+
+.ku-ev { margin-top: 5px; width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.ku-ev--correcto { background: color-mix(in oklab, var(--primary) 80%, transparent); }
+.ku-ev--parcial { background: color-mix(in oklab, var(--accent) 75%, transparent); }
+.ku-ev--incorrecto { background: oklch(0.7 0.17 35 / 0.85); }
