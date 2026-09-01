@@ -61,7 +61,7 @@ function MerlinPage() {
         </nav>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pb-24 pt-6">
+      <main className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-28 pt-6">
         {view === "nucleo" ? (
           <>
             <MerlinCore state={state} size={320} />
@@ -97,15 +97,18 @@ function MerlinPage() {
               />
             </div>
           </>
+        ) : view === "mapa" ? (
+          <KnowledgeUniverse />
         ) : (
           <section className="merlin-panel w-full max-w-3xl p-8 text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-primary/80">{view}</p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Esta capa se construye en la siguiente fase: mapa de conocimiento, ruta adaptativa, memoria y análisis.
+              Esta capa se construye en la siguiente fase: ruta adaptativa, memoria y análisis.
             </p>
           </section>
         )}
       </main>
+
 
       {/* Menú contextual: solo lo relevante en este momento */}
       <nav className="fixed inset-x-0 bottom-6 flex justify-center px-6">
