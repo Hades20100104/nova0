@@ -94,7 +94,7 @@ export function AdaptiveRoute() {
         {/* Secuencia */}
         <div className="merlin-panel p-6">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Secuencia</p>
-          <ol className="mr--2 mt-4 space-y-1">
+          <ol className="mt-4 space-y-1">
             {steps.map((s) => {
               const c = conceptById(s.conceptId);
               const p = personalById(s.conceptId);
