@@ -1213,3 +1213,30 @@
 .ku-ev--correcto { background: color-mix(in oklab, var(--primary) 80%, transparent); }
 .ku-ev--parcial { background: color-mix(in oklab, var(--accent) 75%, transparent); }
 .ku-ev--incorrecto { background: oklch(0.7 0.17 35 / 0.85); }
+
+/* ============ MERLIN — ruta adaptativa ============ */
+.mr-step { position: relative; padding-left: 2px; }
+.mr-step::before {
+  content: ""; position: absolute; left: 5px; top: 16px; bottom: 0; width: 1px;
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+}
+.mr-step:last-child::before { display: none; }
+.mr-step__dot {
+  margin-top: 4px; width: 11px; height: 11px; flex: none; border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--primary) 55%, transparent);
+  background: transparent; transition: all 0.3s; cursor: pointer;
+}
+.mr-step--done .mr-step__dot {
+  background: color-mix(in oklab, var(--primary) 75%, transparent);
+  box-shadow: 0 0 12px -2px var(--glow);
+}
+.mr-step--done p { opacity: 0.55; }
+.mr-step--active .mr-step__dot {
+  border-color: var(--glow);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--glow) 14%, transparent);
+  animation: mrStepPulse 2.6s ease-in-out infinite;
+}
+@keyframes mrStepPulse {
+  0%,100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--glow) 10%, transparent); }
+  50%     { box-shadow: 0 0 0 7px color-mix(in oklab, var(--glow) 4%, transparent); }
+}
