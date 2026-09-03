@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MerlinCore } from "@/components/merlin/MerlinCore";
 import { KnowledgeUniverse } from "@/components/merlin/KnowledgeUniverse";
 import { AdaptiveRoute } from "@/components/merlin/AdaptiveRoute";
+import { LearningMemory } from "@/components/merlin/LearningMemory";
 import { CONTEXT_MENU, useMerlinState, type MerlinView } from "@/lib/merlin/state";
 import { MERLIN_DATA, conceptById, globalProgress, nextStep } from "@/lib/merlin/mock";
 import { MODE_LABEL } from "@/lib/merlin/types";
@@ -103,6 +104,8 @@ function MerlinPage() {
           <KnowledgeUniverse />
         ) : view === "ruta" ? (
           <AdaptiveRoute />
+        ) : view === "memoria" ? (
+          <LearningMemory />
         ) : (
           <section className="merlin-panel w-full max-w-3xl p-8 text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-primary/80">{view}</p>
