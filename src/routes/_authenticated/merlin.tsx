@@ -4,6 +4,8 @@ import { MerlinCore } from "@/components/merlin/MerlinCore";
 import { KnowledgeUniverse } from "@/components/merlin/KnowledgeUniverse";
 import { AdaptiveRoute } from "@/components/merlin/AdaptiveRoute";
 import { LearningMemory } from "@/components/merlin/LearningMemory";
+import { ProgressPanel } from "@/components/merlin/ProgressPanel";
+import { LearningAnalysis } from "@/components/merlin/LearningAnalysis";
 import { CONTEXT_MENU, useMerlinState, type MerlinView } from "@/lib/merlin/state";
 import { MERLIN_DATA, conceptById, globalProgress, nextStep } from "@/lib/merlin/mock";
 import { MODE_LABEL } from "@/lib/merlin/types";
@@ -106,6 +108,10 @@ function MerlinPage() {
           <AdaptiveRoute />
         ) : view === "memoria" ? (
           <LearningMemory />
+        ) : view === "progreso" ? (
+          <ProgressPanel />
+        ) : view === "analisis" ? (
+          <LearningAnalysis />
         ) : (
           <section className="merlin-panel w-full max-w-3xl p-8 text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-primary/80">{view}</p>
