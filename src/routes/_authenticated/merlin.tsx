@@ -108,6 +108,10 @@ function MerlinPage() {
           <AdaptiveRoute />
         ) : view === "memoria" ? (
           <LearningMemory />
+        ) : view === "progreso" ? (
+          <ProgressPanel />
+        ) : view === "analisis" ? (
+          <LearningAnalysis />
         ) : (
           <section className="merlin-panel w-full max-w-3xl p-8 text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-primary/80">{view}</p>
