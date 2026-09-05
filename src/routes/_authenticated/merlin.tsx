@@ -100,9 +100,15 @@ function MerlinPage() {
                 label="Siguiente paso"
                 value={stepConcept?.name ?? "—"}
                 sub={`${MODE_LABEL[step.mode]} · ${step.minutes} min`}
+                onClick={() => {
+                  setLearnConcept(step.conceptId);
+                  setView("aprender");
+                }}
               />
             </div>
           </>
+        ) : view === "aprender" ? (
+          <LearnMode initialConceptId={learnConcept} />
         ) : view === "mapa" ? (
           <KnowledgeUniverse />
         ) : view === "ruta" ? (
