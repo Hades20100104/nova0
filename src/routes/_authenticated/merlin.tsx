@@ -6,6 +6,7 @@ import { AdaptiveRoute } from "@/components/merlin/AdaptiveRoute";
 import { LearningMemory } from "@/components/merlin/LearningMemory";
 import { ProgressPanel } from "@/components/merlin/ProgressPanel";
 import { LearningAnalysis } from "@/components/merlin/LearningAnalysis";
+import { LearnMode } from "@/components/merlin/LearnMode";
 import { CONTEXT_MENU, useMerlinState, type MerlinView } from "@/lib/merlin/state";
 import { MERLIN_DATA, conceptById, globalProgress, nextStep } from "@/lib/merlin/mock";
 import { MODE_LABEL } from "@/lib/merlin/types";

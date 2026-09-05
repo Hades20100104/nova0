@@ -1240,3 +1240,46 @@
   0%,100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--glow) 10%, transparent); }
   50%     { box-shadow: 0 0 0 7px color-mix(in oklab, var(--glow) 4%, transparent); }
 }
+
+/* ============ MERLIN — modo aprender ============ */
+.ml-progress {
+  width: 120px; height: 3px; border-radius: 999px; overflow: hidden;
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+}
+.ml-progress > span {
+  display: block; height: 100%; border-radius: 999px; transition: width 0.45s ease;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--primary) 85%, transparent), var(--glow));
+  box-shadow: 0 0 12px -3px var(--glow);
+}
+
+.ml-detail {
+  white-space: pre-wrap; font-family: inherit; font-size: 0.8rem; line-height: 1.7;
+  padding: 14px 16px; border-radius: 14px;
+  color: color-mix(in oklab, var(--foreground) 82%, transparent);
+  background: color-mix(in oklab, var(--background) 55%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 16%, transparent);
+}
+
+.ml-exercise {
+  padding: 16px 18px; border-radius: 16px;
+  background: color-mix(in oklab, var(--background) 45%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 12%, transparent);
+}
+
+.ml-option {
+  text-align: left; font-size: 0.8rem; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  color: color-mix(in oklab, var(--foreground) 85%, transparent);
+  transition: all 0.25s;
+}
+.ml-option:hover:not(:disabled) { border-color: var(--glow); background: color-mix(in oklab, var(--primary) 8%, transparent); }
+.ml-option:disabled { cursor: default; opacity: 0.6; }
+.ml-option--ok {
+  opacity: 1; border-color: var(--glow);
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  box-shadow: 0 0 18px -8px var(--glow);
+}
+.ml-option--bad {
+  opacity: 1; border-color: oklch(0.7 0.17 35 / 0.6);
+  background: oklch(0.7 0.17 35 / 0.12);
+}
