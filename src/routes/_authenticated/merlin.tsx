@@ -6,6 +6,7 @@ import { AdaptiveRoute } from "@/components/merlin/AdaptiveRoute";
 import { LearningMemory } from "@/components/merlin/LearningMemory";
 import { ProgressPanel } from "@/components/merlin/ProgressPanel";
 import { LearningAnalysis } from "@/components/merlin/LearningAnalysis";
+import { LearnMode } from "@/components/merlin/LearnMode";
 import { CONTEXT_MENU, useMerlinState, type MerlinView } from "@/lib/merlin/state";
 import { MERLIN_DATA, conceptById, globalProgress, nextStep } from "@/lib/merlin/mock";
 import { MODE_LABEL } from "@/lib/merlin/types";
@@ -36,6 +37,7 @@ function MerlinPage() {
   const { state, pulse } = useMerlinState();
   const [view, setView] = useState<MerlinView>("nucleo");
   const [prompt, setPrompt] = useState("");
+  const [learnConcept, setLearnConcept] = useState<string | undefined>(undefined);
 
   const step = nextStep();
   const stepConcept = conceptById(step.conceptId);
@@ -99,9 +101,15 @@ function MerlinPage() {
                 label="Siguiente paso"
                 value={stepConcept?.name ?? "—"}
                 sub={`${MODE_LABEL[step.mode]} · ${step.minutes} min`}
+                onClick={() => {
+                  setLearnConcept(step.conceptId);
+                  setView("aprender");
+                }}
               />
             </div>
           </>
+        ) : view === "aprender" ? (
+          <LearnMode initialConceptId={learnConcept} />
         ) : view === "mapa" ? (
           <KnowledgeUniverse />
         ) : view === "ruta" ? (
@@ -136,13 +144,27 @@ function MerlinPage() {
   );
 }
 
-function Indicator({ label, value, sub }: { label: string; value: string; sub: string }) {
+function Indicator({
+  label,
+  value,
+  sub,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  onClick?: () => void;
+}) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <div className="merlin-panel px-5 py-4">
+    <Tag
+      onClick={onClick}
+      className={`merlin-panel px-5 py-4 text-left ${onClick ? "transition-colors hover:border-primary/40" : ""}`}
+    >
       <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-lg text-foreground">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
-    </div>
+    </Tag>
   );
 }
 
