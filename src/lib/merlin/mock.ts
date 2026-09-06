@@ -197,7 +197,11 @@ const decisions: Decision[] = [
   },
 ];
 
-export const MERLIN_DATA: MerlinDataset = {
+/**
+ * Semilla del prototipo (Matemáticas). Se usa para inicializar los datos
+ * reales del usuario la primera vez que entra a Merlin.
+ */
+export const MERLIN_SEED: MerlinDataset = {
   user: { id: "u1", name: "Alumno", level: "Preparatoria · Matemáticas IV", goals: ["Llegar a derivadas con base sólida", "Cerrar la brecha de aplicación"] },
   subject: { id: subjectId, name: "Matemáticas", curriculum: "Currículo de referencia · Matemáticas I–IV" },
   concepts,
@@ -210,6 +214,25 @@ export const MERLIN_DATA: MerlinDataset = {
   decisions,
 };
 
+/**
+ * Dataset activo. Arranca con la semilla y se sustituye por los datos reales
+ * del usuario en cuanto llegan del backend (binding vivo: los componentes
+ * que lo importan ven el valor actualizado).
+ */
+export let MERLIN_DATA: MerlinDataset = MERLIN_SEED;
+
+const listeners = new Set<() => void>();
+
+export function hydrateMerlinData(next: MerlinDataset) {
+  MERLIN_DATA = next;
+  listeners.forEach((l) => l());
+}
+
+export function subscribeMerlinData(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 /* ---------- selectores ---------- */
 
 export const conceptById = (id: string) => MERLIN_DATA.concepts.find((c) => c.id === id);
@@ -220,6 +243,7 @@ export const relationsOf = (id: string) =>
   MERLIN_DATA.relationships.filter((r) => r.from === id || r.to === id);
 
 export function globalProgress() {
+  if (MERLIN_DATA.personal.length === 0) return 0;
   const total = MERLIN_DATA.personal.reduce((a, p) => a + p.overall, 0);
   return Math.round(total / MERLIN_DATA.personal.length);
 }
@@ -227,3 +251,4 @@ export function globalProgress() {
 export function nextStep() {
   return MERLIN_DATA.route.steps.find((s) => !s.done) ?? MERLIN_DATA.route.steps[MERLIN_DATA.route.steps.length - 1];
 }
+

@@ -10,6 +10,7 @@ import { LearnMode } from "@/components/merlin/LearnMode";
 import { CONTEXT_MENU, useMerlinState, type MerlinView } from "@/lib/merlin/state";
 import { MERLIN_DATA, conceptById, globalProgress, nextStep } from "@/lib/merlin/mock";
 import { MODE_LABEL } from "@/lib/merlin/types";
+import { useMerlinData } from "@/lib/merlin/store";
 
 export const Route = createFileRoute("/_authenticated/merlin")({
   head: () => ({
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/merlin")({
 
 function MerlinPage() {
   const { state, pulse } = useMerlinState();
+  const { loading } = useMerlinData();
   const [view, setView] = useState<MerlinView>("nucleo");
   const [prompt, setPrompt] = useState("");
   const [learnConcept, setLearnConcept] = useState<string | undefined>(undefined);
@@ -69,6 +71,11 @@ function MerlinPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-28 pt-6">
+        {loading && (
+          <p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+            Cargando tu modelo de aprendizaje…
+          </p>
+        )}
         {view === "nucleo" ? (
           <>
             <MerlinCore state={state} size={320} />
