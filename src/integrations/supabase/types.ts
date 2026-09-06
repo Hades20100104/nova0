@@ -542,58 +542,132 @@ export type Database = {
       merlin_concepts: {
         Row: {
           area: string | null
+          breakdown: string[]
           confidence: number
           created_at: string
+          curriculum_unit: string | null
+          difficulty: number
           id: string
           last_review_at: string | null
           mastery: Json
           name: string
           overall: number
           position: Json | null
+          prerequisites: string[]
           priority: string
+          slug: string | null
           status: string
+          strategy_key: string | null
           subject_id: string
           summary: string | null
           updated_at: string
           user_id: string
+          weight: number
         }
         Insert: {
           area?: string | null
+          breakdown?: string[]
           confidence?: number
           created_at?: string
+          curriculum_unit?: string | null
+          difficulty?: number
           id?: string
           last_review_at?: string | null
           mastery?: Json
           name: string
           overall?: number
           position?: Json | null
+          prerequisites?: string[]
           priority?: string
+          slug?: string | null
           status?: string
+          strategy_key?: string | null
           subject_id: string
           summary?: string | null
           updated_at?: string
           user_id: string
+          weight?: number
         }
         Update: {
           area?: string | null
+          breakdown?: string[]
           confidence?: number
           created_at?: string
+          curriculum_unit?: string | null
+          difficulty?: number
           id?: string
           last_review_at?: string | null
           mastery?: Json
           name?: string
           overall?: number
           position?: Json | null
+          prerequisites?: string[]
           priority?: string
+          slug?: string | null
           status?: string
+          strategy_key?: string | null
           subject_id?: string
           summary?: string | null
+          updated_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merlin_concepts_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "merlin_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merlin_decisions: {
+        Row: {
+          action: string
+          confidence: number
+          created_at: string
+          evidence: string
+          expected: string
+          id: string
+          motive: string
+          outcome: string
+          subject_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          confidence?: number
+          created_at?: string
+          evidence: string
+          expected: string
+          id?: string
+          motive: string
+          outcome?: string
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          confidence?: number
+          created_at?: string
+          evidence?: string
+          expected?: string
+          id?: string
+          motive?: string
+          outcome?: string
+          subject_id?: string | null
+          title?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "merlin_concepts_subject_id_fkey"
+            foreignKeyName: "merlin_decisions_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "merlin_subjects"
@@ -656,6 +730,7 @@ export type Database = {
           agent: string
           concept_id: string | null
           confidence: number
+          context: string | null
           correct: boolean | null
           created_at: string
           hypothesis: string | null
@@ -663,6 +738,7 @@ export type Database = {
           importance: string
           kind: string
           payload: Json | null
+          result: string
           subject_id: string | null
           summary: string
           user_id: string
@@ -671,6 +747,7 @@ export type Database = {
           agent: string
           concept_id?: string | null
           confidence?: number
+          context?: string | null
           correct?: boolean | null
           created_at?: string
           hypothesis?: string | null
@@ -678,6 +755,7 @@ export type Database = {
           importance?: string
           kind?: string
           payload?: Json | null
+          result?: string
           subject_id?: string | null
           summary: string
           user_id: string
@@ -686,6 +764,7 @@ export type Database = {
           agent?: string
           concept_id?: string | null
           confidence?: number
+          context?: string | null
           correct?: boolean | null
           created_at?: string
           hypothesis?: string | null
@@ -693,6 +772,7 @@ export type Database = {
           importance?: string
           kind?: string
           payload?: Json | null
+          result?: string
           subject_id?: string | null
           summary?: string
           user_id?: string
@@ -754,6 +834,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "merlin_goals_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "merlin_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merlin_memory: {
+        Row: {
+          confidence: number
+          content: string
+          created_at: string
+          id: string
+          importance: string
+          status: string
+          subject_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          content: string
+          created_at?: string
+          id?: string
+          importance?: string
+          status?: string
+          subject_id?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          content?: string
+          created_at?: string
+          id?: string
+          importance?: string
+          status?: string
+          subject_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merlin_memory_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "merlin_subjects"
@@ -860,6 +987,7 @@ export type Database = {
           confidence: number
           created_at: string
           id: string
+          priority: string
           reason: string | null
           steps: Json
           subject_id: string
@@ -871,6 +999,7 @@ export type Database = {
           confidence?: number
           created_at?: string
           id?: string
+          priority?: string
           reason?: string | null
           steps?: Json
           subject_id: string
@@ -882,6 +1011,7 @@ export type Database = {
           confidence?: number
           created_at?: string
           id?: string
+          priority?: string
           reason?: string | null
           steps?: Json
           subject_id?: string
@@ -956,10 +1086,14 @@ export type Database = {
         Row: {
           concept_kind: string
           confidence: number
+          context: string | null
           created_at: string
+          effectiveness: number
           id: string
           last_used_at: string | null
           losses: number
+          result: string
+          slug: string | null
           strategy: string
           updated_at: string
           user_id: string
@@ -968,10 +1102,14 @@ export type Database = {
         Insert: {
           concept_kind: string
           confidence?: number
+          context?: string | null
           created_at?: string
+          effectiveness?: number
           id?: string
           last_used_at?: string | null
           losses?: number
+          result?: string
+          slug?: string | null
           strategy: string
           updated_at?: string
           user_id: string
@@ -980,10 +1118,14 @@ export type Database = {
         Update: {
           concept_kind?: string
           confidence?: number
+          context?: string | null
           created_at?: string
+          effectiveness?: number
           id?: string
           last_used_at?: string | null
           losses?: number
+          result?: string
+          slug?: string | null
           strategy?: string
           updated_at?: string
           user_id?: string
