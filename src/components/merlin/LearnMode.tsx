@@ -9,6 +9,8 @@ import {
 import { conceptById } from "@/lib/merlin/mock";
 import { MODE_LABEL, STATUS_LABEL } from "@/lib/merlin/types";
 import { pulseMerlinState } from "@/lib/merlin/state";
+import { useServerFn } from "@tanstack/react-start";
+import { recordMerlinEvidence } from "@/lib/merlin.functions";
 
 /**
  * Modo Aprender — explicación guiada paso a paso, ejemplos trabajados
@@ -20,6 +22,7 @@ export function LearnMode({ initialConceptId }: { initialConceptId?: string }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [openDetail, setOpenDetail] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const saveEvidence = useServerFn(recordMerlinEvidence);
 
   const lesson = lessonFor(conceptId);
   const ctx = useMemo(() => lessonContext(conceptId), [conceptId]);
@@ -50,6 +53,16 @@ export function LearnMode({ initialConceptId }: { initialConceptId?: string }) {
     if (answers[exerciseId] !== undefined) return;
     setAnswers((prev) => ({ ...prev, [exerciseId]: option }));
     pulseMerlinState(ok ? "aprendiendo" : "evaluando", 2200);
+    const exercise = lesson?.exercises.find((e) => e.id === exerciseId);
+    void saveEvidence({
+      data: {
+        conceptSlug: conceptId,
+        result: ok ? "correcto" : "incorrecto",
+        context: exercise ? `${exercise.dimension} · ${exercise.prompt}` : "Ejercicio del modo aprender",
+        type: "ejercicio",
+        confidence: 80,
+      },
+    }).catch(() => undefined);
   };
 
   return (
