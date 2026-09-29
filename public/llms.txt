@@ -1,0 +1,16 @@
+# NEVIRA & NOVA
+
+> Asistente personal con IA: música por voz (Spotify), generación de imágenes IA, creación de documentos (Word/Excel/PowerPoint), WhatsApp por voz, automatizaciones por hora y geocercas, y memoria contextual. Dos modos: NEVIRA (día, ejecución) y NOVA (noche, creatividad).
+
+NEVIRA & NOVA es una app web/PWA y nativa (Android/Electron) construida sobre Lovable Cloud. Los usuarios conversan por voz o texto y la asistente reproduce música, genera imágenes, redacta documentos descargables, prepara mensajes de WhatsApp y dispara automatizaciones según ubicación u hora.
+
+## Pages
+
+- [Inicio](/): Dashboard personal con orbe interactivo, accesos rápidos a música, imágenes IA, documentos, WhatsApp y memoria.
+- [Chat](/chat): Conversación principal por voz o texto con la asistente NEVIRA / NOVA.
+- [Galería](/gallery): Galería privada de imágenes generadas con IA por el usuario.
+- [Automatizaciones](/automations): Reglas tipo "cuando llegue a casa, mandar WhatsApp" o "lunes 7:00, poner playlist gym".
+
+## Optional
+
+- [Iniciar sesión](/auth): Acceso con email o Google.

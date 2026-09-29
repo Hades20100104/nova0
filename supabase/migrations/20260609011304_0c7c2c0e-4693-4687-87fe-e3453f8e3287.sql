@@ -1,0 +1,2 @@
+ALTER TABLE public.generated_documents DROP CONSTRAINT IF EXISTS generated_documents_format_check;
+ALTER TABLE public.generated_documents ADD CONSTRAINT generated_documents_format_check CHECK (format = ANY (ARRAY['docx'::text, 'xlsx'::text, 'pptx'::text, 'md'::text, 'txt'::text]));

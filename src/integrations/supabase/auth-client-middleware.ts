@@ -10,7 +10,9 @@ import { requireSupabaseAuth } from "./auth-middleware";
 export const withSupabaseAuth = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])
   .client(async ({ next }) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session?.access_token) {
       throw new Error("No has iniciado sesión.");
     }

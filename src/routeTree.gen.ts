@@ -9,14 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as GalleryRouteImport } from './routes/gallery'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SpotifyCallbackRouteImport } from './routes/spotify.callback'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthenticatedMerlinRouteImport } from './routes/_authenticated/merlin'
+import { Route as AuthenticatedNeviraRouteImport } from './routes/_authenticated/nevira'
+import { Route as AuthenticatedNovaRouteImport } from './routes/_authenticated/nova'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedNeviraThreadIdRouteImport } from './routes/_authenticated/nevira.$threadId'
+import { Route as AuthenticatedNovaThreadIdRouteImport } from './routes/_authenticated/nova.$threadId'
+import { Route as ApiSpotifyCallbackRouteImport } from './routes/api/spotify/callback'
 
-const GalleryRoute = GalleryRouteImport.update({
-  id: '/gallery',
-  path: '/gallery',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -24,58 +35,150 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SpotifyCallbackRoute = SpotifyCallbackRouteImport.update({
-  id: '/spotify/callback',
-  path: '/spotify/callback',
+const AuthenticatedMerlinRoute = AuthenticatedMerlinRouteImport.update({
+  id: '/merlin',
+  path: '/merlin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNeviraRoute = AuthenticatedNeviraRouteImport.update({
+  id: '/nevira',
+  path: '/nevira',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNovaRoute = AuthenticatedNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedNeviraThreadIdRoute =
+  AuthenticatedNeviraThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedNeviraRoute,
+  } as any)
+const AuthenticatedNovaThreadIdRoute =
+  AuthenticatedNovaThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedNovaRoute,
+  } as any)
+const ApiSpotifyCallbackRoute = ApiSpotifyCallbackRouteImport.update({
+  id: '/api/spotify/callback',
+  path: '/api/spotify/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/gallery': typeof GalleryRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/merlin': typeof AuthenticatedMerlinRoute
+  '/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/gallery': typeof GalleryRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/merlin': typeof AuthenticatedMerlinRoute
+  '/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
-  '/gallery': typeof GalleryRoute
-  '/spotify/callback': typeof SpotifyCallbackRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/merlin': typeof AuthenticatedMerlinRoute
+  '/_authenticated/nevira': typeof AuthenticatedNeviraRouteWithChildren
+  '/_authenticated/nova': typeof AuthenticatedNovaRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
+  '/_authenticated/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
+  '/_authenticated/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
+  '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/gallery' | '/spotify/callback'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/merlin'
+    | '/nevira'
+    | '/nova'
+    | '/api/chat'
+    | '/nevira/$threadId'
+    | '/nova/$threadId'
+    | '/api/spotify/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/gallery' | '/spotify/callback'
-  id: '__root__' | '/' | '/auth' | '/gallery' | '/spotify/callback'
+  to:
+    | '/'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/merlin'
+    | '/nevira'
+    | '/nova'
+    | '/api/chat'
+    | '/nevira/$threadId'
+    | '/nova/$threadId'
+    | '/api/spotify/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/_authenticated/merlin'
+    | '/_authenticated/nevira'
+    | '/_authenticated/nova'
+    | '/api/chat'
+    | '/_authenticated/nevira/$threadId'
+    | '/_authenticated/nova/$threadId'
+    | '/api/spotify/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
-  GalleryRoute: typeof GalleryRoute
-  SpotifyCallbackRoute: typeof SpotifyCallbackRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiChatRoute: typeof ApiChatRoute
+  ApiSpotifyCallbackRoute: typeof ApiSpotifyCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/gallery': {
-      id: '/gallery'
-      path: '/gallery'
-      fullPath: '/gallery'
-      preLoaderRoute: typeof GalleryRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -85,38 +188,121 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/spotify/callback': {
-      id: '/spotify/callback'
-      path: '/spotify/callback'
-      fullPath: '/spotify/callback'
-      preLoaderRoute: typeof SpotifyCallbackRouteImport
+    '/_authenticated/merlin': {
+      id: '/_authenticated/merlin'
+      path: '/merlin'
+      fullPath: '/merlin'
+      preLoaderRoute: typeof AuthenticatedMerlinRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/nevira': {
+      id: '/_authenticated/nevira'
+      path: '/nevira'
+      fullPath: '/nevira'
+      preLoaderRoute: typeof AuthenticatedNeviraRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/nova': {
+      id: '/_authenticated/nova'
+      path: '/nova'
+      fullPath: '/nova'
+      preLoaderRoute: typeof AuthenticatedNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/nevira/$threadId': {
+      id: '/_authenticated/nevira/$threadId'
+      path: '/$threadId'
+      fullPath: '/nevira/$threadId'
+      preLoaderRoute: typeof AuthenticatedNeviraThreadIdRouteImport
+      parentRoute: typeof AuthenticatedNeviraRoute
+    }
+    '/_authenticated/nova/$threadId': {
+      id: '/_authenticated/nova/$threadId'
+      path: '/$threadId'
+      fullPath: '/nova/$threadId'
+      preLoaderRoute: typeof AuthenticatedNovaThreadIdRouteImport
+      parentRoute: typeof AuthenticatedNovaRoute
+    }
+    '/api/spotify/callback': {
+      id: '/api/spotify/callback'
+      path: '/api/spotify/callback'
+      fullPath: '/api/spotify/callback'
+      preLoaderRoute: typeof ApiSpotifyCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface AuthenticatedNeviraRouteChildren {
+  AuthenticatedNeviraThreadIdRoute: typeof AuthenticatedNeviraThreadIdRoute
+}
+
+const AuthenticatedNeviraRouteChildren: AuthenticatedNeviraRouteChildren = {
+  AuthenticatedNeviraThreadIdRoute: AuthenticatedNeviraThreadIdRoute,
+}
+
+const AuthenticatedNeviraRouteWithChildren =
+  AuthenticatedNeviraRoute._addFileChildren(AuthenticatedNeviraRouteChildren)
+
+interface AuthenticatedNovaRouteChildren {
+  AuthenticatedNovaThreadIdRoute: typeof AuthenticatedNovaThreadIdRoute
+}
+
+const AuthenticatedNovaRouteChildren: AuthenticatedNovaRouteChildren = {
+  AuthenticatedNovaThreadIdRoute: AuthenticatedNovaThreadIdRoute,
+}
+
+const AuthenticatedNovaRouteWithChildren =
+  AuthenticatedNovaRoute._addFileChildren(AuthenticatedNovaRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedMerlinRoute: typeof AuthenticatedMerlinRoute
+  AuthenticatedNeviraRoute: typeof AuthenticatedNeviraRouteWithChildren
+  AuthenticatedNovaRoute: typeof AuthenticatedNovaRouteWithChildren
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedMerlinRoute: AuthenticatedMerlinRoute,
+  AuthenticatedNeviraRoute: AuthenticatedNeviraRouteWithChildren,
+  AuthenticatedNovaRoute: AuthenticatedNovaRouteWithChildren,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
-  GalleryRoute: GalleryRoute,
-  SpotifyCallbackRoute: SpotifyCallbackRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiChatRoute: ApiChatRoute,
+  ApiSpotifyCallbackRoute: ApiSpotifyCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
