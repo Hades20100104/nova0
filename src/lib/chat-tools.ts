@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { LayoutSchema } from "./section-blocks";
 import { buildProductivityTools } from "./productivity-tools";
+import { buildCalendarFinanceTools } from "./calendar-finance-tools";
 
 type SB = SupabaseClient<Database>;
 
@@ -837,6 +838,7 @@ export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
     list_automations: listAutomationsTool(ctx),
     toggle_automation: toggleAutomationTool(ctx),
     ...buildProductivityTools(ctx),
+    ...buildCalendarFinanceTools(ctx),
   } as const;
   // Intelligence tools are always available: memoria, aprendizaje e índice de confianza.
   const ALWAYS = ["report_confidence", "learn_insight", "list_insights", "recall"];
