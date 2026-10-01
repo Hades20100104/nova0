@@ -19,6 +19,8 @@ import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
 import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
 import { ProductivityHub } from "@/components/sections/ProductivityHub";
 import { AutomationsHub } from "@/components/sections/AutomationsHub";
+import { CalendarHub } from "@/components/sections/CalendarHub";
+import { FinanceHub } from "@/components/sections/FinanceHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -214,38 +216,18 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
     case "calendario":
       return (
-        <Panel title="Calendario" subtitle="Tu tiempo, tu mejor aliado" cta="Nuevo evento" onCta={onChat}>
-          <div className="grid grid-cols-7 gap-2 text-xs">
-            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
-              <div key={d} className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">{d}</div>
-            ))}
-            {Array.from({ length: 28 }).map((_, i) => (
-              <div key={i} className={`aspect-square rounded-lg border text-center grid place-items-center ${
-                i === 12 ? "border-primary bg-primary/25 glow-text" : "border-primary/20 bg-card/30"
-              }`}>{i + 1}</div>
-            ))}
-          </div>
+        <Panel title="Calendario" subtitle="Tu tiempo, tu mejor aliado" cta="Pedir a Chronos" onCta={onChat}>
+          <CalendarHub />
         </Panel>
       );
 
     case "whatsapp":
       return <WhatsappRoom onChat={onChat} />;
 
-
     case "finanzas":
       return (
-        <Panel title="Finanzas" subtitle="Salud financiera" cta="Plan personalizado" onCta={onChat}>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <Stat label="Balance" value="$ 12,480" delta="+8.2%" />
-            <Stat label="Ahorro" value="$ 3,200" delta="+12%" />
-            <Stat label="Gasto mes" value="$ 1,820" />
-          </div>
-          <div className="space-y-2">
-            <Bar label="Vivienda" value={42} />
-            <Bar label="Comida" value={26} />
-            <Bar label="Ocio" value={18} />
-            <Bar label="Ahorro" value={14} />
-          </div>
+        <Panel title="Finanzas" subtitle="Financial Intelligence" cta="Análisis IA" onCta={onChat}>
+          <FinanceHub />
         </Panel>
       );
 
