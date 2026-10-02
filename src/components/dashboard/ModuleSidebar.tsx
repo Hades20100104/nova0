@@ -11,7 +11,7 @@ import novaLogo from "@/assets/nova-logo.png";
 const NOVA_GROUPS: { title: string; slugs: string[] }[] = [
   { title: "Crear", slugs: ["home", "conversacion", "musica", "imagenes", "documentos"] },
   { title: "Pensar", slugs: ["memoria", "automatizaciones", "calendario"] },
-  { title: "Conectar", slugs: ["whatsapp", "finanzas", "ajustes"] },
+  { title: "Conectar", slugs: ["whatsapp", "finanzas", "perfil", "ajustes"] },
 ];
 const NEVIRA_GROUPS: { title: string; slugs: string[] }[] = [
   { title: "Operar", slugs: ["panel", "productividad", "automatizaciones", "comunicacion"] },
@@ -124,13 +124,19 @@ export function ModuleSidebar({
 
       {/* user */}
       <div className="flex items-center gap-3 border-t border-border/30 p-3">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary/40 to-accent/40 border border-primary/40">
-          <UserIcon className="h-4 w-4 text-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="truncate text-sm font-medium">{email.split("@")[0]}</div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Cuenta Premium</div>
-        </div>
+        <button
+          onClick={() => onSelect("perfil")}
+          title="Abrir mi perfil"
+          className="flex flex-1 min-w-0 items-center gap-3 text-left rounded-lg p-1 -m-1 transition hover:bg-primary/10"
+        >
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/40 to-accent/40 border border-primary/40">
+            <UserIcon className="h-4 w-4 text-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="truncate text-sm font-medium">{email.split("@")[0]}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Cuenta Premium</div>
+          </div>
+        </button>
         <button onClick={signOut} title="Cerrar sesión" className="text-muted-foreground hover:text-primary transition">
           <LogOut className="h-4 w-4" />
         </button>

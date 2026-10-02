@@ -21,6 +21,7 @@ import { ProductivityHub } from "@/components/sections/ProductivityHub";
 import { AutomationsHub } from "@/components/sections/AutomationsHub";
 import { CalendarHub } from "@/components/sections/CalendarHub";
 import { FinanceHub } from "@/components/sections/FinanceHub";
+import { ProfileHub } from "@/components/sections/ProfileHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -228,6 +229,13 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
       return (
         <Panel title="Finanzas" subtitle="Financial Intelligence" cta="Análisis IA" onCta={onChat}>
           <FinanceHub />
+        </Panel>
+      );
+
+    case "perfil":
+      return (
+        <Panel title="Perfil" subtitle="Tu cuenta y datos personales">
+          <ProfileHub />
         </Panel>
       );
 
