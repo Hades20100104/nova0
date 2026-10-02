@@ -190,30 +190,7 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
 
     case "automatizaciones":
-      return (
-        <Panel title="Automatizaciones" subtitle="Flujos inteligentes que trabajan por ti" cta="Crear flujo" onCta={onChat}>
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            {[
-              { t: "Trigger", s: "Nuevo email" },
-              { t: "Acción", s: "Analizar contenido" },
-              { t: "Condición", s: "¿Es importante?" },
-              { t: "Sí", s: "Guardar en Drive" },
-              { t: "No", s: "Archivar" },
-            ].map((n, i) => (
-              <div key={i} className="rounded-xl border border-primary/30 bg-card/40 px-3 py-2 min-w-[140px]">
-                <div className="text-[9px] uppercase tracking-[0.25em] text-primary">{n.t}</div>
-                <div className="text-sm">{n.s}</div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            <Stat label="Flujos activos" value="12" />
-            <Stat label="Ejecutados hoy" value="24" />
-            <Stat label="Eficiencia" value="98%" delta="+2%" />
-          </div>
-                  <div className="mt-4"><AutomationsHub /></div>
-        </Panel>
-      );
+      return <NovaAutomationsRoom onChat={onChat} />;
 
     case "calendario":
       return (
@@ -262,6 +239,28 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
         </Panel>
       );
   }
+}
+
+function NovaAutomationsRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading, isError } = useModuleStats();
+  const coverage = stats?.automationsTotal
+    ? Math.round((stats.automationsEnabled / stats.automationsTotal) * 100)
+    : 0;
+
+  return (
+    <Panel title="Automatizaciones" subtitle="Flujos inteligentes que trabajan por ti" cta="Crear flujo" onCta={onChat}>
+      {isLoading ? <LoadingRow /> : isError || !stats ? (
+        <p className="text-xs text-destructive">No se pudieron cargar las estadísticas.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Stat label="Flujos activos" value={String(stats.automationsEnabled)} />
+          <Stat label="Flujos ejecutados hoy" value={String(stats.automationsToday)} />
+          <Stat label="Cobertura activa" value={`${coverage}%`} />
+        </div>
+      )}
+      <div className="mt-4"><AutomationsHub /></div>
+    </Panel>
+  );
 }
 
 /* ===================================================== */
@@ -932,7 +931,7 @@ function SeguridadRoom({ onChat }: { onChat: () => void }) {
     { l: "Conexión HTTPS", ok: secure },
     { l: "Sesión autenticada", ok: authOk },
     { l: "Cliente online", ok: perf.online },
-    { l: "Cifrado E2E chat", ok: true },
+    { l: "Transporte cifrado", ok: secure },
     { l: "Aislamiento RLS", ok: true },
   ];
 

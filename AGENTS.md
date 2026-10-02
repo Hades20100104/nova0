@@ -1,0 +1,1 @@
+- Automation summaries in Nova use the shared `useModuleStats()` query and invalidate it after automation mutations, so the displayed counts reflect the signed-in user's records rather than examples.

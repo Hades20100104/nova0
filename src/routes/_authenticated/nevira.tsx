@@ -32,6 +32,8 @@ export const Route = createFileRoute("/_authenticated/nevira")({
       { property: "og:title", content: "NEVIRA — Dashboard IA con voz" },
       { property: "og:description", content: "Sistema operativo inteligente: métricas, automatización, WhatsApp y documentos, todo desde un solo panel." },
       { property: "og:url", content: "https://nova0.lovable.app/nevira" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://nova0.lovable.app/nevira" }],
   }),
