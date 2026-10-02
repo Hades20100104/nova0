@@ -36,6 +36,7 @@ export function useModuleStats() {
         contactsTotal,
         automationsTotal,
         automationsEnabled,
+        automationsToday,
       ] = await Promise.all([
         c("assistant_threads"),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,6 +53,9 @@ export function useModuleStats() {
         c("automations"),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         c("automations", (q: any) => q.eq("enabled", true)),
+        // Counts distinct flows whose most recent run occurred today in the user's local timezone.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        c("automations", (q: any) => q.gte("last_triggered_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())),
       ]);
 
       // Latest thread for "última actividad"
@@ -88,6 +92,7 @@ export function useModuleStats() {
         contactsTotal,
         automationsTotal,
         automationsEnabled,
+        automationsToday,
         latest,
         activityByDay: byDay,
         activityMaxDay: maxDay,

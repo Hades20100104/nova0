@@ -28,7 +28,10 @@ export function useAutomationMutations() {
   const toggle = useServerFn(setAutomationEnabled);
   const remove = useServerFn(deleteAutomation);
   const run = useServerFn(runAutomation);
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["automations"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["automations"] });
+    qc.invalidateQueries({ queryKey: ["module-stats"] });
+  };
 
   return {
     save: useMutation({
