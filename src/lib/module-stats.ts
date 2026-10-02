@@ -19,7 +19,10 @@ export function useModuleStats() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let q: any = supabase.from(table as never).select("*", { count: "exact", head: true });
         if (extra) q = extra(q);
-        return q.then((r: { count: number | null }) => r.count ?? 0);
+        return q.then((r: { count: number | null; error: { message: string } | null }) => {
+          if (r.error) throw new Error(r.error.message);
+          return r.count ?? 0;
+        });
       };
 
       const since = (days: number) => new Date(Date.now() - days * 864e5).toISOString();
