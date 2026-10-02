@@ -11,7 +11,7 @@ import novaLogo from "@/assets/nova-logo.png";
 const NOVA_GROUPS: { title: string; slugs: string[] }[] = [
   { title: "Crear", slugs: ["home", "conversacion", "musica", "imagenes", "documentos"] },
   { title: "Pensar", slugs: ["memoria", "automatizaciones", "calendario"] },
-  { title: "Conectar", slugs: ["whatsapp", "finanzas", "ajustes"] },
+  { title: "Conectar", slugs: ["whatsapp", "finanzas", "perfil", "ajustes"] },
 ];
 const NEVIRA_GROUPS: { title: string; slugs: string[] }[] = [
   { title: "Operar", slugs: ["panel", "productividad", "automatizaciones", "comunicacion"] },
