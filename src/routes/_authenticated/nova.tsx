@@ -27,6 +27,8 @@ export const Route = createFileRoute("/_authenticated/nova")({
       { property: "og:title", content: "NOVA — IA Creativa Cósmica" },
       { property: "og:description", content: "Asistente creativo con voz e interfaz 3D. Crea imágenes, documentos y música con IA." },
       { property: "og:url", content: "https://nova0.lovable.app/nova" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://nova0.lovable.app/nova" }],
   }),

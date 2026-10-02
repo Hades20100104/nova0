@@ -11,6 +11,14 @@ import type { UIMessage } from "ai";
 import novaLogo from "@/assets/nova-logo.png";
 
 export const Route = createFileRoute("/_authenticated/nova/$threadId")({
+  head: () => ({ meta: [
+    { title: "Conversación con NOVA" },
+    { name: "description", content: "Continúa tu conversación creativa con NOVA." },
+    { property: "og:title", content: "Conversación con NOVA" },
+    { property: "og:description", content: "Continúa tu conversación creativa con NOVA." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: NovaThread,
 });
 
