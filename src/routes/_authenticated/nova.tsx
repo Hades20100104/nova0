@@ -151,6 +151,9 @@ function NovaHome() {
             }}
           >
             <NovaSphereClient onSelect={handleSelect} active={module} />
+            <div className="absolute inset-x-4 bottom-4 md:left-auto md:right-6 md:w-[380px] max-h-[45%] overflow-y-auto">
+              <RecentActivity />
+            </div>
           </div>
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">

@@ -203,6 +203,10 @@ function NeviraHome() {
                   <ModulePanel key={p.slug} title={p.title} icon={p.icon} items={p.items} cta={p.cta} onClick={() => setModule(p.slug)} align="right" />
                 ))}
               </div>
+
+              <div className="order-4 lg:col-span-12">
+                <RecentActivity />
+              </div>
             </div>
           </div>
 
