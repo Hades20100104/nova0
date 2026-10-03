@@ -8,6 +8,7 @@ import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { NovaSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
 import { useUserSections } from "@/hooks/use-user-sections";

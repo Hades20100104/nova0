@@ -10,6 +10,7 @@ import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
