@@ -85,29 +85,25 @@ export const Route = createFileRoute("/api/spotify/callback")({
         const expiresAt = new Date(Date.now() + tok.expires_in * 1000).toISOString();
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: existing } = await supabaseAdmin
+        // Single upsert keyed by user_id: the token row is written exactly once,
+        // whether the connection is new or being refreshed.
+        const { error: upsertError } = await supabaseAdmin
           .from("spotify_connections")
-          .select("id")
-          .eq("user_id", userId)
-          .maybeSingle();
+          .upsert(
+            {
+              user_id: userId,
+              access_token: tok.access_token,
+              refresh_token: tok.refresh_token ?? null,
+              expires_at: expiresAt,
+              scopes: tok.scope.split(" "),
+              spotify_user_id: me.id ?? null,
+              spotify_display_name: me.display_name ?? null,
+            },
+            { onConflict: "user_id" },
+          );
 
-        const row = {
-          user_id: userId,
-          access_token: tok.access_token,
-          refresh_token: tok.refresh_token ?? null,
-          expires_at: expiresAt,
-          scopes: tok.scope.split(" "),
-          spotify_user_id: me.id ?? null,
-          spotify_display_name: me.display_name ?? null,
-        };
-
-        if (existing) {
-          await supabaseAdmin
-            .from("spotify_connections")
-            .update(row)
-            .eq("id", existing.id);
-        } else {
-          await supabaseAdmin.from("spotify_connections").insert(row);
+        if (upsertError) {
+          return html(`<h1>Spotify</h1><p>No se pudo guardar la conexión.</p>`, 500);
         }
 
         return html(
