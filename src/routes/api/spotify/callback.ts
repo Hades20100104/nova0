@@ -5,7 +5,8 @@ function verifyState(state: string): string | null {
   const parts = state.split(".");
   if (parts.length !== 3) return null;
   const [userId, nonce, sig] = parts;
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "fallback";
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) return null;
   const expected = createHmac("sha256", secret)
     .update(`${userId}.${nonce}`)
     .digest("hex")
