@@ -8,6 +8,13 @@
       "when": 1790819100954,
       "tag": "0000_profile_avatar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791254887936,
+      "tag": "0001_automation_runs",
+      "breakpoints": true
     }
   ]
 }
