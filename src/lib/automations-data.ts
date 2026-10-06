@@ -35,8 +35,13 @@ export function useAutomationMutations() {
 
   return {
     save: useMutation({
-      mutationFn: (input: { id?: string; name: string; enabled: boolean; trigger: Trigger; steps: Step[] }) =>
-        save({ data: input }),
+      mutationFn: (input: { id?: string; name: string; enabled: boolean; trigger: Trigger; steps: Step[] }) => {
+        const trigger =
+          input.trigger.type === "time"
+            ? { ...input.trigger, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }
+            : input.trigger;
+        return save({ data: { ...input, trigger } });
+      },
       onSuccess: invalidate,
     }),
     toggle: useMutation({

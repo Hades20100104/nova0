@@ -8,7 +8,7 @@ import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { ActivityDrawer } from "@/components/dashboard/ActivityDrawer";
 import { NovaSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
 import { useUserSections } from "@/hooks/use-user-sections";
@@ -138,7 +138,10 @@ function NovaHome() {
               </p>
             </div>
           </div>
-          <ClockBadge />
+          <div className="flex items-center gap-2">
+            <ActivityDrawer />
+            <ClockBadge />
+          </div>
         </header>
 
         {/* Stage: sphere stays mounted; section overlays when active */}
@@ -151,9 +154,6 @@ function NovaHome() {
             }}
           >
             <NovaSphereClient onSelect={handleSelect} active={module} />
-            <div className="absolute inset-x-4 bottom-4 md:left-auto md:right-6 md:w-[380px] max-h-[45%] overflow-y-auto">
-              <RecentActivity />
-            </div>
           </div>
           {showSection && (
             <div key={module} className="absolute inset-0 overflow-y-auto p-4 md:p-6 animate-fade-in">

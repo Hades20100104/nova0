@@ -10,7 +10,7 @@ import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { ActivityDrawer } from "@/components/dashboard/ActivityDrawer";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
@@ -173,7 +173,10 @@ function NeviraHome() {
               </p>
             </div>
           </div>
-          <ClockBadge />
+          <div className="flex items-center gap-2">
+            <ActivityDrawer />
+            <ClockBadge />
+          </div>
         </header>
 
         <div className="relative flex-1 overflow-hidden">
@@ -202,10 +205,6 @@ function NeviraHome() {
                 {rightPanels.map((p) => (
                   <ModulePanel key={p.slug} title={p.title} icon={p.icon} items={p.items} cta={p.cta} onClick={() => setModule(p.slug)} align="right" />
                 ))}
-              </div>
-
-              <div className="order-4 lg:col-span-12">
-                <RecentActivity />
               </div>
             </div>
           </div>
