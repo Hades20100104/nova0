@@ -15,7 +15,7 @@ export type Step = z.infer<typeof StepSchema>;
 
 export const TriggerSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("manual") }),
-  z.object({ type: z.literal("time"), at: z.string().regex(/^\d{2}:\d{2}$/) }),
+  z.object({ type: z.literal("time"), at: z.string().regex(/^\d{2}:\d{2}$/), tz: z.string().max(64).optional() }),
   z.object({ type: z.literal("interval"), minutes: z.number().int().min(5).max(1440) }),
   z.object({ type: z.literal("voice"), phrase: z.string().min(2).max(60) }),
   z.object({ type: z.literal("app_open") }),
@@ -119,67 +119,26 @@ export const runAutomation = createServerFn({ method: "POST" })
       .single();
     if (error || !row) throw new Error(error?.message ?? "Automatización no encontrada");
     const automation = row as unknown as Automation;
-    const steps = automation.action_config?.steps ?? [];
-
-    const { generateText, stepCountIs } = await import("ai");
-    const { createLovableAiGatewayProvider } = await import("./ai-gateway");
-    const { buildChatTools } = await import("./chat-tools");
-    const { getSectionAgent } = await import("./section-agents");
-
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    const log: string[] = [];
-    const notifications: string[] = [];
-    const speech: string[] = [];
-    let navigate: string | null = null;
-
-    for (const step of steps) {
-      try {
-        if (step.type === "notify") {
-          notifications.push(step.message);
-          log.push(`Notificación: ${step.message}`);
-        } else if (step.type === "speak") {
-          speech.push(step.text);
-          log.push(`Voz: ${step.text}`);
-        } else if (step.type === "open_section") {
-          navigate = step.slug;
-          log.push(`Abrir sección: ${step.slug}`);
-        } else if (step.type === "task") {
-          const { error: tErr } = await context.supabase
-            .from("tasks")
-            .insert({ user_id: context.userId, title: step.title, status: "todo" } as never);
-          log.push(tErr ? `Tarea falló: ${tErr.message}` : `Tarea creada: ${step.title}`);
-        } else if (step.type === "ai") {
-          if (!apiKey) {
-            log.push("IA no disponible (falta clave).");
-            continue;
-          }
-          const gateway = createLovableAiGatewayProvider(apiKey);
-          const agent = getSectionAgent("nevira", step.module ?? "automatizaciones");
-          const tools = buildChatTools(
-            { supabase: context.supabase, userId: context.userId, apiKey },
-            agent?.allowedTools,
-          );
-          const { text } = await generateText({
-            model: gateway("google/gemini-3-flash-preview"),
-            system:
-              "Ejecutas un paso de una automatización sin supervisión humana. Usa las herramientas necesarias y responde con un resumen de una o dos frases de lo que hiciste.",
-            prompt: step.prompt,
-            tools,
-            stopWhen: stepCountIs(8),
-          });
-          log.push(text.slice(0, 400));
-          notifications.push(text.slice(0, 200));
-        }
-      } catch (e) {
-        log.push(`Error: ${e instanceof Error ? e.message : "desconocido"}`);
-      }
-    }
+    const { executeSteps } = await import("./automation-engine.server");
+    const { log, notifications, speech, navigate, failed } = await executeSteps(
+      context.supabase,
+      context.userId,
+      automation,
+    );
 
     const state = log.join(" · ").slice(0, 900);
     await context.supabase
       .from("automations")
       .update({ last_triggered_at: new Date().toISOString(), last_state: state } as never)
       .eq("id", automation.id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("automation_runs").insert({
+      automation_id: automation.id,
+      user_id: context.userId,
+      source: "manual",
+      status: failed ? "error" : "ok",
+      log: state,
+    });
 
     return { ok: true, log, notifications, speech, navigate, name: automation.name };
   });
