@@ -20,6 +20,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedNeviraThreadIdRouteImport } from './routes/_authenticated/nevira.$threadId'
 import { Route as AuthenticatedNovaThreadIdRouteImport } from './routes/_authenticated/nova.$threadId'
 import { Route as ApiSpotifyCallbackRouteImport } from './routes/api/spotify/callback'
+import { Route as ApiPublicHooksRunAutomationsRouteImport } from './routes/api/public/hooks/run-automations'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -77,6 +78,12 @@ const ApiSpotifyCallbackRoute = ApiSpotifyCallbackRouteImport.update({
   path: '/api/spotify/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRunAutomationsRoute =
+  ApiPublicHooksRunAutomationsRouteImport.update({
+    id: '/api/public/hooks/run-automations',
+    path: '/api/public/hooks/run-automations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
   '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
+  '/api/public/hooks/run-automations': typeof ApiPublicHooksRunAutomationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
   '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
+  '/api/public/hooks/run-automations': typeof ApiPublicHooksRunAutomationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/_authenticated/nevira/$threadId': typeof AuthenticatedNeviraThreadIdRoute
   '/_authenticated/nova/$threadId': typeof AuthenticatedNovaThreadIdRoute
   '/api/spotify/callback': typeof ApiSpotifyCallbackRoute
+  '/api/public/hooks/run-automations': typeof ApiPublicHooksRunAutomationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/nevira/$threadId'
     | '/nova/$threadId'
     | '/api/spotify/callback'
+    | '/api/public/hooks/run-automations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/nevira/$threadId'
     | '/nova/$threadId'
     | '/api/spotify/callback'
+    | '/api/public/hooks/run-automations'
   id:
     | '__root__'
     | '/'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nevira/$threadId'
     | '/_authenticated/nova/$threadId'
     | '/api/spotify/callback'
+    | '/api/public/hooks/run-automations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,6 +176,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSpotifyCallbackRoute: typeof ApiSpotifyCallbackRoute
+  ApiPublicHooksRunAutomationsRoute: typeof ApiPublicHooksRunAutomationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSpotifyCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/run-automations': {
+      id: '/api/public/hooks/run-automations'
+      path: '/api/public/hooks/run-automations'
+      fullPath: '/api/public/hooks/run-automations'
+      preLoaderRoute: typeof ApiPublicHooksRunAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -292,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSpotifyCallbackRoute: ApiSpotifyCallbackRoute,
+  ApiPublicHooksRunAutomationsRoute: ApiPublicHooksRunAutomationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
