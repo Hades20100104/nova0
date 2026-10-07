@@ -2,7 +2,6 @@ import { MessageSquare, Sparkles, Music2, Image as ImageIcon, FileText, Brain, H
 import { useState } from "react";
 import { getModule } from "@/lib/modules";
 import { MusicPlayerWidget } from "@/components/dashboard/MusicPlayerWidget";
-import { SpotifyConnectButton } from "@/components/dashboard/SpotifyConnectButton";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { Waveform } from "@/components/dashboard/Waveform";
 import { Icon3D } from "@/components/Icon3D";
@@ -19,6 +18,9 @@ import { RoomsMessenger } from "@/components/sections/RoomsMessenger";
 import { TrendAnalyzer } from "@/components/sections/TrendAnalyzer";
 import { ProductivityHub } from "@/components/sections/ProductivityHub";
 import { AutomationsHub } from "@/components/sections/AutomationsHub";
+import { CalendarHub } from "@/components/sections/CalendarHub";
+import { FinanceHub } from "@/components/sections/FinanceHub";
+import { ProfileHub } from "@/components/sections/ProfileHub";
 import { toast } from "sonner";
 
 /* ---------------- ambient FX ---------------- */
@@ -145,7 +147,6 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
             </div>
             <div className="col-span-12 lg:col-span-7 space-y-4">
               <div className="rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-md p-4 space-y-3">
-                <SpotifyConnectButton />
                 <MusicPlayerWidget />
               </div>
               <div>
@@ -187,65 +188,29 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
 
 
     case "automatizaciones":
-      return (
-        <Panel title="Automatizaciones" subtitle="Flujos inteligentes que trabajan por ti" cta="Crear flujo" onCta={onChat}>
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            {[
-              { t: "Trigger", s: "Nuevo email" },
-              { t: "Acción", s: "Analizar contenido" },
-              { t: "Condición", s: "¿Es importante?" },
-              { t: "Sí", s: "Guardar en Drive" },
-              { t: "No", s: "Archivar" },
-            ].map((n, i) => (
-              <div key={i} className="rounded-xl border border-primary/30 bg-card/40 px-3 py-2 min-w-[140px]">
-                <div className="text-[9px] uppercase tracking-[0.25em] text-primary">{n.t}</div>
-                <div className="text-sm">{n.s}</div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            <Stat label="Flujos activos" value="12" />
-            <Stat label="Ejecutados hoy" value="24" />
-            <Stat label="Eficiencia" value="98%" delta="+2%" />
-          </div>
-                  <div className="mt-4"><AutomationsHub /></div>
-        </Panel>
-      );
+      return <NovaAutomationsRoom onChat={onChat} />;
 
     case "calendario":
       return (
-        <Panel title="Calendario" subtitle="Tu tiempo, tu mejor aliado" cta="Nuevo evento" onCta={onChat}>
-          <div className="grid grid-cols-7 gap-2 text-xs">
-            {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
-              <div key={d} className="text-center text-[10px] uppercase tracking-widest text-muted-foreground">{d}</div>
-            ))}
-            {Array.from({ length: 28 }).map((_, i) => (
-              <div key={i} className={`aspect-square rounded-lg border text-center grid place-items-center ${
-                i === 12 ? "border-primary bg-primary/25 glow-text" : "border-primary/20 bg-card/30"
-              }`}>{i + 1}</div>
-            ))}
-          </div>
+        <Panel title="Calendario" subtitle="Tu tiempo, tu mejor aliado" cta="Pedir a Chronos" onCta={onChat}>
+          <CalendarHub />
         </Panel>
       );
 
     case "whatsapp":
       return <WhatsappRoom onChat={onChat} />;
 
-
     case "finanzas":
       return (
-        <Panel title="Finanzas" subtitle="Salud financiera" cta="Plan personalizado" onCta={onChat}>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <Stat label="Balance" value="$ 12,480" delta="+8.2%" />
-            <Stat label="Ahorro" value="$ 3,200" delta="+12%" />
-            <Stat label="Gasto mes" value="$ 1,820" />
-          </div>
-          <div className="space-y-2">
-            <Bar label="Vivienda" value={42} />
-            <Bar label="Comida" value={26} />
-            <Bar label="Ocio" value={18} />
-            <Bar label="Ahorro" value={14} />
-          </div>
+        <Panel title="Finanzas" subtitle="Financial Intelligence" cta="Análisis IA" onCta={onChat}>
+          <FinanceHub />
+        </Panel>
+      );
+
+    case "perfil":
+      return (
+        <Panel title="Perfil" subtitle="Tu cuenta y datos personales">
+          <ProfileHub />
         </Panel>
       );
 
@@ -272,6 +237,28 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
         </Panel>
       );
   }
+}
+
+function NovaAutomationsRoom({ onChat }: { onChat: () => void }) {
+  const { data: stats, isLoading, isError } = useModuleStats();
+  const coverage = stats?.automationsTotal
+    ? Math.round((stats.automationsEnabled / stats.automationsTotal) * 100)
+    : 0;
+
+  return (
+    <Panel title="Automatizaciones" subtitle="Flujos inteligentes que trabajan por ti" cta="Crear flujo" onCta={onChat}>
+      {isLoading ? <LoadingRow /> : isError || !stats ? (
+        <p className="text-xs text-destructive">No se pudieron cargar las estadísticas.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Stat label="Flujos activos" value={String(stats.automationsEnabled)} />
+          <Stat label="Flujos ejecutados hoy" value={String(stats.automationsToday)} />
+          <Stat label="Cobertura activa" value={`${coverage}%`} />
+        </div>
+      )}
+      <div className="mt-4"><AutomationsHub /></div>
+    </Panel>
+  );
 }
 
 /* ===================================================== */
@@ -942,7 +929,7 @@ function SeguridadRoom({ onChat }: { onChat: () => void }) {
     { l: "Conexión HTTPS", ok: secure },
     { l: "Sesión autenticada", ok: authOk },
     { l: "Cliente online", ok: perf.online },
-    { l: "Cifrado E2E chat", ok: true },
+    { l: "Transporte cifrado", ok: secure },
     { l: "Aislamiento RLS", ok: true },
   ];
 

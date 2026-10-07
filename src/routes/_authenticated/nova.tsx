@@ -8,6 +8,7 @@ import { ModuleSidebar } from "@/components/dashboard/ModuleSidebar";
 import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
+import { ActivityDrawer } from "@/components/dashboard/ActivityDrawer";
 import { NovaSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
 import { useUserSections } from "@/hooks/use-user-sections";
@@ -27,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/nova")({
       { property: "og:title", content: "NOVA — IA Creativa Cósmica" },
       { property: "og:description", content: "Asistente creativo con voz e interfaz 3D. Crea imágenes, documentos y música con IA." },
       { property: "og:url", content: "https://nova0.lovable.app/nova" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://nova0.lovable.app/nova" }],
   }),
@@ -135,7 +138,10 @@ function NovaHome() {
               </p>
             </div>
           </div>
-          <ClockBadge />
+          <div className="flex items-center gap-2">
+            <ActivityDrawer />
+            <ClockBadge />
+          </div>
         </header>
 
         {/* Stage: sphere stays mounted; section overlays when active */}

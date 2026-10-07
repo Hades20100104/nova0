@@ -10,6 +10,7 @@ import { ClockBadge } from "@/components/dashboard/ClockBadge";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { LiquidChatBar } from "@/components/dashboard/LiquidChatBar";
 import { InlineChatPanel } from "@/components/dashboard/InlineChatPanel";
+import { ActivityDrawer } from "@/components/dashboard/ActivityDrawer";
 import { HudCorners } from "@/components/HudTelemetry";
 import { NeviraSection } from "@/components/sections/ModuleSections";
 import { DynamicSection } from "@/components/dynamic/DynamicSection";
@@ -32,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/nevira")({
       { property: "og:title", content: "NEVIRA — Dashboard IA con voz" },
       { property: "og:description", content: "Sistema operativo inteligente: métricas, automatización, WhatsApp y documentos, todo desde un solo panel." },
       { property: "og:url", content: "https://nova0.lovable.app/nevira" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://nova0.lovable.app/nevira" }],
   }),
@@ -170,7 +173,10 @@ function NeviraHome() {
               </p>
             </div>
           </div>
-          <ClockBadge />
+          <div className="flex items-center gap-2">
+            <ActivityDrawer />
+            <ClockBadge />
+          </div>
         </header>
 
         <div className="relative flex-1 overflow-hidden">

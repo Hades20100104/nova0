@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createHmac } from "crypto";
+import { getRequest } from "@tanstack/react-start/server";
 
 const SCOPES = [
   "user-read-email",
@@ -12,10 +13,12 @@ const SCOPES = [
   "playlist-read-private",
   "playlist-modify-private",
   "user-library-read",
+  "user-library-modify",
 ].join(" ");
 
 function signState(userId: string): string {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "fallback";
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("Spotify state signing key not configured");
   const nonce = Date.now().toString(36);
   const payload = `${userId}.${nonce}`;
   const sig = createHmac("sha256", secret).update(payload).digest("hex").slice(0, 24);
@@ -24,12 +27,13 @@ function signState(userId: string): string {
 
 export const getSpotifyAuthUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { origin: string }) => input)
-  .handler(async ({ context, data }) => {
+  .inputValidator((input: { origin?: string } | undefined) => input ?? {})
+  .handler(async ({ context }) => {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     if (!clientId) throw new Error("Spotify no configurado");
     const redirectUri =
-      process.env.SPOTIFY_REDIRECT_URI ?? `${data.origin}/api/spotify/callback`;
+      process.env.SPOTIFY_REDIRECT_URI ??
+      `${new URL(getRequest().url).origin}/api/spotify/callback`;
     const state = signState(context.userId);
     const url = new URL("https://accounts.spotify.com/authorize");
     url.searchParams.set("client_id", clientId);

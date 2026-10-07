@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { LayoutSchema } from "./section-blocks";
 import { buildProductivityTools } from "./productivity-tools";
+import { buildCalendarFinanceTools } from "./calendar-finance-tools";
 
 type SB = SupabaseClient<Database>;
 
@@ -151,7 +152,11 @@ const recall = (ctx: Ctx) =>
         .eq("user_id", ctx.userId)
         .order("updated_at", { ascending: false })
         .limit(limit);
-      if (query) q = q.or(`key.ilike.%${query}%,value.ilike.%${query}%`);
+      if (query) {
+        // Strip PostgREST filter syntax and LIKE wildcards so the query is treated as plain text.
+        const safe = query.replace(/[,().:*%_\\"']/g, " ").trim();
+        if (safe) q = q.or(`key.ilike.%${safe}%,value.ilike.%${safe}%`);
+      }
       const { data, error } = await q;
       if (error) return { ok: false, error: error.message };
       return { ok: true, memories: data ?? [] };
@@ -162,16 +167,26 @@ const recall = (ctx: Ctx) =>
 const sendWhatsapp = (ctx: Ctx) =>
   tool({
     description:
-      "Envía un mensaje de WhatsApp. Usa 'contact_name' para buscar en la libreta del usuario, o 'phone' (E.164 sin '+', ej. 521555...) si ya lo conoces.",
+      "Envía un mensaje de WhatsApp SOLO a contactos guardados en la libreta del usuario. Usa 'contact_name' o 'phone' de un contacto existente.",
     inputSchema: z.object({
       contact_name: z.string().max(80).optional(),
       phone: z.string().regex(/^\d{8,15}$/).optional(),
       message: z.string().min(1).max(4000),
     }),
     execute: async ({ contact_name, phone, message }) => {
-      let to = phone;
+      let to: string | undefined;
       let resolvedName: string | undefined;
-      if (!to && contact_name) {
+      if (phone) {
+        const { data: contacts } = await ctx.supabase
+          .from("whatsapp_contacts")
+          .select("phone, name")
+          .eq("user_id", ctx.userId);
+        const match = (contacts ?? []).find((c) => c.phone.replace(/[^\d]/g, "") === phone);
+        if (match) {
+          to = phone;
+          resolvedName = match.name;
+        }
+      } else if (contact_name) {
         const { data } = await ctx.supabase
           .from("whatsapp_contacts")
           .select("phone, name")
@@ -184,7 +199,7 @@ const sendWhatsapp = (ctx: Ctx) =>
           resolvedName = data.name;
         }
       }
-      if (!to) return { ok: false, error: "No se encontró el contacto. Da un número o nombre válido." };
+      if (!to) return { ok: false, error: "Solo puedo enviar a contactos guardados en tu libreta de WhatsApp." };
 
       const token = process.env.WHATSAPP_ACCESS_TOKEN;
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -837,6 +852,7 @@ export function buildChatTools(ctx: Ctx, allowedTools?: string[]) {
     list_automations: listAutomationsTool(ctx),
     toggle_automation: toggleAutomationTool(ctx),
     ...buildProductivityTools(ctx),
+    ...buildCalendarFinanceTools(ctx),
   } as const;
   // Intelligence tools are always available: memoria, aprendizaje e índice de confianza.
   const ALWAYS = ["report_confidence", "learn_insight", "list_insights", "recall"];
