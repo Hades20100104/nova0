@@ -13,6 +13,8 @@ import {
 } from "@/lib/spotify-player.functions";
 import { SpotifyConnectButton } from "./SpotifyConnectButton";
 
+type ControlInput = Parameters<typeof controlPlayer>[0] extends { data: infer D } ? D : never;
+
 const fmt = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -58,7 +60,7 @@ export function MusicPlayerWidget() {
     enabled: panel === "playlists",
   });
 
-  const act = async (input: Parameters<typeof control>[0]["data"], optimistic?: Partial<PlayerState>) => {
+  const act = async (input: ControlInput, optimistic?: Partial<PlayerState>) => {
     if (optimistic) qc.setQueryData<PlayerState>(["spotify-player"], (o) => (o ? { ...o, ...optimistic } : o));
     const res = await control({ data: input });
     if (!res.ok) toast.error(res.message ?? "No se pudo controlar Spotify");
