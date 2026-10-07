@@ -1,30 +1,30 @@
-import {
-  Image as ImageIcon,
-  FileText,
-  MessageSquare,
-  Sparkles,
-  ArrowUpRight,
-  CheckSquare,
-  Workflow,
-  Brain,
-  FolderKanban,
-  Bot,
-} from "lucide-react";
-import { useRecentActivity, relativeTime, type ActivityKind } from "@/lib/activity-data";
+import { Image as ImageIcon, FileText, MessageSquare, Sparkles, ArrowUpRight } from "lucide-react";
 
-const META: Record<ActivityKind, { icon: typeof ImageIcon; tag: string }> = {
-  message: { icon: MessageSquare, tag: "Chat" },
-  image: { icon: ImageIcon, tag: "Visual" },
-  document: { icon: FileText, tag: "Doc" },
-  task: { icon: CheckSquare, tag: "Tarea" },
-  automation: { icon: Workflow, tag: "Auto" },
-  memory: { icon: Brain, tag: "Memoria" },
-  project: { icon: FolderKanban, tag: "Proyecto" },
-  ai: { icon: Bot, tag: "IA" },
-};
+const ITEMS = [
+  {
+    icon: ImageIcon,
+    label: "Imagen creada",
+    detail: "nebula_concept_04.png",
+    time: "Hace 2 min",
+    tag: "Visual",
+  },
+  {
+    icon: FileText,
+    label: "Documento actualizado",
+    detail: "Brief campaña · v3",
+    time: "Hace 1 h",
+    tag: "Doc",
+  },
+  {
+    icon: MessageSquare,
+    label: "Conversación con NOVA",
+    detail: "Ideas para el lanzamiento",
+    time: "Hace 2 h",
+    tag: "Chat",
+  },
+];
 
 export function RecentActivity() {
-  const { data: items = [], isLoading, error } = useRecentActivity(6);
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-primary/30 bg-card/50 backdrop-blur-xl p-3"
@@ -50,17 +50,12 @@ export function RecentActivity() {
         </span>
       </div>
 
-      {isLoading && <p className="text-[10px] text-muted-foreground p-2">Cargando actividad…</p>}
-      {error && <p className="text-[10px] text-destructive p-2">No se pudo cargar la actividad.</p>}
-      {!isLoading && !error && items.length === 0 && (
-        <p className="text-[10px] text-muted-foreground p-2">Aún no hay actividad. Empieza una conversación.</p>
-      )}
       <ul className="space-y-1.5">
-        {items.map((it, idx) => {
-          const { icon: Icon, tag } = META[it.kind];
+        {ITEMS.map((it, idx) => {
+          const Icon = it.icon;
           return (
             <li
-              key={it.id}
+              key={it.label}
               className="group relative flex items-center gap-2.5 rounded-lg border border-border/40 bg-background/30 p-2 hover:border-primary/60 hover:bg-primary/5 transition fade-up"
               style={{ animationDelay: `${idx * 80}ms` }}
             >
@@ -78,13 +73,13 @@ export function RecentActivity() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-medium truncate">{it.label}</span>
                   <span className="font-mono text-[8px] uppercase tracking-[0.2em] px-1 py-px rounded border border-primary/30 text-primary/90">
-                    {tag}
+                    {it.tag}
                   </span>
                 </div>
                 <div className="text-[10px] text-muted-foreground truncate">{it.detail}</div>
               </div>
               <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[9px] text-muted-foreground font-mono">{relativeTime(it.at)}</span>
+                <span className="text-[9px] text-muted-foreground font-mono">{it.time}</span>
                 <ArrowUpRight className="h-3 w-3 text-primary/70 opacity-0 group-hover:opacity-100 transition" />
               </div>
             </li>

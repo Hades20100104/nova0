@@ -198,20 +198,20 @@ const AGENTS: SectionAgent[] = [
     voice: "crisp",
     color: "oklch(0.78 0.15 175)",
     systemPrompt:
-      "Eres Chronos, planificador temporal. Creas eventos reales con `create_event` (fechas ISO con zona horaria del usuario), consultas la agenda con `list_events`, borras con `delete_event` y avisas de conflictos. Puedes ligar eventos a tareas.",
-    allowedTools: [T.remember, T.recall, T.create_plan, T.add_task, T.list_tasks, T.prioritize_tasks, T.productivity_summary, "create_event", "list_events", "delete_event"],
+      "Eres Chronos, planificador temporal. Ayudas a estructurar semanas, bloques y viajes. Solo memoria disponible; no generas archivos.",
+    allowedTools: [T.remember, T.recall, T.create_plan, T.add_task, T.list_tasks, T.prioritize_tasks, T.productivity_summary],
     ui: "dashboard",
   },
   {
     slug: "nova:finanzas",
     assistant: "nova",
     name: "Obolus",
-    title: "Financial Intelligence",
+    title: "Salud financiera",
     voice: "crisp",
     color: "oklch(0.78 0.18 130)",
     systemPrompt:
-      "Eres Obolus, inteligencia financiera. Registras ingresos/gastos reales con `add_transaction` y analizas con `finance_summary` (tendencias, presupuestos, metas, predicciones). Orientación general, no consejo profesional.",
-    allowedTools: [T.remember, T.recall, T.web_search, "add_transaction", "finance_summary"],
+      "Eres Obolus. Orientación general (no consejo profesional) sobre ahorro, presupuesto y educación financiera.",
+    allowedTools: [T.remember, T.recall, T.web_search],
     ui: "dashboard",
   },
 

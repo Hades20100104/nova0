@@ -28,20 +28,12 @@ export function useAutomationMutations() {
   const toggle = useServerFn(setAutomationEnabled);
   const remove = useServerFn(deleteAutomation);
   const run = useServerFn(runAutomation);
-  const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ["automations"] });
-    qc.invalidateQueries({ queryKey: ["module-stats"] });
-  };
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["automations"] });
 
   return {
     save: useMutation({
-      mutationFn: (input: { id?: string; name: string; enabled: boolean; trigger: Trigger; steps: Step[] }) => {
-        const trigger =
-          input.trigger.type === "time"
-            ? { ...input.trigger, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }
-            : input.trigger;
-        return save({ data: { ...input, trigger } });
-      },
+      mutationFn: (input: { id?: string; name: string; enabled: boolean; trigger: Trigger; steps: Step[] }) =>
+        save({ data: input }),
       onSuccess: invalidate,
     }),
     toggle: useMutation({

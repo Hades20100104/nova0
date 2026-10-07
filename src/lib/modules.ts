@@ -1,6 +1,6 @@
 import {
   Home, MessageSquare, Music, Image as ImageIcon, FileText, Brain, Zap,
-  Calendar, MessageCircle, Wallet, Settings, UserCircle,
+  Calendar, MessageCircle, Wallet, Settings,
   LayoutDashboard, TrendingUp, Workflow, Database, Radio, BookOpen, Shield, Cpu,
   Gauge, Code2,
 } from "lucide-react";
@@ -53,7 +53,6 @@ export const NOVA_MODULES: ModuleDef[] = [
   { slug: "calendario", label: "Calendario", icon: Calendar, description: "Tu tiempo, tu aliado", systemPrompt: "Modo calendario: ayuda a planificar el día, semana y proyectos.", theme: "theme-nova-calendario" },
   { slug: "whatsapp", label: "WhatsApp", icon: MessageCircle, description: "Mensajería", systemPrompt: "Modo mensajería: ayuda a redactar mensajes claros, profesionales o personales.", theme: "theme-nova-whatsapp" },
   { slug: "finanzas", label: "Finanzas", icon: Wallet, description: "Salud financiera", systemPrompt: "Modo finanzas: orientación general sobre presupuestos, ahorro e inversión. No es consejo financiero profesional.", theme: "theme-nova-finanzas" },
-  { slug: "perfil", label: "Perfil", icon: UserCircle, description: "Tu cuenta y datos", systemPrompt: "Modo perfil: ayuda a gestionar la cuenta, nombre, foto y preferencias personales.", theme: "theme-nova-ajustes" },
   { slug: "ajustes", label: "Ajustes", icon: Settings, description: "Preferencias", systemPrompt: "Modo ajustes: explica funciones y preferencias del asistente.", theme: "theme-nova-ajustes" },
 ];
 

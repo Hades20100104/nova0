@@ -1,2 +1,0 @@
-- [x] Corregir la etiqueta de transporte cifrado en SeguridadRoom.
-- [x] Sustituir las cifras decorativas de automatizaciones de Nova por estadísticas reales y actualizarlas tras cambios.

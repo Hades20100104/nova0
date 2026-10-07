@@ -10,14 +10,6 @@ import type { UIMessage } from "ai";
 import neviraLogo from "@/assets/nevira-logo.png";
 
 export const Route = createFileRoute("/_authenticated/nevira/$threadId")({
-  head: () => ({ meta: [
-    { title: "Conversación con NEVIRA" },
-    { name: "description", content: "Continúa tu conversación de productividad con NEVIRA." },
-    { property: "og:title", content: "Conversación con NEVIRA" },
-    { property: "og:description", content: "Continúa tu conversación de productividad con NEVIRA." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
   component: NeviraThread,
 });
 

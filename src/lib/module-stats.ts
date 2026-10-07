@@ -19,10 +19,7 @@ export function useModuleStats() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let q: any = supabase.from(table as never).select("*", { count: "exact", head: true });
         if (extra) q = extra(q);
-        return q.then((r: { count: number | null; error: { message: string } | null }) => {
-          if (r.error) throw new Error(r.error.message);
-          return r.count ?? 0;
-        });
+        return q.then((r: { count: number | null }) => r.count ?? 0);
       };
 
       const since = (days: number) => new Date(Date.now() - days * 864e5).toISOString();
@@ -39,7 +36,6 @@ export function useModuleStats() {
         contactsTotal,
         automationsTotal,
         automationsEnabled,
-        automationsToday,
       ] = await Promise.all([
         c("assistant_threads"),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,9 +52,6 @@ export function useModuleStats() {
         c("automations"),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         c("automations", (q: any) => q.eq("enabled", true)),
-        // Counts distinct flows whose most recent run occurred today in the user's local timezone.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        c("automations", (q: any) => q.gte("last_triggered_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())),
       ]);
 
       // Latest thread for "última actividad"
@@ -95,7 +88,6 @@ export function useModuleStats() {
         contactsTotal,
         automationsTotal,
         automationsEnabled,
-        automationsToday,
         latest,
         activityByDay: byDay,
         activityMaxDay: maxDay,

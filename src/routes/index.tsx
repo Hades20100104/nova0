@@ -12,8 +12,6 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Escoge tu Asistente de IA: NOVA o NEVIRA" },
       { property: "og:description", content: "Dos asistentes con voz tipo JARVIS: NOVA para crear e imaginar, NEVIRA para productividad y datos." },
       { property: "og:url", content: "https://nova0.lovable.app/" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://nova0.lovable.app/" }],
   }),

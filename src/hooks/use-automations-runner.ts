@@ -61,11 +61,13 @@ export function useAutomationsRunner(enabled: boolean) {
       if (running.current || stopped) return;
       running.current = true;
       try {
-        // Interval/time automations now run on the backend scheduler;
-        // here we only refresh the cache used by voice triggers.
         const { automations } = await list();
         cache.current = automations;
-        void isDue;
+        const now = new Date();
+        for (const a of automations) {
+          if (!a.enabled) continue;
+          if (isDue(a, now)) await execute.current(a);
+        }
       } catch {
         /* silencioso: reintenta al siguiente ciclo */
       } finally {
