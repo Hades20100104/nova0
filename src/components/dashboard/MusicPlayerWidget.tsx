@@ -9,11 +9,11 @@ import {
   searchTracks,
   listMyPlaylists,
   type PlayerState,
+  type ControlInput,
   type TrackHit,
 } from "@/lib/spotify-player.functions";
 import { SpotifyConnectButton } from "./SpotifyConnectButton";
 
-type ControlInput = Parameters<typeof controlPlayer>[0] extends { data: infer D } ? D : never;
 
 const fmt = (ms: number) => {
   const s = Math.floor(ms / 1000);

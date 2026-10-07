@@ -84,6 +84,8 @@ const ControlSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("playContext"), contextUri: z.string().startsWith("spotify:") }),
 ]);
 
+export type ControlInput = z.infer<typeof ControlSchema>;
+
 export const controlPlayer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ControlSchema.parse(d))
