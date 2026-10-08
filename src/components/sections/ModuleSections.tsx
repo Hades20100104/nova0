@@ -149,6 +149,7 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
             </div>
             <div className="col-span-12 lg:col-span-7 space-y-4">
               <div className="rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-md p-4 space-y-3">
+                <SpotifyConnectButton />
                 <MusicPlayerWidget />
                 <DjPanel />
               </div>
