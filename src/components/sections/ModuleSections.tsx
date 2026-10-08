@@ -2,6 +2,7 @@ import { MessageSquare, Sparkles, Music2, Image as ImageIcon, FileText, Brain, H
 import { useState } from "react";
 import { getModule } from "@/lib/modules";
 import { MusicPlayerWidget } from "@/components/dashboard/MusicPlayerWidget";
+import { SpotifyConnectButton } from "@/components/dashboard/SpotifyConnectButton";
 import { DjPanel } from "@/components/dashboard/DjPanel";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { Waveform } from "@/components/dashboard/Waveform";
