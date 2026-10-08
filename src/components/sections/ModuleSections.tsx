@@ -2,6 +2,7 @@ import { MessageSquare, Sparkles, Music2, Image as ImageIcon, FileText, Brain, H
 import { useState } from "react";
 import { getModule } from "@/lib/modules";
 import { MusicPlayerWidget } from "@/components/dashboard/MusicPlayerWidget";
+import { SpotifyConnectButton } from "@/components/dashboard/SpotifyConnectButton";
 import { DjPanel } from "@/components/dashboard/DjPanel";
 import { PerfGauge } from "@/components/dashboard/PerfGauge";
 import { Waveform } from "@/components/dashboard/Waveform";
@@ -148,6 +149,7 @@ export function NovaSection({ slug, onChat }: { slug: string; onChat: () => void
             </div>
             <div className="col-span-12 lg:col-span-7 space-y-4">
               <div className="rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-md p-4 space-y-3">
+                <SpotifyConnectButton />
                 <MusicPlayerWidget />
                 <DjPanel />
               </div>
