@@ -82,6 +82,7 @@ const ControlSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("like"), trackId: z.string().min(1).max(64), liked: z.boolean() }),
   z.object({ action: z.literal("playUris"), uris: z.array(z.string().startsWith("spotify:")).min(1).max(50) }),
   z.object({ action: z.literal("playContext"), contextUri: z.string().startsWith("spotify:") }),
+  z.object({ action: z.literal("queue"), uri: z.string().startsWith("spotify:track:") }),
 ]);
 
 export type ControlInput = z.infer<typeof ControlSchema>;
@@ -109,6 +110,7 @@ export const controlPlayer = createServerFn({ method: "POST" })
           break;
         case "playUris": await put("/me/player/play", { uris: data.uris }); break;
         case "playContext": await put("/me/player/play", { context_uri: data.contextUri }); break;
+        case "queue": await spotifyApi(token, `/me/player/queue?uri=${encodeURIComponent(data.uri)}`, { method: "POST" }); break;
       }
       return { ok: true as const };
     } catch (e) {

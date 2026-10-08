@@ -14,6 +14,8 @@ const SCOPES = [
   "playlist-modify-private",
   "user-library-read",
   "user-library-modify",
+  "user-top-read",
+  "user-read-recently-played",
 ].join(" ");
 
 function signState(userId: string): string {
