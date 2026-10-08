@@ -1283,3 +1283,9 @@
   opacity: 1; border-color: oklch(0.7 0.17 35 / 0.6);
   background: oklch(0.7 0.17 35 / 0.12);
 }
+
+@keyframes dj-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 55%, transparent); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+.dj-pulse { animation: dj-pulse 1.6s ease-in-out infinite; }
