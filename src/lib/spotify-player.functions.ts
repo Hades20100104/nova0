@@ -150,3 +150,36 @@ export const listMyPlaylists = createServerFn({ method: "GET" })
       return { ok: false as const, playlists: [] as { uri: string; id: string; name: string; cover?: string }[], ...asState(e) };
     }
   });
+
+/** Autoplay: if the Spotify queue is (almost) empty, enqueue tracks related to the seed. */
+export const autoContinue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ trackId: z.string().min(1).max(64), artist: z.string().max(200).optional() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { getUserToken, spotifyApi } = await import("./spotify-player.server");
+    try {
+      const token = await getUserToken(context.supabase, context.userId);
+      const q = await spotifyApi<{ queue: { id: string }[] }>(token, "/me/player/queue").catch(() => null);
+      const queued = new Set((q?.queue ?? []).map((t) => t.id));
+      if (queued.size >= 2) return { ok: true as const, added: 0 };
+      queued.add(data.trackId);
+
+      let picks: SpTrack[] = [];
+      // Recommendations API (may be unavailable for newer Spotify apps)
+      const rec = await spotifyApi<{ tracks: SpTrack[] }>(token, `/recommendations?limit=10&seed_tracks=${encodeURIComponent(data.trackId)}`).catch(() => null);
+      picks = rec?.tracks ?? [];
+      if (!picks.length && data.artist) {
+        const main = data.artist.split(",")[0].trim();
+        const r = await spotifyApi<{ tracks: { items: SpTrack[] } }>(token, `/search?type=track&limit=20&q=${encodeURIComponent(`artist:"${main}"`)}`).catch(() => null);
+        const r2 = await spotifyApi<{ tracks: { items: SpTrack[] } }>(token, `/search?type=track&limit=20&q=${encodeURIComponent(main)}`).catch(() => null);
+        picks = [...(r?.tracks.items ?? []), ...(r2?.tracks.items ?? [])].sort(() => Math.random() - 0.5);
+      }
+      const fresh = picks.filter((t) => t && !queued.has(t.id) && (queued.add(t.id), true)).slice(0, 5);
+      for (const t of fresh) {
+        await spotifyApi(token, `/me/player/queue?uri=${encodeURIComponent(t.uri)}`, { method: "POST" });
+      }
+      return { ok: true as const, added: fresh.length };
+    } catch (e) {
+      return { ok: false as const, added: 0, ...asState(e) };
+    }
+  });
