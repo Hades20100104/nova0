@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Volume2, VolumeX, Shuffle, Send, Play, ListPlus, Loader2, Power } from "lucide-react";
+import { Radio, Volume2, VolumeX, Shuffle, Send, Play, ListPlus, Loader2, Power, Infinity as InfinityIcon } from "lucide-react";
 import { runDj, VIBES, type Vibe, type DjResult } from "@/lib/dj.functions";
 import { controlPlayer, type PlayerState, type TrackHit } from "@/lib/spotify-player.functions";
 import { loadVoicePrefs, speak, stopSpeaking } from "@/lib/voice";
@@ -28,6 +28,10 @@ export function DjPanel() {
   const [q, setQ] = useState("");
   const lastTrack = useRef<string | undefined>(undefined);
   const lastTransitionAt = useRef(0);
+  const [continuous, setContinuous] = useState(true);
+  const tracksRef = useRef<TrackHit[]>([]);
+  tracksRef.current = tracks;
+  const extending = useRef<string | undefined>(undefined);
 
   const say = (text: string) => {
     setLine(text);
@@ -96,13 +100,23 @@ export function DjPanel() {
       if (!st?.trackId || st.trackId === lastTrack.current) return;
       const first = lastTrack.current === undefined;
       lastTrack.current = st.trackId;
+      // Set continuo: al empezar la última canción del bloque, genera y encola el siguiente
+      const list = tracksRef.current;
+      if (continuous && list.length && list[list.length - 1].id === st.trackId && extending.current !== st.trackId) {
+        extending.current = st.trackId;
+        void call("set").then(async (res) => {
+          for (const t of res?.tracks ?? []) await control({ data: { action: "queue", uri: t.uri } });
+          if (res?.tracks.length) toast.success(`DJ AURA: siguiente bloque (${res.tracks.length}) en cola`);
+        });
+        return;
+      }
       if (first || busy || Date.now() - lastTransitionAt.current < 90_000) return;
       lastTransitionAt.current = Date.now();
       void call("transition");
     });
     return unsub;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, vibe, voice]);
+  }, [on, vibe, voice, continuous]);
 
   useEffect(() => () => stopSpeaking(), []);
 
@@ -162,6 +176,13 @@ export function DjPanel() {
               {VIBE_LABEL[v]}
             </button>
           ))}
+          <button
+            onClick={() => setContinuous((c) => !c)}
+            className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${continuous ? "border-primary bg-primary/25" : "border-primary/25 text-muted-foreground"}`}
+            title="Genera el siguiente bloque automáticamente con la misma vibra"
+          >
+            <InfinityIcon className="h-3 w-3" /> Set continuo {continuous ? "ON" : "OFF"}
+          </button>
           <button
             onClick={() => changeVibe(VIBES[(VIBES.indexOf(vibe) + 1) % VIBES.length])}
             disabled={busy}
