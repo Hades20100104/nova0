@@ -1,4 +1,4 @@
-import { Play, SkipBack, SkipForward, Shuffle, Pause, Repeat, Repeat1, Heart, Volume2, Search, ListMusic, Loader2, Music } from "lucide-react";
+import { Play, SkipBack, SkipForward, Shuffle, Pause, Repeat, Repeat1, Heart, Volume2, Search, ListMusic, Loader2, Music, Infinity as InfinityIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import {
   controlPlayer,
   searchTracks,
   listMyPlaylists,
+  autoContinue,
   type PlayerState,
   type ControlInput,
   type TrackHit,
@@ -47,6 +48,31 @@ export function MusicPlayerWidget() {
     }, 500);
     return () => clearInterval(id);
   }, [st?.isPlaying, st?.durationMs]);
+
+  // Autoplay continuo: cerca del final de cada canción, encola temas afines
+  const autoFn = useServerFn(autoContinue);
+  const [autoplay, setAutoplay] = useState(true);
+  useEffect(() => {
+    const v = localStorage.getItem("nova-autoplay");
+    if (v !== null) setAutoplay(v === "1");
+  }, []);
+  const toggleAutoplay = () => {
+    setAutoplay((a) => {
+      localStorage.setItem("nova-autoplay", a ? "0" : "1");
+      toast.success(a ? "Autoplay desactivado" : "Autoplay activado: la música no se detendrá");
+      return !a;
+    });
+  };
+  const autoDone = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!autoplay || !st?.trackId || !st.isPlaying || !st.durationMs) return;
+    if (autoDone.current === st.trackId) return;
+    if (st.durationMs - progress > 30_000) return;
+    autoDone.current = st.trackId;
+    void autoFn({ data: { trackId: st.trackId, artist: st.artist } }).then((r) => {
+      if (r.ok && r.added) toast.message(`Autoplay: ${r.added} temas afines en cola`);
+    });
+  }, [autoplay, progress, st?.trackId, st?.isPlaying, st?.durationMs, st?.artist, autoFn]);
 
   const [volume, setVolume] = useState<number | null>(null);
   const [panel, setPanel] = useState<null | "search" | "playlists">(null);
@@ -169,6 +195,9 @@ export function MusicPlayerWidget() {
               {st.isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
             </button>
             <button onClick={() => act({ action: "next" })} className="hover:text-primary" aria-label="Siguiente"><SkipForward className="h-4 w-4" /></button>
+            <button onClick={toggleAutoplay} className={autoplay ? "text-primary" : "text-muted-foreground hover:text-primary"} aria-label={autoplay ? "Desactivar autoplay" : "Activar autoplay"} title={autoplay ? "Autoplay ON" : "Autoplay OFF"}>
+              <InfinityIcon className="h-3.5 w-3.5" />
+            </button>
             <button onClick={() => act({ action: "repeat", state: nextRepeat }, { repeat: nextRepeat })} className={st.repeat !== "off" ? "text-primary" : "hover:text-primary"} aria-label="Repetir">
               {st.repeat === "track" ? <Repeat1 className="h-3.5 w-3.5" /> : <Repeat className="h-3.5 w-3.5" />}
             </button>
