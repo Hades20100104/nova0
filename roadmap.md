@@ -1,2 +1,6 @@
 - [x] Corregir la etiqueta de transporte cifrado en SeguridadRoom.
 - [x] Sustituir las cifras decorativas de automatizaciones de Nova por estadísticas reales y actualizarlas tras cambios.
+- [x] Parte 1: orquestador cognitivo trazable antes del modelo y las herramientas.
+- [x] Parte 1: clasificación de intención y contexto dinámico del usuario.
+- [x] Parte 1: 11 pruebas del orden, clasificación, aislamiento y contexto; app sin errores y chat sin sesión devuelve 401.
+- [ ] Parte 1: verificar respuesta y lectura de trazas con sesión real — bloqueado: Lovable Cloud no está accesible y no permite obtener sesión.
