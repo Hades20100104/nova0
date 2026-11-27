@@ -1,4 +1,4 @@
-# Pipeline cognitivo — Parte 1
+# Pipeline cognitivo — Partes 1 y 2
 
 `/api/chat` conserva la autenticación, la comprobación de propietario de conversación, el modelo y los permisos por sección existentes.
 
@@ -6,9 +6,9 @@
 
 1. **INTENT:** clasificación determinista `rules-v1` sin llamada adicional a IA: tipo de tarea, objetivo, dominios, necesidad de planificación, ejecución directa o aclaración, urgencia, capacidades candidatas y confianza heurística (no probabilidad calibrada). Los seguimientos cortos pueden recuperar el objetivo del mensaje previo.
 2. **CONTEXT:** consulta paralela y acotada de datos reales con el cliente autenticado del usuario. Selecciona recuerdos por relevancia y preferencias generales; añade aprendizajes pertinentes, secciones activas y skills disponibles. Agenda/tareas/metas, automatizaciones, muestra financiera y estado de conexión Spotify solo se consultan cuando son relevantes. Las preferencias inmediatas se detectan en el mensaje actual, sin persistirlas como preferencias permanentes.
-3. **PLANNER:** etapa explícitamente `deferred`; registra que un plan es necesario, sin simular un motor de planificación. El modelo conserva la capacidad actual de proponer planes.
+3. **PLANNER:** inferencia independiente con salida estructurada y validación del grafo dirigido acíclico. Determina objetivo, información requerida, criterios de éxito, pasos atómicos, herramienta/agente por paso, dependencias y confirmaciones. Calcula grupos paralelos topológicamente. Las conversaciones simples usan un paso de respuesta sin inferencia adicional. Las preguntas no autorizan escrituras. No se generan respuestas ni se invocan herramientas antes de esta etapa.
 4. **AGENT SELECTOR:** ejecuta el selector actual por sección después del contexto; no concede nuevos permisos ni deriva automáticamente a otros agentes.
-5. **TOOLS / SKILLS:** conserva el bucle actual del modelo y herramientas. Los skills encontrados aportan contexto, no ejecución nueva. Registra nombres y estado de resultados, nunca argumentos ni contenido.
+5. **TOOLS / SKILLS:** el modelo conserva la transmisión actual pero solo puede llamar `execute_plan_step`. El ejecutor verifica dependencias, valida argumentos contra el esquema real y reclama el paso antes de esperar; admite llamadas concurrentes de pasos listos independientes. Las escrituras de calendario se serializan para compartir disponibilidad. Fallos bloquean dependientes, y pasos completados no se repiten. Los skills encontrados aportan contexto, no ejecución nueva.
 6. **VERIFICATION:** comprobación básica de resultados devueltos y errores; no es aún un verificador semántico independiente.
 7. **MEMORY UPDATE:** contabiliza las operaciones `remember`/`learn_insight` del bucle existente; no introduce escrituras autónomas adicionales.
 8. **RESPONSE:** guarda la respuesta y una parte `data-cognitive-trace` en la conversación del usuario. La respuesta continúa transmitiéndose como antes; las etapas finales observan el resultado del bucle, no retrasan cada fragmento hasta una verificación semántica.
@@ -18,6 +18,9 @@
 - Cada solicitud tiene su propio identificador `X-Cognitive-Run-Id` y una traza aislada con tiempos, estados y resúmenes.
 - Las respuestas guardadas incluyen la clasificación (sin duplicar el texto del objetivo), fuentes consultadas, secciones y skills relevantes. Se reutiliza la protección de las conversaciones existentes.
 - Los errores y cancelaciones emiten trazas operativas sin texto del usuario, recuerdos, argumentos, resultados ni credenciales. Un fallo no se presenta como ejecución completada.
+- El plan y sus estados/resultados acotados se guardan solo en la traza privada de la conversación, nunca en registros operativos. Los resultados de razonamiento se identifican como análisis no verificado.
+- Las acciones críticas (envíos, borrado, cambios existentes, automatizaciones, movimientos financieros, skills ejecutables y escrituras masivas) se bloquean en el servidor. Se muestran los argumentos y se pide `Confirmo <código>`. El código dura 15 minutos; la siguiente solicitud recupera exclusivamente la traza del servidor en esa conversación/sección y consume la aprobación atómicamente antes de ejecutar los mismos argumentos. No basta con decir «sí», un flag cliente o instrucciones almacenadas. Fallo o interrupción no provoca reejecución automática.
+- Los agentes fuera de la sección son sugerencias, no derivaciones automáticas. La información indispensable ausente crea pasos de aclaración que bloquean las acciones dependientes. Un paso de herramienta representa una invocación: varios bloques/tareas requieren varios pasos, hasta 24 por solicitud.
 - Las fuentes que no responden se marcan `unavailable`; no se reemplazan por datos ficticios. El contexto nunca selecciona tokens de Spotify ni código de skills, y se delimita como datos no confiables.
 - No se creó una tabla adicional: el intento de migración falló porque el servicio de datos no estaba accesible; el registro usa las partes JSON ya existentes, sin depender de esa migración.
 

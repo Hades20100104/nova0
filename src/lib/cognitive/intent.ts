@@ -41,7 +41,7 @@ const RULES: Array<{ domain: TaskDomain; pattern: RegExp; skills: string[] }> = 
   {
     domain: "calendar",
     pattern:
-      /\b(calendario|agenda\w*|evento\w*|reunion\w*|horario\w*|disponibilidad|calendar|meeting\w*|event\w*|schedule)\b/,
+      /\b(calendario|agenda\w*|evento\w*|reunion\w*|horario\w*|disponibilidad|semana|examen\w*|estudio|calendar|meeting\w*|event\w*|schedule|week|exam\w*)\b/,
     skills: ["list_events", "create_event"],
   },
   {
@@ -53,7 +53,7 @@ const RULES: Array<{ domain: TaskDomain; pattern: RegExp; skills: string[] }> = 
   {
     domain: "productivity",
     pattern:
-      /\b(tarea\w*|proyecto\w*|productividad|objetivo\w*|habito\w*|task\w*|project\w*|goal\w*)\b/,
+      /\b(tarea\w*|proyecto\w*|productividad|objetivo\w*|habito\w*|examen\w*|estudio|task\w*|project\w*|goal\w*|exam\w*)\b/,
     skills: ["list_tasks", "add_task", "create_plan"],
   },
   {
